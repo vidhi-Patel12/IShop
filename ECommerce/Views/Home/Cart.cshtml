@@ -1,0 +1,289 @@
+﻿<html>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<body>
+    <div class="container mt-4">
+        <h2>🛒 Shopping Cart</h2>
+        <hr />
+        <div class="row">
+            <div id="cartSummary"></div>
+        </div>
+
+        <!-- Empty Cart Message (Initially Hidden) -->
+        <div id="emptyCartMessage" class="text-center mt-4" style="display: none;">
+            <h5>No items in the cart</h5>
+            <p>Start shopping now!</p>
+            <a href="/Home/Index" class="btn btn-primary">Go to Shop</a>
+        </div>
+
+        <!-- Checkout Section (Initially Hidden) -->
+        <div id="cartSummarySection" style="display: none;">
+            <div class="float-end">
+                <div><h4><strong>Subtotal:</strong> ₹<span id="cartTotal">0.00</span></h4></div>
+            </div>
+            <br /><br />
+            <div>
+                <div class="float-end">
+                    <a id="checkoutLink" asp-controller="Home" asp-action="Checkout" class="btn btn-success mb-5">
+                        ✔ Proceed to Checkout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    let cartSummary = document.getElementById("cartSummary");
+    let cartTotal = document.getElementById("cartTotal");
+    let cartSummarySection = document.getElementById("cartSummarySection");
+    let emptyCartMessage = document.getElementById("emptyCartMessage");
+    let cartItemCount = document.getElementById("cartItemCount");
+    let checkoutLink = document.getElementById("checkoutLink");
+
+    let cartItems = JSON.parse(localStorage.getItem("cartItems")) || loadCartFromCookies() || [];
+    let totalPrice = 0;
+
+    function updateCartCount() {
+        let totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+        if (cartItemCount) cartItemCount.innerText = totalItems;
+    }
+
+    function saveCartToCookies() {
+        document.cookie = `cartItems=${encodeURIComponent(JSON.stringify(cartItems))}; path=/; max-age=604800`;
+    }
+
+    function loadCartFromCookies() {
+        let cookies = document.cookie.split("; ");
+        for (let cookie of cookies) {
+            let [name, value] = cookie.split("=");
+            if (name === "cartItems" && value) {
+                try {
+                    return JSON.parse(decodeURIComponent(value));
+                } catch (error) {
+                    console.error("Error parsing cart cookie:", error);
+                    return [];
+                }
+            }
+        }
+        return [];
+    }
+
+        async function loadCartFromDatabase() {            
+            try {
+                let response = await fetch("/Home/Cart");
+                let data = await response.json();
+
+                if (data.success && data.cartItems.length > 0) {
+                    console.log("Cart loaded from database:", data.cartItems);
+                    localStorage.setItem("cartItems", JSON.stringify(data.cartItems));
+                    renderCart(); // Update UI
+                } else {
+                    console.log("No items in the cart.");
+                }
+            } catch (error) {
+                console.error("Error loading cart from database:", error);
+            }
+        }
+
+         async function saveCartToDatabase() {
+                console.log("Saving cart to database...", cartItems);
+
+                if (cartItems.length === 0) {
+                    console.log("Cart is empty. Calling delete API...");
+                    await deleteCartItem();  // Call delete function when cart is empty
+                    return;
+                }
+                
+                try {
+                    let response = await fetch("/Home/SaveCart", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(cartItems),
+                    });
+
+                    if (response.ok) {
+                        console.log("Cart saved successfully.");
+                        localStorage.setItem("cartItems", JSON.stringify(cartItems));
+                        updateCartCount();
+                    } else {
+                        console.log("Failed to save cart.", response);
+                    }
+                } catch (error) {
+                    console.error("Error saving cart:", error);
+                }
+         }
+
+    function renderCart() {
+        cartSummary.innerHTML = "";
+        totalPrice = 0;
+
+        if (cartItems.length === 0) {
+            cartSummarySection.style.display = "none";
+            emptyCartMessage.style.display = "block";
+            return;
+        } else {
+            cartSummarySection.style.display = "block";
+            emptyCartMessage.style.display = "none";
+        }
+
+        cartItems.forEach((item, index) => {
+            totalPrice += parseFloat(item.total);
+            cartSummary.innerHTML += `
+                <div class="row">
+                    <div class="col-md-4 mb-2">
+                        <img src="${item.image}" width="100%" height="270px">
+                    </div>
+                    <div class="col-md-6">
+                        <h5>${capitalizeWords(item.name)} | ${capitalizeWords(item.type)} | ${capitalizeWords(item.color)}</h5>
+                        <br/>
+                        <h6>${capitalizeWords(item.description)}</h6>
+                        <br/><br/>
+                        <div class="mb-0">
+                            <button class="btn btn-sm btn-outline-secondary decrease-qty" data-index="${index}">-</button>
+                            ${item.quantity}
+                            <button class="btn btn-sm btn-outline-secondary increase-qty" data-index="${index}">+</button> |
+                            <button class="btn btn-danger btn-sm remove-item" data-index="${index}">Remove</button>
+                        </div>
+                        <br/>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="float-end mt-0">
+                            <h5>₹${item.price}</h5>
+                            <br/><br/>
+                            <h5>₹${item.total}</h5>
+                        </div>
+                    </div>
+                </div>
+                <hr />
+            `;
+        });
+
+        cartTotal.innerText = totalPrice.toFixed(2);
+        attachEventListeners();
+        saveCartToCookies();
+        saveCartToDatabase();
+        }
+
+    function capitalizeWords(str) {
+        return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
+    }
+
+    async function updateQuantity(index, amount) {
+        if (!cartItems[index]) return;
+
+        let item = cartItems[index];
+        let newQty = item.quantity + amount;
+
+        if (newQty < 1) {
+            cartItems.splice(index, 1);
+                saveCartToLocalStorageAndCookies();
+            renderCart();
+
+            // Call API to delete item from DB
+            await deleteCartItem(item.productid, item.productsimageid);
+            updateCartCount();
+        } 
+        else 
+        {
+            let stockAvailable = await checkStockAvailability(item.productsimageid, newQty);
+            if (!stockAvailable) {
+                alert(`Not enough stock for ${item.name}.`);
+                return;
+            }
+            item.quantity = newQty;
+            item.total = (newQty * item.price).toFixed(2);
+            saveCartToLocalStorageAndCookies();
+            renderCart();
+        }
+
+        saveCartToLocalStorageAndCookies();
+        renderCart();
+    }
+
+    async function checkStockAvailability(productImageId, requestedQty) {
+        try {
+            let response = await fetch(`/Home/CheckStockAvailability?productImageId=${productImageId}&requestedQty=${requestedQty}`);
+            let data = await response.json();
+            return response.ok && data.success;
+        } catch (error) {
+            console.error("Error checking stock:", error);
+            return false;
+        }
+    }
+
+    function attachEventListeners() {
+         document.querySelectorAll(".remove-item").forEach(button => {
+             button.addEventListener("click", async function () {
+                            let index = this.getAttribute("data-index");
+                            let item = cartItems[index];
+
+                            if (!item) return;
+
+                            // Remove from local cart
+                            cartItems.splice(index, 1);
+                            saveCartToLocalStorageAndCookies();
+                            renderCart();
+
+                            // Call API to delete item from DB
+                            await deleteCartItem(item.productid, item.productsimageid);
+             });
+         });
+
+        document.querySelectorAll(".increase-qty").forEach(button => {
+            button.addEventListener("click", function () {
+                let index = this.getAttribute("data-index");
+                updateQuantity(index, 1);
+            });
+        });
+
+        document.querySelectorAll(".decrease-qty").forEach(button => {
+            button.addEventListener("click", function () {
+                let index = this.getAttribute("data-index");
+                updateQuantity(index, -1);
+            });
+        });
+
+        updateCartCount();
+    }
+
+        async function deleteCartItem(productId, productsImageId) {
+             try {
+                        let response = await fetch("/Home/DeleteCartItem", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ProductId: productId, ProductsImageId: productsImageId }),
+                        });
+
+                        let result = await response.json();
+
+                        if (result.success) {
+                            console.log("Item deleted successfully from the cart.");
+                            updateCartCount();
+                        } else {
+                            console.log("Failed to delete item from the cart.", result.message);
+                        }
+                    } catch (error) {
+                        console.error("Error deleting item from cart:", error);
+             }
+        }
+
+    function saveCartToLocalStorageAndCookies() {
+        localStorage.setItem("cartItems", JSON.stringify(cartItems));
+        saveCartToCookies();
+    }
+
+    checkoutLink.addEventListener("click", function () {
+        localStorage.setItem("checkoutItems", JSON.stringify(cartItems));
+        saveCartToCookies();
+        saveCartToDatabase();
+    });
+
+    loadCartFromDatabase();
+    renderCart();
+});
+
+</script>

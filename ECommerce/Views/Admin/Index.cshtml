@@ -1,0 +1,115 @@
+﻿@model List<ECommerce.Models.Products>
+
+@{
+    ViewData["Title"] = "Products";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-2">
+        </div>
+        <div class="col-md-5">
+            <div class="card p-4 shadow-lg" style="width:200%;">
+                <div class="row">
+                    <div class="col-md-10">
+                        <h2>Product List</h2>
+                    </div>
+                    <div class="col-md-2 mt-2">
+                        <a asp-action="Create" class="btn btn-success btn-sm">Add New Products</a>
+                    </div>
+                </div>
+                <br />
+                <!-- Table -->
+                <table id="productsTable" class="table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Color</th>
+                            <th>Quantity</th>
+                            <th>MRP</th>
+                            <th>Discount</th>
+                            <th>Price</th>
+                            <th>Arriving Days</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var product in Model)
+                        {
+                            @if (product.ProductImages.Any())
+                            {
+                                @foreach (var image in product.ProductImages)
+                                {
+                                    <tr>
+                                        <td>@product.Name</td>
+                                        <td>@image.Type</td>
+                                        <td>@image.Color</td>
+                                        <td>@image.Quantity</td>
+                                        @*  <td>
+                                            <img src="@image.Image" class="img-thumbnail" width="50" height="50" />
+                                        </td> *@
+                                        <td>₹@image.MRP</td>
+                                        <td>@image.Discount%</td>
+                                        <td>₹@image.Price</td>
+                                        <td>@image.ArrivingDays</td>
+                                        <td style="width:20%;">
+                                            <a asp-action="GetById" asp-route-id="@image.ProductId" asp-route-productsImageId="@image.ProductsImageId" class="btn btn-success btn-sm">View</a>
+
+                                            <a asp-action="Edit" asp-route-id="@image.ProductsImageId" class="btn btn-primary btn-sm">Edit</a>
+                                            <!-- Separate Delete Button for Each Image -->
+                                            <form asp-action="Delete" asp-route-id="@image.ProductsImageId" method="post" style="display:inline;">
+                                                <button type="submit" class="btn btn-danger btn-sm"
+                                                        onclick="return confirm('Are you sure you want to delete this image?');">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <span>No data available...</span>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-md-5">
+        </div>
+    </div>
+</div>
+<br/>
+
+
+<!-- Include jQuery and DataTables -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" />
+
+<!-- Initialize DataTable -->
+<script>
+    $(document).ready(function () {
+        $('#productsTable').DataTable({
+            "paging": true,      // Enable pagination
+            "searching": true,   // Enable search box
+            "ordering": true,    // Enable column sorting
+            "lengthMenu": [5, 10, 25, 50], // Show entries per page options
+            "language": {
+                "search": "Search Products:"
+            }
+        });
+
+         $("div.dataTables_filter input").css({
+        "margin-bottom": "8px",
+        "padding": "8px",
+        "border-radius": "5px",
+        "border": "1px solid #ccc"
+    });
+
+    });
+</script>

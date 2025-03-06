@@ -1,0 +1,286 @@
+﻿@model ECommerce.Models.Products
+
+@{
+    ViewData["Title"] = "Add Product";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card p-4 shadow-lg">
+                <h3 class="text-center">Add Product</h3>
+                <form method="post" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label class="form-label fw-bold">Product Name</label>
+                        <input asp-for="Name" class="form-control" placeholder="Enter product name" required>
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+                    <div id="imageContainer">
+                        <div class="row image-entry">
+                            <div class="row">
+                                <div class="col-6 mt-3">
+                                    <label class="form-label fw-bold">Type</label>
+                                    <input name="ProductImages[0].Type" class="form-control" placeholder="Type" required>
+                                </div>
+                                <div class="col-6 mt-3">
+                                    <label class="form-label fw-bold">Color</label>
+                                    <input name="ProductImages[0].Color" class="form-control" style="width:293px;" placeholder="Color" required>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6 mt-3">
+                                    <label class="form-label fw-bold">Product Image</label>
+
+                                    <!-- Image Preview Container -->
+                                    <div id="imagePreviewContainer" class="img-preview-container" onclick="$('#ImageUpload').click();">
+                                        <img id="previewImage" src="https://via.placeholder.com/100" class="img-thumbnail" style="width:300px; height:240px;">
+                                    </div>
+
+                                    <!-- Hidden File Input -->
+                                    <input type="file" id="ImageUpload" name="ImageFiles" class="form-control d-none" accept="image/*">
+                                </div>
+
+                                <div class="col-6 mt-3">
+                                    <label class="form-label fw-bold">Description</label>
+                                    <textarea name="ProductImages[0].Description" class="form-control" style="width:300px; height:240px;" placeholder="Enter product Description" required></textarea>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-6 mt-3">
+                                    <label class="form-label fw-bold">Quantity</label>
+                                    <input name="ProductImages[0].Quantity" class="form-control" placeholder="Quantity" required>
+                                </div>
+
+                                <div class="col-6 mt-3">
+                                    <label class="form-label fw-bold">MRP</label>
+                                    <input name="ProductImages[0].MRP" class="form-control mrp-input" style="width:293px;" placeholder="MRP" required>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-6 mt-3">
+                                    <label class="form-label fw-bold">Discount</label>
+                                    <input name="ProductImages[0].Discount" class="form-control discount-input" placeholder="Discount">
+                                </div>
+
+                                <div class="col-6 mt-3">
+                                    <label class="form-label fw-bold">Price</label>
+                                    <input type="number" class="form-control price-input" style="width:293px;" placeholder="Calculated Price" readonly>
+                                </div>
+
+                            </div>
+
+                            <div class="row">
+                                <div class="col-6 mt-3">
+                                    <label class="form-label fw-bold">Arriving Days</label>
+                                    <input type="number" name="ProductImages[0].ArrivingDays" class="form-control arrivingDays-input" placeholder="Arriving Days">
+                                </div>
+
+                                <div class="col-6 mt-3">
+                                   
+                                </div>
+
+                            </div>
+
+                            <div class="d-flex mt-3">
+                                <button type="button" id="addImage" class="btn btn-primary">Add More</button>
+                                &nbsp;&nbsp;
+                                <button type="button" class="btn btn-danger remove-image ">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                    <br />
+                    <div class="d-flex float-end">
+                        <button type="submit" class="btn btn-success">Save Product</button>
+                        &nbsp;
+                        <a asp-action="Index" class="btn btn-secondary ">Cancel</a>
+                    </div>
+                </form>              
+            </div>
+        </div>
+    </div>
+</div>
+<br />
+
+<div class="modal fade" id="ProductModal" tabindex="-1" aria-labelledby="ProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Add Products</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="productForm">
+                    <div class="mb-3">
+                        <label class="form-label">Product Name</label>
+                        <input type="text" id="productName" class="form-control" placeholder="Product Name">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <input type="text" id="type" class="form-control" placeholder="Type">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Color</label>
+                        <input type="text" id="color" class="form-control" placeholder="Color">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Product Image</label>
+
+                        <!-- Image Preview Container -->
+                        <div id="imagePreviewContainer" class="img-preview-container" onclick="$('#ImageUpload').click();">
+                            <img id="previewImage" src="https://via.placeholder.com/100" class="img-thumbnail" style="width:300px; height:240px;">
+                        </div>
+
+                        <!-- Hidden File Input -->
+                        <input type="file" id="ImageUpload" name="ImageFiles" class="form-control d-none" accept="image/*">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">State</label>
+                            <select id="state" class="form-control">
+                                <option>Choose a state</option>
+                                <option>Gujarat</option>
+                                <option>Maharashtra</option>
+                                <option>Delhi</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Town/City</label>
+                            <input type="text" id="city" class="form-control" placeholder="City">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Pincode</label>
+                        <input type="text" class="form-control" id="zipCode" placeholder="6 digits [0-9] PIN code">
+                    </div>
+
+                    <button type="submit" id="modalSubmitButton" class="btn btn-warning w-100 mt-3">Add this address</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        var imageIndex = 1;
+
+        // Function to calculate price based on MRP and Discount in each row
+        function calculatePrice(row) {
+            var mrp = parseFloat(row.find(".mrp-input").val()) || 0;
+            var discount = parseFloat(row.find(".discount-input").val()) || 0;
+            var price = mrp - (mrp * discount / 100);
+            row.find(".price-input").val(price.toFixed(2)); // Update the specific price field
+        }
+
+        // Add new image entry dynamically
+        $("#addImage").click(function () {
+            var newEntry = `
+            <div class="row mb-3 image-entry">
+                 <div class="row">
+                      <div class="col-6 mt-3">
+                             <label class="form-label">Type</label>
+                             <input name="ProductImages[${imageIndex}].Type" class="form-control" placeholder="Type">
+                      </div>
+                        <div class="col-6 mt-3">
+                            <label class="form-label">Color</label>
+                             <input name="ProductImages[${imageIndex}].Color" class="form-control" placeholder="Color">
+                        </div>
+                 </div>
+                    <div class="row">
+                         <div class="col-6 mt-3">
+                            <label class="form-label">Product Image</label>
+                            <div class="img-preview-container" onclick="$(this).siblings('input').click();">
+                                <img src="https://via.placeholder.com/100" class="img-thumbnail previewImage" style="width:300px; height:240px;">
+                             </div>
+                             <input type="file" class="ImageUpload d-none" name="ImageFiles" accept="image/*">
+                        </div>
+                           <div class="col-6 mt-3">
+                               <label class="form-label fw-bold">Description</label>
+                                <textarea name="ProductImages[0].Description" class="form-control" style="width:270px; height:240px;" placeholder="Enter product Description"></textarea>
+                            </div>
+                     </div>
+
+                      <div class="row">
+                           <div class="col-6 mt-3">
+                                       <label class="form-label">Quantity</label>
+                                       <input name="ProductImages[${imageIndex}].Quantity" class="form-control quantity-input" placeholder="Quantity">
+                            </div>
+                           <div class="col-6 mt-3">
+                                   <label class="form-label">MRP</label>
+                                   <input name="ProductImages[${imageIndex}].MRP" class="form-control mrp-input" placeholder="MRP">
+                           </div>                           
+                     </div>
+                      <div class="row">
+                             <div class="col-6 mt-3">
+                                    <label class="form-label">Discount</label>
+                                    <input name="ProductImages[${imageIndex}].Discount" class="form-control discount-input" placeholder="Discount">
+                             </div>
+                             <div class="col-6 mt-3">
+                                       <label class="form-label">Price</label>
+                                        <input type="number" class="form-control price-input" placeholder="Calculated Price" readonly>
+                            </div>
+                     </div>
+                       <div class="row">
+                             <div class="col-6 mt-3">
+                                    <label class="form-label">Arriving Days</label>
+                                    <input name="ProductImages[${imageIndex}].ArrivingDays" class="form-control arrivingDays-input" placeholder="Arriving Days">
+                             </div>
+                             <div class="col-6 mt-3">
+                                      
+                            </div>
+                     </div>
+
+                     <div class="d-flex mt-3">
+                         <button type="button" id="addImage" class="btn btn-primary">Add More</button>
+                           &nbsp;&nbsp;
+                          <button type="button" class="btn btn-danger remove-image ">Remove</button>
+                     </div>
+            </div>`;
+
+            $("#imageContainer").append(newEntry);
+            imageIndex++;
+        });
+
+            $(document).on("change", ".ImageUpload", function (event) {
+                let reader = new FileReader();
+                let imgPreview = $(this).siblings(".img-preview-container").find(".previewImage"); // Find related preview image
+
+                reader.onload = function (e) {
+                    imgPreview.attr("src", e.target.result); // Update the correct preview
+                };
+
+                reader.readAsDataURL(event.target.files[0]);
+            });
+
+        $(document).on("change", "#ImageUpload", function (event) {
+            let reader = new FileReader();
+            reader.onload = function (e) {
+                $("#previewImage").attr("src", e.target.result); // Update the preview image
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        });
+
+        // Remove image entry
+        $(document).on("click", ".remove-image", function () {
+            $(this).closest(".image-entry").remove();
+        });
+
+        // Update price when MRP or Discount changes
+        $(document).on("input", ".mrp-input, .discount-input", function () {
+            var row = $(this).closest(".image-entry"); // Get the current row
+            calculatePrice(row);
+        });
+    });
+</script>
+

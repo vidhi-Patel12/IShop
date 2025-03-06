@@ -1,0 +1,722 @@
+﻿@model ECommerce.Models.Checkout
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <!-- Left Section: Delivery Address & Payment -->
+        <div class="col-md-7">
+            <!-- Select Delivery Address -->
+            <div class="card p-4 mb-4">
+                <h5><strong>Delivery address</strong></h5>
+                <hr>
+                <div class="delivery-address">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div id="addressListContainer" class="col-md-11 float-start mb-3">
+                            </div> <!-- Address List Section -->
+                        </div>
+                    </div>
+
+                    <div class="float-end">
+                        <a href="#" class="text-primary" id="addNewAddress" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                            Add a new delivery address
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <!-- Payment Method -->
+            <div class="card p-4 mb-4">
+                <div class="row">
+                    <div class="col-md-7">
+                        <h5><strong>Pay on delivery (Cash)</strong></h5>
+                    </div>
+                    <div class="col-md-5 float-end">
+                        <input type="text" id="CoupanCode" name="CoupanCode" placeholder="Enter Code"></input>
+                        <button type="button" onclick="applyCoupon()">Apply</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="card p-4 mb-4">
+                <h5><strong>Items</strong></h5>
+                <div id="checkoutContainer" class="col-md-12">
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Section: Order Summary -->
+        <div class="col-md-5">
+            <div class="card p-4">
+                <h5><strong>Order Summary</strong></h5>
+                <hr>
+                <p>Total: <span class="float-end" id="totalCheckoutAmount">₹0.00</span></p>
+                <p>Delivery: <span class="float-end" id="deliveryCharge">₹0.00</span></p>
+                <p>Final Amount: <span class="float-end" id="finalAmount">₹0.00</span></p>
+                <p>Promotion Applied: <span class="float-end" id="promotionApplied">₹0.00</span></p>
+                <hr>
+                <h5><strong>Order Total:</strong> <span class="float-end" id="orderTotalAmount">₹0.00</span></h5>
+                <button id="placeOrderBtn" class="btn btn-warning w-100 mt-3">Place Your Order</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Address Modal -->
+<div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Add an address</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addressForm">
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" id="fullName" class="form-control" placeholder="Full Name">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Mobile Number</label>
+                        <input type="text" id="mobile" class="form-control" placeholder="Mobile number">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        <input type="text" id="address" class="form-control" placeholder="Address">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Country/Region</label>
+                        <select class="form-control">
+                            <option>India</option>
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">State</label>
+                            <select id="state" class="form-control">
+                                <option>Choose a state</option>
+                                <option>Gujarat</option>
+                                <option>Maharashtra</option>
+                                <option>Delhi</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Town/City</label>
+                            <input type="text" id="city" class="form-control" placeholder="City">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Pincode</label>
+                        <input type="text" class="form-control" id="zipCode" placeholder="6 digits [0-9] PIN code">
+                    </div>
+
+                    <button type="submit" id="modalSubmitButton" class="btn btn-warning w-100 mt-3">Add this address</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Order Success Modal -->
+<div class="modal fade" id="orderSuccessModal" tabindex="-1" aria-labelledby="orderSuccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="orderSuccessModalLabel">Success</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <h5>✅ Order placed successfully!</h5>
+            </div>
+            <div class="modal-footer">
+                <button asp-action="Orders" asp-controller="Home" type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+        document.addEventListener("DOMContentLoaded", async function () {  //  Add async here
+                 let shopId = getShopIdFromCookie(); // Fetch shopId from cookie
+        let addressListContainer = document.getElementById("addressListContainer");
+
+        try {
+            let response = await fetch(`/Home/GetAddresses`);
+            let addresses = await response.json();
+
+            //  Ensure the response is an array
+            if (!Array.isArray(addresses)) {
+                throw new Error("Invalid API response: Expected an array.");
+            }
+
+            if (addresses.length === 0) {
+                addressListContainer.innerHTML = `<p>No saved addresses found.</p>`;
+                return;
+            }
+
+            let addressHTML = "";
+            addresses.forEach((address, index) => {
+                let isHidden = index >= 2 ? "d-none extra-address" : ""; // Hide addresses beyond the first two
+
+                addressHTML += `
+                    <div class="delivery-address p-2 border rounded mb-2 d-flex align-items-start ${isHidden}">
+                        <div class="me-2">
+                            <input type="radio" name="selectedAddress" class="select-address mt-2" ${index === 0 ? "checked" : ""} data-id="${address.addressId}">
+                        </div>
+                        <div class="flex-grow-1">
+                            <strong>${address.fullName}</strong>
+                            <p class="mb-1">${address.address}, ${address.city}, ${address.state}, ${address.zipCode}, ${address.country}</p>
+                            <a href="#" class="text-primary edit-address" data-id="${address.addressId}">Edit address</a>
+                        </div>
+                    </div>`;
+            });
+
+            // Add "Show More / Show Less" button if there are more than 2 addresses
+            if (addresses.length > 2) {
+                addressHTML += `
+                    <button id="toggleAddresses" class="btn btn-link text-primary">Show More</button>`;
+            }
+
+            addressListContainer.innerHTML = addressHTML;
+
+            // Attach event listeners to Edit buttons
+            document.querySelectorAll(".edit-address").forEach(button => {
+                button.addEventListener("click", function () {
+                    let addressId = this.getAttribute("data-id");
+                    editAddress(addressId);
+                });
+            });
+
+            // Store selected address when changed
+            document.querySelectorAll(".select-address").forEach(radio => {
+                radio.addEventListener("change", function () {
+                    let selectedId = this.getAttribute("data-id");
+                    let selectedAddr = addresses.find(addr => addr.addressId == selectedId);
+                    displaySelectedAddress(selectedAddr);
+                    localStorage.setItem("selectedAddress", JSON.stringify(selectedAddr));
+                });
+            });
+
+            // Handle Show More / Show Less toggle
+            let toggleButton = document.getElementById("toggleAddresses");
+            if (toggleButton) {
+                toggleButton.addEventListener("click", function () {
+                    let hiddenAddresses = document.querySelectorAll(".extra-address");
+                    let isExpanded = hiddenAddresses.length > 0 && !hiddenAddresses[0].classList.contains("d-none");
+
+                    if (isExpanded) {
+                        hiddenAddresses.forEach(addr => addr.classList.add("d-none"));
+                        toggleButton.innerText = "Show More";
+                    } else {
+                        hiddenAddresses.forEach(addr => addr.classList.remove("d-none"));
+                        toggleButton.innerText = "Show Less";
+                    }
+                });
+            }
+
+        } catch (error) {
+            console.error("Error fetching addresses:", error);
+        }
+
+
+        });
+
+        //  Function to fetch `IShopId` from cookies
+        function getShopIdFromCookie() {
+            let cookies = document.cookie.split("; ");
+            let shopIdCookie = cookies.find(row => row.startsWith("IShopId="));
+            return shopIdCookie ? shopIdCookie.split("=")[1] : 0; // Return 0 if not found
+        }
+
+        //  Function to display selected address in UI
+        function displaySelectedAddress(address) {
+            if (!address) return;
+            document.getElementById("fullName").innerText = address.fullName;
+            document.getElementById("address").innerText = `${address.address}, ${address.city}, ${address.state}, ${address.zipCode}, ${address.country}`;
+        }
+
+
+        //  Helper function to fetch shopId from cookies
+        function getShopIdFromCookie() {
+            let cookies = document.cookie.split("; ");
+            let shopIdCookie = cookies.find(row => row.startsWith("IShopId="));
+            return shopIdCookie ? shopIdCookie.split("=")[1] : 0; // Return 0 if not found
+        }
+
+        //  Function to display selected address
+        function displaySelectedAddress(address) {
+            if (!address) return;
+            document.getElementById("fullName").innerText = address.fullName;
+            document.getElementById("address").innerText = `${address.address}, ${address.city}, ${address.state}, ${address.zipCode}, ${address.country}`;
+
+             document.body.classList.remove("modal-open");
+                    document.querySelectorAll(".modal-backdrop").forEach(el => el.remove());
+        }
+
+        // Function to Edit Address
+        async function editAddress(addressId) {
+            let response = await fetch(`/Home/GetAddresses?shopId=1`);
+            let addresses = await response.json();
+            let selectedAddress = addresses.find(addr => addr.addressId == addressId);
+
+            if (selectedAddress) {
+                document.getElementById("modalTitle").innerText = "Edit Address";
+                document.getElementById("fullName").value = selectedAddress.fullName;
+                document.getElementById("mobile").value = selectedAddress.mobile;
+                document.getElementById("address").value = selectedAddress.address;
+                document.getElementById("city").value = selectedAddress.city;
+                document.getElementById("state").value = selectedAddress.state;
+                document.getElementById("zipCode").value = selectedAddress.zipCode;
+                document.getElementById("modalSubmitButton").innerText = "Update this address";
+
+                localStorage.setItem("editingAddress", JSON.stringify(selectedAddress));
+
+                let modal = new bootstrap.Modal(document.getElementById("addAddressModal"));
+                modal.show();
+            }
+        }
+
+        // Save or Update Address
+        document.getElementById("addressForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            let editingAddress = localStorage.getItem("editingAddress") ? JSON.parse(localStorage.getItem("editingAddress")) : null;
+            let addressId = editingAddress ? editingAddress.addressId : 0; // Use 0 for new address
+
+            let newAddress = {
+                addressId: addressId, // Include AddressId for updating existing
+                fullName: document.getElementById("fullName").value,
+                mobile: document.getElementById("mobile").value,
+                address: document.getElementById("address").value,
+                city: document.getElementById("city").value,
+                zipCode: document.getElementById("zipCode").value,
+                state: document.getElementById("state").value,
+                country: "India",
+                isActive: true // Assuming address is active by default
+            };
+
+            try {
+                let response = await fetch("/Home/SaveAddress", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(newAddress)
+                });
+
+                let result = await response.json();
+
+                if (response.ok) {
+                    alert("Address saved successfully!");
+
+                    // Refresh Address List
+                    location.reload();
+
+                    // Close modal
+                    let modalElement = document.getElementById("addAddressModal");
+                    let modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
+                    modalInstance.hide();
+
+                    document.body.classList.remove("modal-open");
+                    document.querySelectorAll(".modal-backdrop").forEach(el => el.remove());
+
+                     document.getElementById("addressForm").reset();
+
+                    localStorage.removeItem("editingAddress"); // Reset edit mode
+                } else {
+                    alert(result.message || "Failed to save address.");
+                }
+            } catch (error) {
+                console.error("Error saving address:", error);
+                alert("An error occurred while saving the address.");
+            }
+        });
+
+        document.getElementById("addNewAddress").addEventListener("click", function () {
+            // Clear form fields
+            document.getElementById("addressForm").reset();
+
+            // Remove any stored editing data
+            localStorage.removeItem("editingAddress");
+
+            // Show the modal
+            let modalElement = document.getElementById("addAddressModal");
+            let modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
+            document.getElementById("modalTitle").innerText = "Add an Address";
+            document.getElementById("modalSubmitButton").innerText = "Add this address";
+            modalInstance.show();
+
+        });
+
+        function updateQuantity(index, amount) {
+            let checkoutItems = JSON.parse(localStorage.getItem("checkoutItems")) || [];
+            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+            if (checkoutItems[index]) {
+                checkoutItems[index].quantity += amount;
+
+                if (checkoutItems[index].quantity <= 0) {
+                    checkoutItems.splice(index, 1); // Remove item if quantity is 0
+                } else {
+                    checkoutItems[index].total = (checkoutItems[index].quantity * checkoutItems[index].price).toFixed(2);
+                }
+            }
+
+            // Update cartItems based on checkoutItems
+            let productId = checkoutItems[index]?.productId; // Assuming each item has a unique productId
+            let cartItem = cartItems.find(item => item.productId === productId);
+            if (cartItem) {
+                cartItem.quantity = checkoutItems[index]?.quantity || 0;
+                cartItem.total = checkoutItems[index]?.total || 0;
+                if (cartItem.quantity <= 0) {
+                    cartItems = cartItems.filter(item => item.productId !== productId);
+                }
+            }
+
+            localStorage.setItem("checkoutItems", JSON.stringify(checkoutItems));
+            localStorage.setItem("cartItems", JSON.stringify(cartItems));
+
+            renderCheckout(); // Re-render checkout after updating quantity
+        }
+
+        async function applyCoupon() {
+            let coupanCode = document.getElementById("CoupanCode").value.trim();
+            let promotionAppliedElement = document.getElementById("promotionApplied");
+            let finalAmountElement = document.getElementById("finalAmount");
+            let orderTotalAmountElement = document.getElementById("orderTotalAmount");
+
+            if (!coupanCode) {
+                alert("Please enter a coupon code.");
+                return;
+            }
+
+            try {
+                let response = await fetch(`/Admin/ValidateCoupan?coupanCode=${coupanCode}`);
+                let data = await response.json();
+
+                if (data.success) {
+                    let discountPercentage = data.discount; // Discount from API
+                    let totalAmount = parseFloat(orderTotalAmountElement.innerText.replace("₹", "")); // Get total amount
+
+                    // Calculate Discount
+                    let discountAmount = (totalAmount * discountPercentage) / 100;
+
+                    // Apply Discount
+                    promotionAppliedElement.innerText = `₹${discountAmount.toFixed(2)}`;
+                    orderTotalAmountElement.innerText = `₹${(totalAmount - discountAmount).toFixed(2)}`;
+
+                    alert(`Coupon applied! You saved ₹${discountAmount.toFixed(2)}`);
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                console.error("Error applying coupon:", error);
+                alert("Something went wrong. Please try again.");
+            }
+        }
+
+
+        function renderCheckout() {
+            let checkoutItems = JSON.parse(localStorage.getItem("checkoutItems")) || [];
+            let checkoutContainer = document.getElementById("checkoutContainer");
+
+            let totalCheckoutAmount = document.getElementById("totalCheckoutAmount");
+            let deliveryChargeElement = document.getElementById("deliveryCharge");
+            let finalAmountElement = document.getElementById("finalAmount");
+            let promotionAppliedElement = document.getElementById("promotionApplied");
+            let orderTotalAmountElement = document.getElementById("orderTotalAmount");
+
+            let total = 0;
+            let deliveryCharge = 40;
+            let freeDeliveryThreshold = 1500;
+            let promotionDiscountText = promotionAppliedElement.innerText.trim(); // Remove extra spaces
+            promotionDiscountText = promotionDiscountText.replace(/[₹-]/g, ""); // Remove ₹ and -
+
+            let promotionDiscount = parseFloat(promotionDiscountText) || 0; // Convert to number
+
+            checkoutContainer.innerHTML = "";
+
+            if (checkoutItems.length === 0) {
+                checkoutContainer.innerHTML = `<p>No items in your checkout.</p>`;
+                totalCheckoutAmount.innerText = `₹0.00`;
+                deliveryChargeElement.innerHTML = `₹0.00`;
+                finalAmountElement.innerText = `₹0.00`;
+                promotionAppliedElement.innerHTML = `₹0.00`;
+                orderTotalAmountElement.innerText = `₹0.00`;
+                return;
+            }
+
+            checkoutItems.forEach((item, index) => {
+                let arrivingDays = parseInt(item.arrivingDays) || 0;
+
+                let itemHtml = `
+                    <div class="card p-4 mb-4 product-item" data-index="${index}" data-productimageid="${item.productsimageid}">
+                      <h5><strong>Arriving on: ${getExpectedArrivalDate(item.arrivingDays)}</strong></h5>
+                        <div class="d-flex">
+                            <img src="${item.image}" width="80">
+                            <p class="ms-3">
+                                ${item.name}, ${item.type}, ${item.color} <br>
+                                <strong>₹${item.price}</strong> |
+                                <button class="btn btn-sm btn-outline-secondary decrease-qty" data-index="${index}">-</button>
+                                Quantity: <span id="qty-${index}" class="item-qty">${item.quantity}</span>
+                               <button class="btn btn-sm btn-outline-secondary increase-qty" data-index="${index}">+</button>
+                    | Total: <span class="item-total">₹${item.total}</span>
+                            </p>
+                        </div>
+                    </div>
+                `;
+                checkoutContainer.innerHTML += itemHtml;
+
+                // Log each generated item
+                console.log(`Generated item ${index}:`, itemHtml);
+            });
+
+             total = Array.from(document.querySelectorAll(".item-total"))
+            .map(el => parseFloat(el.innerText.replace("₹", "")) || 0)
+            .reduce((sum, value) => sum + value, 0);
+
+            // Delivery charge logic
+            if (total >= freeDeliveryThreshold) {
+                deliveryChargeElement.innerHTML = `<span class="text-decoration-line-through text-danger">₹40.00</span> Free`;
+                deliveryCharge = 0;
+            } else {
+                deliveryChargeElement.innerHTML = `₹40.00`;
+            }
+
+            // Final Amount Calculation
+            let finalAmount = total + deliveryCharge;
+
+            // Display Updated Values
+            totalCheckoutAmount.innerText = `₹${total.toFixed(2)}`;
+            finalAmountElement.innerText = `₹${finalAmount.toFixed(2)}`;
+            OrderAmount = finalAmount - promotionDiscount;
+            orderTotalAmountElement.innerText = `₹${OrderAmount.toFixed(2)}`;
+
+
+            // Add event listeners for dynamically generated buttons
+               document.querySelectorAll(".increase-qty").forEach(button => {
+                    button.addEventListener("click", async function () {
+                        let index = this.getAttribute("data-index");
+                        console.log(`Increase clicked for index: ${index}`);
+                        await checkStockAndUpdate(index, 1);
+                    });
+                });
+
+                document.querySelectorAll(".decrease-qty").forEach(button => {
+                    button.addEventListener("click", async function () {
+                        let index = this.getAttribute("data-index");
+                        console.log(`Decrease clicked for index: ${index}`);
+                        await checkStockAndUpdate(index, -1);
+                    });
+                });
+
+                // Log all generated spans
+                document.querySelectorAll(".item-qty").forEach(span => {
+                    console.log("Found quantity span:", span.id);
+                });
+        }
+
+            function getExpectedArrivalDate(itemDays) {
+                if (!itemDays || isNaN(itemDays)) {
+                    console.warn(`Invalid arrivingDays value:`, itemDays);
+                    return "Date Not Available"; // Handle invalid values gracefully
+                }
+
+                let today = new Date();
+                let totalDays = parseInt(itemDays) + 3; // Ensure conversion to number
+                today.setDate(today.getDate() + totalDays);
+
+                let options = { day: '2-digit', month: 'long', year: 'numeric' };
+                return today.toLocaleDateString('en-GB', options);
+            }
+
+            async function checkStockAndUpdate(index, change) {
+                console.log(`Checking stock for index ${index} with change ${change}`);
+
+                let productElement = document.querySelector(`.product-item[data-index="${index}"]`);
+
+                if (!productElement) {
+                    console.error(` No product item found with data-index="${index}"`);
+                    return;
+                }
+
+                let productImageId = productElement.getAttribute("data-productimageid");
+                let qtyElement = document.querySelector(`#qty-${index}`);
+                let totalElement = productElement.querySelector(".item-total");
+
+                if (!qtyElement || !totalElement) {
+                    console.error(` No quantity span or total price element found for index ${index}`);
+                    return;
+                }
+
+                let checkoutItems = JSON.parse(localStorage.getItem("checkoutItems")) || [];
+                let item = checkoutItems[index];
+
+                if (!item) {
+                    console.error(` Item not found in localStorage at index ${index}`);
+                    return;
+                }
+
+                let currentQty = parseInt(qtyElement.innerText);
+                let newQty = currentQty + change;
+
+                if (newQty < 1) return; // Prevent negative quantity
+
+                console.log(` Checking stock for product ${productImageId} with requested quantity ${newQty}`);
+
+                try {
+                    //  Only check stock
+                    let response = await fetch(`/Home/CheckStockAvailability?productImageId=${productImageId}&requestedQty=${newQty}`);
+                    let data = await response.json();
+
+                    if (!data.success) {
+                        console.warn(` Out of stock for product ${productImageId}`);
+                        alert(data.message); // "Out of Stock!"
+                        return;
+                    }
+
+                    //  If stock is available, update UI (but do not update database)
+                    item.quantity = newQty;
+                    item.total = (newQty * item.price).toFixed(2);
+                    localStorage.setItem("checkoutItems", JSON.stringify(checkoutItems));
+
+                    qtyElement.innerText = newQty;
+                    totalElement.innerText = `₹${item.total}`;
+
+                    renderCheckout(); // Recalculate checkout totals
+                } catch (error) {
+                    console.error(" Error checking stock:", error);
+                }
+            }
+
+
+
+
+
+        document.addEventListener("DOMContentLoaded", async function () {
+            renderCheckout();
+        });
+
+        document.getElementById("placeOrderBtn").addEventListener("click", async function () {
+            let checkoutItems = JSON.parse(localStorage.getItem("checkoutItems")) || [];
+
+            if (checkoutItems.length === 0) {
+                alert("No items in the cart to place an order!");
+                return;
+            }
+
+            let selectedAddress = JSON.parse(localStorage.getItem("selectedAddress")) || {};
+            let AddressId = selectedAddress.addressId || 0; //  Extract only the ID
+
+            let OrderId = crypto.randomUUID(); // Generate a random Order ID
+            let PaymentMode = "COD"; // Assume default payment method
+
+            // Fetch checkout values from DOM
+            let TotalAmount = parseFloat(document.getElementById("totalCheckoutAmount")?.innerText.replace("₹", "")) || 0;
+            let DeliveryCharge = parseFloat(document.getElementById("deliveryCharge")?.innerText.replace("₹", "")) || 0;
+            let FinalAmount = parseFloat(document.getElementById("finalAmount")?.innerText.replace("₹", "")) || 0;
+            let PromoAmount = parseFloat(document.getElementById("promotionApplied")?.innerText.replace("₹", "")) || 0;
+            let OrderAmount = parseFloat(document.getElementById("orderTotalAmount")?.innerText.replace("₹", "")) || 0;
+            let Tax = 0; // Assume tax calculation if applicable
+
+            let orders = checkoutItems.map(item => ({
+                OrderId: OrderId,
+                ProductId: item.productid,
+                ProductsImageId: item.productsimageid, // Assuming `imageId` exists in `checkoutItems`
+                OrderQty: item.quantity,
+                TotalAmount: item.total
+            }));
+
+            let checkout = {
+                OrderId: OrderId,
+                AddressId: AddressId,
+                PaymentMode: PaymentMode,
+                TotalAmount: TotalAmount,
+                Tax: Tax,
+                DelivaryCharge: DeliveryCharge,
+                FinalAmount: FinalAmount,
+                PromoAmount: PromoAmount,
+                OrderAmount: OrderAmount
+            };
+
+            console.log(" Checkout Data Sent:", checkout); //  Debugging
+
+            try {
+                // Step 1: Save Order Details
+                let orderResponse = await fetch("/Home/SaveOrder", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(orders)
+                });
+
+                let orderResult = await orderResponse.json();
+                if (!orderResponse.ok) {
+                    alert(orderResult.message || "Failed to place order.");
+                    return;
+                }
+
+                // Step 2: Save Checkout Details
+                let checkoutResponse = await fetch("/Home/SaveCheckout", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(checkout)
+                });
+
+                let checkoutResult = await checkoutResponse.json();
+                if (checkoutResponse.ok) {
+                     showOrderSuccessModal();
+                    localStorage.removeItem("checkoutItems");
+                    localStorage.removeItem("cartItems");
+                    deleteCookie("cartItems");
+                    await deleteCartItem();
+                    window.location.href = "/Home/Orders"; // Redirect to success page
+                } else {
+                    alert(checkoutResult.message || "Failed to save checkout details.");
+                }
+            } catch (error) {
+                console.error("Error placing order:", error);
+                alert("An error occurred while placing the order.");
+            }
+        });
+
+            function deleteCookie(name) {
+                document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            }
+
+         async function deleteCartItem(productId, productsImageId) {
+             try
+             {
+                    let response = await fetch("/Home/DeleteCartItem", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ProductId: productId, ProductsImageId: productsImageId }),
+                    });
+
+                    let result = await response.json();
+
+                    if (result.success) {
+                        console.log("Item deleted successfully from the cart.");
+                        updateCartCount();
+                    } else {
+                        console.log("Failed to delete item from the cart.", result.message);
+                    }
+             } 
+             catch (error) {
+                    console.error("Error deleting item from cart:", error);
+             }
+         }
+
+         function showOrderSuccessModal() {
+                let orderSuccessModal = new bootstrap.Modal(document.getElementById("orderSuccessModal"));
+                orderSuccessModal.show();
+         }
+</script>
+
+

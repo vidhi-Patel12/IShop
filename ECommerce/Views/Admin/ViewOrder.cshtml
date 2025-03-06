@@ -1,0 +1,81 @@
+﻿@model List<ECommerce.Models.OrderDetails>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<div class="container mt-5">
+    <div class="card p-4 shadow-lg">
+        <h3 class="fw-bold">Order Summary</h3>
+
+        <!--  Display order summary ONCE -->
+        <div class="row align-items-center">
+            <div class="col-md-2">
+                <p class="mb-1 text-muted">ORDER PLACED</p>
+                <p class="fw-bold">@Model.First().OrderDate.ToString("dd MMMM yyyy")</p>
+            </div>
+            <div class="col-md-2">
+                <p class="mb-1 text-muted">ORDER TOTAL</p>
+                <p class="fw-bold">₹@Model.First().OrderAmount.ToString("N2")</p>
+            </div>
+            <div class="col-md-2">
+                <p class="mb-1 text-muted">SHIP TO</p>
+
+                <p class="fw-bold text-primary"
+                   data-bs-toggle="popover"
+                   data-bs-trigger="hover"
+                   data-bs-placement="bottom"
+                   title="Shipping Address"
+                   data-bs-html="true"
+                   data-bs-content="
+                <strong>@Model.First().Address</strong><br>
+                <span>@Model.First().City, @Model.First().State</span><br>
+                <span>@Model.First().ZipCode, @Model.First().Country</span><br>
+                <strong>Phone:</strong> @Model.First().Mobile">
+                    <strong>@Model.First().FullName <i class="a-icon a-icon-popover"></i></strong>
+                </p>
+            </div>
+            <div class="col-md-6 text-end">
+                <p class="mb-1 text-muted">ORDER #</p>
+                <p class="fw-bold">@Model.First().OrderId</p>
+            </div>
+        </div>
+    </div>
+
+    <!--  Loop only through order items (Fix: Display full list) -->
+    <div class="card shadow-sm mt-3 p-4">
+        @foreach (var order in Model)
+        {
+            <div class="row mt-3 align-items-center">
+                <div class="col-md-1">
+                    <img src="@order.Image" class="img-thumbnail" style="width:100px; height:100px; object-fit:cover;" />
+                </div>
+                <div class="col-md-9 float-start">
+                    <p class="fw-bold">@order.ProductName</p>
+                    <p class="text-muted">@order.Type, @order.Color</p>
+                </div>
+            </div>
+        }
+        <br />
+
+        <!-- Show "Back" button only once if at least one active order exists -->
+        <form asp-action="Orders">
+            <button type="submit" class="btn btn-primary">Back</button>
+        </form>
+    </div>
+
+    <br />
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('[data-bs-toggle="popover"]').popover();
+    });
+</script>

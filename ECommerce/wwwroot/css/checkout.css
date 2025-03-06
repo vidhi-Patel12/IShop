@@ -1,0 +1,30 @@
+﻿.card {
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.delivery-address {
+    padding: 10px;
+}
+
+h5, p {
+    margin-bottom: 5px;
+}
+
+.text-primary {
+    text-decoration: none;
+}
+
+.btn-warning {
+    background-color: #ffcc00;
+    border-color: #ffcc00;
+    font-weight: bold;
+}
+
+    .btn-warning:hover {
+        background-color: #ffad00;
+    }
+
+.float-end {
+    float: right;
+}

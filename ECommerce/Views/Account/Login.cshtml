@@ -1,0 +1,68 @@
+﻿@{
+    ViewData["Title"] = "Login";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+<div class="container" style="margin-top:10%;">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card p-4 shadow-lg">
+                <h3 class="text-center mb-4">Log in to your account</h3>
+
+                <!-- Toggle Buttons for Login Methods -->
+                <div class="d-flex justify-content-center mb-3">
+                    <button class="btn btn-dark me-2" onclick="showLoginWithPassword()">Login with Password</button>
+                    <button class="btn btn-outline-dark" onclick="showLoginWithOTP()">Login with OTP</button>
+                </div>
+
+                <!-- Login with Password Form -->
+                <form asp-action="LoginWithPassword" method="post" id="passwordLoginForm">
+                    <div class="form-group">
+                        <label>Mobile</label>
+                        <input type="number" class="form-control" name="Mobile" required />
+                    </div>
+                    <div class="form-group mt-3">
+                        <label>Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="Password" id="password" required />
+                            <button type="button" class="btn btn-secondary" onclick="togglePassword()">SHOW</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-dark w-100 mt-3">SIGN IN</button>
+                </form>
+
+                <!-- Login with OTP Form -->
+                <form asp-action="LoginWithOTP" method="post" id="otpLoginForm" style="display: none;">
+                    <div class="form-group">
+                        <label>Mobile</label>
+                        <input type="number" class="form-control" name="Mobile" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mt-3">Generate OTP</button>
+                </form>
+
+                <div class="text-center mt-3">
+                    <p>No account? <a href="/Account/Register">Create one here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript to Toggle Between Forms -->
+<script>
+    function togglePassword() {
+        var passwordInput = document.getElementById("password");
+        passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+    }
+
+    function showLoginWithPassword() {
+        document.getElementById("passwordLoginForm").style.display = "block";
+        document.getElementById("otpLoginForm").style.display = "none";
+    }
+
+    function showLoginWithOTP() {
+        document.getElementById("passwordLoginForm").style.display = "none";
+        document.getElementById("otpLoginForm").style.display = "block";
+    }
+</script>

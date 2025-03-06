@@ -1,0 +1,195 @@
+﻿@{
+    ViewData["Title"] = "Admin";
+}
+@model List<Products>
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<!-- Hero Section -->
+
+<div class="container-fluid p-0">
+    <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+                <img src="/images/slider-1.jpg" class="d-block w-100" alt="Fashion Look">
+                <div class="carousel-caption d-none d-md-block text-end">
+                    <h2 class="fw-bold text-black fs-2">MEGA STORE</h2>
+                    <h1 class="fw-bold text-black display-4">TRENDING <br> FASHION LOOK</h1>
+                    <p class="fs-5 text-black">New Clothes, New Passion.</p>
+                    <a href="#" class="btn btn-danger btn-lg">SHOP TODAY</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FEATURED PRODUCTS -->
+<div class="container mt-4">
+    <h3 class="text-center font-weight-bold">FEATURED PRODUCTS</h3>
+
+    <hr style="background-color: red;height:3px;width:100px;border:none;margin-left:46%;" />
+    <br />
+    <div class="row">
+        @foreach (var product in Model)
+        {
+            var firstImage = product.ProductImages.FirstOrDefault();
+
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="product-card position-relative shadow-sm p-2">
+                    <!-- Image Wrapper -->
+                    <div class="product-image-block position-relative">
+                        <a asp-action="ProductDetails" asp-route-id="@firstImage.ProductsImageId">
+                            <img src="@firstImage?.Image" class="card-img-top product-image"
+                                 style="width: 100%; height: 270px; object-fit: cover; border-radius: 5px;"
+                                 alt="Product Image">
+                        </a>
+
+                        <!-- Discount Badge -->
+                        @if (firstImage?.Discount > 0)
+                        {
+                            <span class="position-absolute top-0 end-0 bg-dark text-white px-2 py-1 m-1 rounded small">
+                                -@firstImage.Discount%
+                            </span>
+                        }
+
+                        <!-- New Product Badge -->
+                        <span class="position-absolute top-0 start-0 bg-danger text-white px-2 py-1 m-1 rounded small">
+                            NEW PRODUCT
+                        </span>
+                    </div>
+                </div>
+
+                <h4 class="product-title text-center">
+                    <a class="product-link text-black" asp-action="ProductDetails" asp-route-id="@firstImage.ProductsImageId" style="text-decoration:none">
+                        @product.Name
+                    </a>
+                </h4>
+
+                <h6 class="product-price text-center">
+                    <del class="text-danger">₹@firstImage.MRP</del>
+                    <span class="text-success">₹@firstImage.Price</span>
+                </h6>
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-dark btn-sm w-50 add-to-cart-btn"
+                            data-name="@Html.Raw(product.Name)"
+                            data-image="@Html.Raw(firstImage?.Image)"
+                            data-type="@Html.Raw(firstImage.Type)"
+                            data-color="@Html.Raw(firstImage.Color)"
+                            data-description="@Html.Raw(firstImage.Description)"
+                            data-price="@Json.Serialize(firstImage?.Price)"
+                            data-productid="@Json.Serialize(product?.ProductId)"
+                            data-productsimageid="@Json.Serialize(firstImage?.ProductsImageId)"
+                            data-arrivingDays="@firstImage.ArrivingDays ?? 0">
+                        ADD TO CART
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+
+<script>
+         
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+                function updateCartCount() {
+                    let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+                    let totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+
+                    let cartItemCount = document.getElementById("cartItemCount");
+                    if (cartItemCount) {
+                        cartItemCount.innerText = totalItems;
+                    } else {
+                        console.error("cartItemCount element not found in DOM!");
+                    }
+
+                    console.log(`Cart updated: ${totalItems} items`);
+                }
+
+
+
+            function addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays) {
+                let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+                let existingItem = cartItems.find(item =>
+                    item.name === productName &&
+                    item.productid === productId &&
+                    item.productsimageid === productsImageId
+                );
+
+                if (existingItem) {
+                    existingItem.quantity += 1;
+                    existingItem.total = (existingItem.quantity * price).toFixed(2);
+                } else {
+                    cartItems.push({
+
+                        name: productName,
+                        image: productImage,
+                        type: productType,
+                        color: productColor,
+                        description: productDescription,
+                        quantity: 1,
+                        price: price,
+                        total: price.toFixed(2),
+                        productid: productId,
+                        productsimageid: productsImageId,
+                        arrivingDays: arrivingDays
+                    });
+                }
+
+                localStorage.setItem("cartItems", JSON.stringify(cartItems));
+                updateCartCount();
+                saveCartToDatabase();
+            }
+
+            async function saveCartToDatabase() {
+                let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+                if (cartItems.length === 0) {
+                    console.log("Cart is empty. Nothing to save.");
+                    return;
+                }
+
+                console.log("Saving cart to database...", cartItems);
+
+                let response = await fetch("/Home/SaveCart", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(cartItems),
+                });
+
+                if (response.ok) {                    
+                    console.log("Cart saved successfully.");
+                     localStorage.setItem("cartItems", JSON.stringify(cartItems));
+                     updateCartCount();
+                } else {
+                    console.log("Failed to save cart.", response);
+                }
+               
+            }
+
+
+
+        document.querySelectorAll(".add-to-cart-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                let productName = this.getAttribute("data-name");
+                let productImage = this.getAttribute("data-image");
+                let productType = this.getAttribute("data-type");
+                let productColor = this.getAttribute("data-color");
+                let productDescription = this.getAttribute("data-description");
+                let price = parseFloat(this.getAttribute("data-price")) || 0;
+                let productId = parseFloat(this.getAttribute("data-productid")) || 0;
+                let productsImageId = parseFloat(this.getAttribute("data-productsimageid")) || 0;
+                let arrivingDays = parseInt(this.getAttribute("data-arrivingDays")) || 0;
+
+                addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays);
+            });
+        });
+
+        updateCartCount();
+    });
+
+</script>

@@ -1,0 +1,226 @@
+﻿@model ECommerce.Models.Products
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Product Details";
+    var productDetails = Model.ProductImages.FirstOrDefault(x => x.ProductsImageId == @ViewBag.ProductImageId);
+}
+
+<body>
+<!-- Main Product Details Section -->
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-2"></div>
+        <div class="col-md-4">
+            <div class="main-image">
+                @if (productDetails != null)
+                {
+                    <img src="@productDetails.Image" id="mainProductImage" class="img-fluid">
+                    @if (productDetails.Discount > 0)
+                    {
+                        <span class="main-image discount-label">-@productDetails.Discount%</span>
+                    }
+                }
+            </div>
+
+            <!-- Thumbnails -->
+            <div class="thumbnails mt-3">
+                @foreach (var img in Model.ProductImages)
+                {
+                    bool isSelected = img.ProductsImageId == ViewBag.ProductImageId;
+                    <a asp-action="ProductDetails" asp-route-id="@img.ProductsImageId">
+                        <img src="@img.Image" class="thumbnail @(isSelected ? "selected" : "")">
+                    </a>
+                }
+            </div>
+        </div>
+
+        <!-- Product Information -->
+        <div class="col-md-4 product-info">
+            <h2>@Model.Name</h2>
+            <h4>
+                <del>₹@productDetails?.MRP</del>
+                ₹@productDetails?.Price
+                <span class="badge bg-danger">Save @productDetails?.Discount%</span>
+            </h4>
+            <hr />
+            <p><strong>Type:</strong> @productDetails?.Type</p>
+            <p><strong>Color:</strong> @productDetails?.Color</p>
+            <p><strong>Description:</strong> @productDetails?.Description</p>
+
+            <!-- Quantity & Add to Cart -->
+            <div class="quantity">
+                <strong>Quantity:</strong>
+                <input type="number" id="cartQuantity" value="1" min="1">
+                <button class="btn btn-dark" id="addToCartBtn">🛒 ADD TO CART</button>
+            </div>
+        </div>
+        <div class="col-md-2"></div>
+    </div>
+
+    <!-- Product Description -->
+    <div class="row mt-4">
+        <div class="col-md-2"></div>
+        <div class="col-md-8">
+            <div class="tab-content-description">
+                <ul class="nav nav-tabs " id="productTab">
+                    <li class="nav-item ">
+                        <a class="nav-link active fw-bold" data-bs-toggle="tab" href="#description">Description</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="tab-content-description  p-3">
+                <div class="tab-pane fade show active" id="description">
+                    <p>@productDetails?.Description</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<br/>
+
+
+
+    <div class="container mt-5">        
+        <div class="row">
+            @if (ViewBag.AllProducts != null && ((List<ECommerce.Models.Products>)ViewBag.AllProducts).Count > 0)
+            {
+                <div class="container mt-5">
+                    <h3 class="text-center">Related Products</h3>
+                    <div class="row">
+                        @foreach (var product in (List<ECommerce.Models.Products>)ViewBag.AllProducts)
+                        {
+                            var firstImage = product.ProductImages.FirstOrDefault(); // Get first product image
+                            <div class="col-md-3 mb-4">
+                                <div class="card">
+                                    <a asp-action="ProductDetails" asp-route-id="@firstImage?.ProductsImageId">
+                                        <img src="@firstImage?.Image" class="card-img-top" alt="Product Image">
+                                    </a>
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">@product.Name</h5>
+                                        <p class="card-text">₹@firstImage?.Price</p>
+                                        <a asp-action="ProductDetails" asp-route-id="@firstImage?.ProductsImageId" class="btn btn-primary">View Details</a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <p class="text-center mt-4">No related products available.</p>
+            }
+
+        </div>
+    </div>
+</body>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" />
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let addToCartBtn = document.getElementById("addToCartBtn");
+        let cartQuantity = document.getElementById("cartQuantity");
+        let cartItemCount = document.getElementById("cartItemCount");
+
+        let price = @productDetails?.Price ?? 0;
+        let productName = "@Html.Raw(Model.Name)";
+        let productImage = "@Html.Raw(productDetails?.Image)";
+        let productType = "@Html.Raw(productDetails?.Type)";
+        let productColor = "@Html.Raw(productDetails?.Color)";
+        let productDescription = "@Html.Raw(productDetails?.Description)";
+        let productId  = @Model.ProductId ?? 0;
+        let productsImageId = @productDetails?.ProductsImageId ?? 0;
+        let arrivingDays = @productDetails?.ArrivingDays ?? 0;
+
+        // Load cart from localStorage
+        let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+        //  Function to Update Cart Count
+        function updateCartCount() {
+            let totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+            cartItemCount.innerText = totalItems;
+        }
+
+        //  Function to Add Item to Cart
+       function addToCart() {
+            let quantity = parseInt(cartQuantity.value);
+            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+            // Check if product already exists in cart
+           let existingItem = cartItems.find(item =>
+                item.name === productName &&
+                item.image === productImage &&
+                item.type === productType &&
+                item.color === productColor &&
+                item.description === productDescription &&
+                item.productid === productId &&
+                item.productsimageid === productsImageId &&
+                item.arrivingDays === arrivingDays
+            );
+            if (existingItem) {
+                existingItem.quantity += quantity;
+                existingItem.total = (existingItem.quantity * price).toFixed(2);
+            } else {
+                cartItems.push({
+                    name: productName,
+                    image: productImage,
+                    type: productType,
+                    color: productColor,
+                    description: productDescription,
+                    quantity: quantity,
+                    price: price,
+                    total: (price * quantity).toFixed(2),
+                    productid: productId,
+                    productsimageid: productsImageId,
+                    arrivingDays : arrivingDays
+                });
+            }
+
+            localStorage.setItem("cartItems", JSON.stringify(cartItems));
+            updateCartCount();
+        }
+
+        //  Event Listener for "Add to Cart" Button
+          function updateCartCount() {
+            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+            let totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+            cartItemCount.innerText = totalItems;
+        }
+
+        //  Event Listener for Add to Cart Button
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener("click", function () {
+                addToCart();
+                //alert("Item added to cart!");
+            });
+        }
+
+        updateCartCount();
+    });
+
+
+    $(document).ready(function () {
+        $('#productsTable').DataTable({
+            "paging": true,      // Enable pagination
+            "searching": true,   // Enable search box
+            "ordering": true,    // Enable column sorting
+            "lengthMenu": [5, 10, 25, 50], // Show entries per page options
+            "language": {
+                "search": "Search Products:"
+            }
+        });
+
+         $("div.dataTables_filter input").css({
+            "margin-bottom": "8px",
+            "padding": "8px",
+            "border-radius": "5px",
+            "border": "1px solid #ccc"
+        });
+
+    });
+</script>

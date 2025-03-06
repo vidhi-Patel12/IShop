@@ -1,0 +1,118 @@
+﻿@model ECommerce.Models.ProductsImage
+
+@{
+    ViewData["Title"] = "Edit Product Image";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card p-4 shadow-lg">
+                <h3 class="text-center">Edit Product</h3>
+                <form method="post" enctype="multipart/form-data">
+                    <input type="hidden" asp-for="ProductsImageId" />
+                    <input type="hidden" asp-for="ProductId" />
+
+                    <div class="form-group">
+                        <label class="form-label fw-bold">Product Name</label>
+                        <input type="text" class="form-control" name="ProductName" value="@ViewBag.ProductName">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mt-3">
+                            <label class="form-label fw-bold">Type</label>
+                            <input asp-for="Type" class="form-control" placeholder="Enter Type">
+                        </div>
+                        <div class="col-6 mt-3">
+                            <label class="form-label fw-bold">Color</label>
+                            <input asp-for="Color" class="form-control" style="width:293px;" placeholder="Enter Color">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mt-3">
+                            <label class="form-label fw-bold">Product Image</label>
+                            <div class="img-preview-container mt-2" onclick="$(this).siblings('.img-input').click();">
+                                <img src="@(!string.IsNullOrEmpty(Model.Image) ? Model.Image : "https://via.placeholder.com/100")"
+                                     class="img-thumbnail img-preview" style="width: 300px; height: 240px;">
+                            </div>
+
+                            <input type="hidden" name="ExistingImage" value="@Model.Image" />
+                            <input type="file" name="ImageFile" class="form-control img-input d-none" accept="image/*">
+                        </div>
+
+                        <div class="col-6 mt-3">
+                            <div class="col-6 mt-3">
+                                <label class="form-label fw-bold">Description</label>
+                                <textarea asp-for="Description" class="form-control" style="width:293px; height:240px;" placeholder="Enter Description" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mt-3">
+                            <label class="form-label fw-bold">Quantity</label>
+                            <input asp-for="Quantity" type="number" class="form-control" placeholder="Enter Quantity" required>
+                        </div>
+                        <div class="col-6 mt-3">
+                            <label class="form-label fw-bold">MRP</label>
+                            <input asp-for="MRP" type="number" class="form-control" style="width:293px;" placeholder="Enter MRP" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mt-3">
+                            <label class="form-label fw-bold">Discount (%)</label>
+                            <input asp-for="Discount" type="number" class="form-control" placeholder="Enter Discount">
+                        </div>
+                        <div class="col-6 mt-3">
+                            <label class="form-label fw-bold">Price</label>
+                            <input asp-for="Price" type="number" class="form-control" style="width:293px;" readonly placeholder="Calculated Price">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mt-3">
+                            <label class="form-label fw-bold">Arriving Days</label>
+                            <input asp-for="ArrivingDays" type="number" class="form-control" placeholder="Arriving Days">
+                        </div>
+
+                        <div class="col-6 mt-3">
+                        </div>
+
+                    </div>
+                    <div class="d-flex float-end mt-3">
+                        <button type="submit" class="btn btn-success">Save Changes</button>
+                        &nbsp;
+                        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Image Preview -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).on("change", ".img-input", function (event) {
+        let input = this;
+        let imgPreview = $(this).siblings(".img-preview-container").find(".img-preview");
+
+        if (input.files && input.files[0]) {
+            let reader = new FileReader();
+            reader.onload = function (e) {
+                imgPreview.attr("src", e.target.result);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    });
+
+    $(document).on("input", "#MRP, #Discount", function () {
+        let mrp = parseFloat($("#MRP").val()) || 0;
+        let discount = parseFloat($("#Discount").val()) || 0;
+        let price = mrp - (mrp * discount / 100);
+        $("#Price").val(price.toFixed(2));
+    });
+</script>

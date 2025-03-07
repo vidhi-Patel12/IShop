@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ECommerce.Models
 {
-    public class Products
+    public class Products : ProductsImage
     {
         [Key]
         public int ProductId { get; set; }
@@ -12,7 +12,11 @@ namespace ECommerce.Models
         public bool IsActive { get; set; }
 
         [NotMapped]
-        public IFormFile ImageFile { get; set; }
+        public IFormFile LargeImageFile { get; set; }
+        [NotMapped]
+        public IFormFile MediumImageFile { get; set; }
+        [NotMapped]
+        public IFormFile SmallImageFile { get; set; }
         public virtual ICollection<ProductsImage> ProductImages { get; set; } = new List<ProductsImage>();
     }
 }

@@ -96,7 +96,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="productForm" method="post" enctype="multipart/form-data">
+                <form id="productForm" method="post" enctype="multipart/form-data" asp-controller="Admin" asp-action="Create">
                     <div class="row">
                         <!-- Product Name -->
                         <div class="col-md-4">
@@ -111,7 +111,7 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label class="form-label fw-bold">Type</label>
-                                <input name="ProductImages[0].Type" class="form-control" placeholder="Type" required>
+                                <input name="ProductImagesType" class="form-control" placeholder="Type" required>
                             </div>
                         </div>
 
@@ -119,7 +119,7 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label class="form-label fw-bold">Color</label>
-                                <input name="ProductImages[0].Color" class="form-control" placeholder="Color" required>
+                                <input name="ProductImagesColor" class="form-control" placeholder="Color" required>
                             </div>
                         </div>
                     </div>
@@ -135,7 +135,7 @@
                                     <div class="img-preview-container" onclick="$('#LargeImageUpload').click();">
                                         <img id="largePreviewImage" src="https://via.placeholder.com/300" class="img-thumbnail" style="width:100%; height:185px;">
                                     </div>
-                                    <input type="file" id="LargeImageUpload" name="ImageFiles" class="form-control d-none" accept="image/*">
+                                    <input type="file" id="LargeImageUpload" name="LargeImageUpload" class="form-control d-none" accept="image/*">
                                 </div>
 
                                 <!-- Medium Image (Col-3) -->
@@ -153,7 +153,7 @@
                                     <div class="img-preview-container" onclick="$('#SmallImageUpload').click();">
                                         <img id="smallPreviewImage" src="https://via.placeholder.com/150" class="img-thumbnail" style="width:100%; height:185px;">
                                     </div>
-                                    <input type="file" id="SmallImageUpload" name="ImageFiles" class="form-control d-none" accept="image/*">
+                                    <input type="file" id="SmallImageUpload" name="SmallImageUpload" class="form-control d-none" accept="image/*">
                                 </div>
                             </div>
 
@@ -162,7 +162,7 @@
                                 <div class="col-md-12 mt-3">
                                     <div class="mt-3">
                                         <label class="form-label fw-bold">Description</label>
-                                        <textarea name="ProductImages[0].Description" class="form-control" placeholder="Enter product Description" required></textarea>
+                                        <textarea name="ProductImagesDescription" class="form-control" placeholder="Enter product Description" required></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -171,7 +171,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label class="form-label fw-bold">Quantity</label>
-                                        <input name="ProductImages[0].Quantity" class="form-control" placeholder="Quantity" required>
+                                        <input name="ProductImagesQuantity" class="form-control" placeholder="Quantity" required>
                                     </div>
                                 </div>
 
@@ -179,14 +179,14 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label class="form-label fw-bold">MRP</label>
-                                        <input name="ProductImages[0].MRP" class="form-control" placeholder="MRP" required>
+                                        <input name="ProductImagesMRP" class="form-control" placeholder="MRP" required>
                                     </div>
                                 </div>
 
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label class="form-label fw-bold">Discount</label>
-                                        <input name="ProductImages[0].Discount" class="form-control" placeholder="Discount" required>
+                                        <input name="ProductImagesDiscount" class="form-control" placeholder="Discount" required>
                                     </div>
                                 </div>
                             </div>
@@ -198,23 +198,16 @@
 
                                 <div class="col-4 mt-3">
                                     <label class="form-label">Arriving Days</label>
-                                    <input type="number" name="ProductImages[0].ArrivingDays" class="form-control arrivingDays-input" placeholder="Arriving Days">
+                                    <input type="number" name="ProductImagesArrivingDays" class="form-control arrivingDays-input" placeholder="Arriving Days">
                                 </div>
                                 <div class="col-4 mt-3">
                                 </div>
                             </div>
 
-                            <div class="d-flex mt-3">
-                                <button type="button" id="addImage" class="btn btn-primary">Add More</button>
-                               @*  &nbsp;&nbsp;
-                                <button type="button" class="btn btn-danger remove-image">Remove</button> *@
-                            </div>
                         </div>
                     </div>
-                    <br />
                     <div class="d-flex float-end">
-                        <button type="submit" class="btn btn-success">Save Product</button>
-                        &nbsp;
+                        <input type="button" value="Add More" id="addImage" onclick="AjaxSubmit()" class="btn btn-primary" />
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     </div>
                 </form>
@@ -223,180 +216,162 @@
     </div>
 </div>
 
-
-
-
 <!-- Include jQuery and DataTables -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" />
 
 <!-- Initialize DataTable -->
-<script>
-    $(document).ready(function () {
-        $('#productsTable').DataTable({
-            "paging": true,      // Enable pagination
-            "searching": true,   // Enable search box
-            "ordering": true,    // Enable column sorting
-            "lengthMenu": [5, 10, 25, 50], // Show entries per page options
-            "language": {
-                "search": "Search Products:"
-            }
-        });
-
-         $("div.dataTables_filter input").css({
-            "margin-bottom": "8px",
-            "padding": "8px",
-            "border-radius": "5px",
-            "border": "1px solid #ccc"
-         });
-    });
-
-
-</script>
-
-<script>
-
-    $(document).ready(function () {
-
-         $("#openModal").click(function () {
-              $("#ProductModal").modal("show");
-         });
-
-       let productList = [];
-         let productName = "";
-
-        // Save product name on first input
-        $("#productForm input[placeholder='Enter product name']").on("input", function () {
-            productName = $(this).val();
-        });
-
-        // Handle image preview
-        function previewImage(input, previewId) {
-            if (input.files && input.files[0]) {
-                let reader = new FileReader();
-                reader.onload = function (e) {
-                    $("#" + previewId).attr("src", e.target.result);
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        // Attach change event to file inputs correctly
-        $("#LargeImageUpload").change(function () {
-            previewImage(this, "largePreviewImage");
-        });
-        $("#MediumImageUpload").change(function () {
-            previewImage(this, "mediumPreviewImage");
-        });
-        $("#SmallImageUpload").change(function () {
-            previewImage(this, "smallPreviewImage");
-        });
-
-     // Function to calculate price
-        function calculatePrice() {
-            let mrp = parseFloat($("input[name='ProductImages[0].MRP']").val()) || 0;
-            let discount = parseFloat($("input[name='ProductImages[0].Discount']").val()) || 0;
-            let price = mrp - (mrp * discount / 100); // Apply discount percentage
-
-            $(".price-input").val(price.toFixed(2)); // Update calculated price field
-        }
-
-        // Recalculate price when MRP or Discount changes
-        $(document).on("input", "input[name='ProductImages[0].MRP'], input[name='ProductImages[0].Discount']", function () {
-            calculatePrice();
-        });
-
-
-
-    // Handle "Add More" button
-        $("#addImage").click(function () {
-            let index = productList.length; // Get current index
-
-            //  Create product data object with only names of images (not full file objects)
-            let productData = {
-                Name: $("#productForm input[placeholder='Enter product name']").val() || "",
-                Type: $(`input[name='ProductImages[${index}].Type']`).val() || "",
-                Color: $(`input[name='ProductImages.Color']`).val() || "",
-                Description: $(`textarea[name='ProductImages.Description']`).val() || "",
-                LargeImage: $("#LargeImageUpload")[0]?.files[0] ? $("#LargeImageUpload")[0].files[0].name : null,
-                MediumImage: $("#MediumImageUpload")[0]?.files[0] ? $("#MediumImageUpload")[0].files[0].name : null,
-                SmallImage: $("#SmallImageUpload")[0]?.files[0] ? $("#SmallImageUpload")[0].files[0].name : null,
-                Quantity: $(`input[name='ProductImages.Quantity']`).val() || "0",
-                MRP: $(`input[name='ProductImages.MRP']`).val() || "0",
-                Discount: $(`input[name='ProductImages.Discount']`).val() || "0",
-                Price: $(".price-input").val() || "0",
-                ArrivingDays: parseInt($(`input[name='ProductImages.ArrivingDays']`).val()) || 0
-            };
-
-            //  Append the new product to the productList
-            productList.push(productData);
-            console.log("Updated Product List:", productList);
-
-            //  Reset form fields but keep the product name
-            $("#productForm")[0].reset();
-            $("#productForm input[placeholder='Enter product name']").val(productData.Name);
-
-            //  Display file names for selected images
-            if (productData.LargeImage) {
-                $("#largeImageName").text(productData.LargeImage);
-            }
-            if (productData.MediumImage) {
-                $("#mediumImageName").text(productData.MediumImage);
-            }
-            if (productData.SmallImage) {
-                $("#smallImageName").text(productData.SmallImage);
-            }
-        });
-
-    // Handle "Save Product" button
-    $("#productForm").submit(function (event) {
-        event.preventDefault();
-
-        if (productList.length === 0) {
-            alert("No products added!");
-            return;
-        }
-
-        let formData = new FormData();
-        formData.append("products", JSON.stringify(productList));
-
-        // Append images for each product entry
-        let largeFile = $("#LargeImageUpload")[0].files[0];
-        let mediumFile = $("#MediumImageUpload")[0].files[0];
-        let smallFile = $("#SmallImageUpload")[0].files[0];
-
-        if (largeFile) formData.append(`ImageFiles[0]`, largeFile);
-        if (mediumFile) formData.append(`ImageFiles[1]`, mediumFile);
-        if (smallFile) formData.append(`ImageFiles[2]`, smallFile);
-
-        console.log("Form Data Before Sending:");
-        for (let pair of formData.entries()) {
-            console.log(pair[0], pair[1]);
-        }
-
-        $.ajax({
-            url: "/Admin/Create",
-            type: "POST",
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function (response) {
-                if (response.success) {
-                    alert("Products added successfully!");
-                    $("#ProductModal").modal("hide");
-                    location.reload();
-                } else {
-                    alert(response.message);
+<script type="text/javascript">
+        $(document).ready(function () {
+            $('#productsTable').DataTable({
+                "paging": true,      // Enable pagination
+                "searching": true,   // Enable search box
+                "ordering": true,    // Enable column sorting
+                "lengthMenu": [5, 10, 25, 50], // Show entries per page options
+                "language": {
+                    "search": "Search Products:"
                 }
-            },
-            error: function () {
-                alert("Failed to save products.");
-            }
             });
-        });
 
-    }); 
+             $("div.dataTables_filter input").css({
+                "margin-bottom": "8px",
+                "padding": "8px",
+                "border-radius": "5px",
+                "border": "1px solid #ccc"
+             });
+
+             $("#openModal").click(function () {
+                  $("#ProductModal").modal("show");
+             });
+
+             var formData = new FormData();
+           let productList = [];
+             let productName = "";
+
+            // Save product name on first input
+            $("#productForm input[placeholder='Enter product name']").on("input", function () {
+                productName = $(this).val();
+            });
+
+            // Handle image preview
+            function previewImage(input, previewId) {
+                if (input.files && input.files[0]) {
+                    let reader = new FileReader();
+                    reader.onload = function (e) {
+                        $("#" + previewId).attr("src", e.target.result);
+                    };
+                    reader.readAsDataURL(input.files[0]);
+                }
+            }
+
+            // Attach change event to file inputs correctly
+            $("#LargeImageUpload").change(function () {
+                previewImage(this, "largePreviewImage");
+            });
+            $("#MediumImageUpload").change(function () {
+                previewImage(this, "mediumPreviewImage");
+            });
+            $("#SmallImageUpload").change(function () {
+                previewImage(this, "smallPreviewImage");
+            });
+
+         // Function to calculate price
+            function calculatePrice() {
+                let mrp = parseFloat($("input[name='ProductImagesMRP']").val()) || 0;
+                let discount = parseFloat($("input[name='ProductImagesDiscount']").val()) || 0;
+                let price = mrp - (mrp * discount / 100); // Apply discount percentage
+
+                $(".price-input").val(price.toFixed(2)); // Update calculated price field
+            }
+
+            // Recalculate price when MRP or Discount changes
+            $(document).on("input", "input[name='ProductImagesMRP'], input[name='ProductImagesDiscount']", function () {
+                calculatePrice();
+            });
+
+                });
+
+            function AjaxSubmit(){
+                    alert("test");
+                    let productsList = [];
+
+                    var largeImageInput = document.getElementById("LargeImageUpload");
+                    var mediumImageInput = document.getElementById("MediumImageUpload");
+                    var smallImageInput = document.getElementById("SmallImageUpload");
+
+                    let productData = {
+                        Name: $("#productForm input[placeholder='Enter product name']").val() || "",
+                        Type: $(`input[name='ProductImagesType']`).val() || "",
+                        Color: $(`input[name='ProductImagesColor']`).val() || "",
+                        Description: $(`textarea[name='ProductImagesDescription']`).val() || "",
+                        LargeImage: largeImageInput?.files?.length ? largeImageInput.files.item(0).name : null,
+                        MediumImage: mediumImageInput?.files?.length ? mediumImageInput.files.item(0).name : null,
+                        SmallImage: smallImageInput?.files?.length ? smallImageInput.files.item(0).name : null,
+                        Quantity: $(`input[name='ProductImagesQuantity']`).val() || "0",
+                        MRP: $(`input[name='ProductImagesMRP']`).val() || "0",
+                        Discount: $(`input[name='ProductImagesDiscount']`).val() || "0",
+                        Price: $(".price-input").val() || "0",
+                        ArrivingDays: parseInt($(`input[name='ProductImagesArrivingDays']`).val()) || 0
+                    };
+
+                     productsList.push(productData);
+                    console.log("Updated Product List:", productsList);
+
+                    var url = $("#productForm").attr("action");
+                    var data = new FormData();
+
+                         productsList.forEach((product, index) => {
+                            data.append(`productList[${index}].Name`, product.Name);
+                            data.append(`productList[${index}].Type`, product.Type);
+                            data.append(`productList[${index}].Color`, product.Color);
+                            data.append(`productList[${index}].Description`, product.Description);
+                            data.append(`productList[${index}].LargeImage`, product.LargeImage);
+                            data.append(`productList[${index}].MediumImage`, product.MediumImage);
+                            data.append(`productList[${index}].SmallImage`, product.SmallImage);
+                            data.append(`productList[${index}].Quantity`, product.Quantity);
+                            data.append(`productList[${index}].MRP`, product.MRP);
+                            data.append(`productList[${index}].Discount`, product.Discount);
+                            data.append(`productList[${index}].Price`, product.Price);
+                            data.append(`productList[${index}].ArrivingDays`, product.ArrivingDays);
+                        });
+
+                         data.append("largeImageFile", $("#LargeImageUpload")[0].files[0]);
+                        data.append("mediumImageFile", $("#MediumImageUpload")[0].files[0]);
+                        data.append("smallImageFile", $("#SmallImageUpload")[0].files[0]);
 
 
+                    console.log(data);
+
+                    $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: data,
+                    contentType: false,
+                    processData: false,
+                    success: function (response) {
+                        if (response.success) {
+                            alert("Products added successfully!");
+
+                            //  Reset form fields but keep the product name
+                            $("#productForm")[0].reset();
+                            $("#LargeImageUpload, #MediumImageUpload, #SmallImageUpload").val("");
+
+                            $("#largePreviewImage").attr("src", "https://via.placeholder.com/300");
+                            $("#mediumPreviewImage").attr("src", "https://via.placeholder.com/150");
+                            $("#smallPreviewImage").attr("src", "https://via.placeholder.com/150");
+
+                            $("#productForm input[placeholder='Enter product name']").val(productData.Name);
+                            //$("#ProductModal").modal("show");
+
+                            //location.reload();
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function () {
+                        alert("Failed to save products.");
+                    }
+                    });
+           }
 </script>

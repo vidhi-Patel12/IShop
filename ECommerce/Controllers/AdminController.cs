@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
+using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using static Azure.Core.HttpHeader;
 
@@ -87,187 +88,127 @@ namespace ECommerce.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(Products model, List<IFormFile> ImageFiles)
+        public async Task<IActionResult> Create([FromForm] List<Products> productList, IFormFile largeImageFile, IFormFile mediumImageFile, IFormFile smallImageFile)
         {
-            int productId;
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
+            foreach (var model in productList)
             {
-                await conn.OpenAsync();
+                int productId;
 
-                // Check if product exists
-                using (SqlCommand checkCmd = new SqlCommand("SELECT ProductId FROM Products WHERE Name = @Name", conn))
+                using (SqlConnection conn = new SqlConnection(_connectionString))
                 {
-                    checkCmd.Parameters.AddWithValue("@Name", model.Name);
-                    object result = await checkCmd.ExecuteScalarAsync();
-                    productId = result != null ? Convert.ToInt32(result) : 0;
-                }
+                    await conn.OpenAsync();
 
-                // If product does not exist, insert it
-                if (productId == 0)
-                {
-                    using (SqlCommand cmd = new SqlCommand("AddProduct", conn))
+                    // Check if product exists
+                    using (SqlCommand checkCmd = new SqlCommand("SELECT ProductId FROM Products WHERE Name = @Name", conn))
                     {
-                        cmd.CommandType = CommandType.StoredProcedure;
-                        cmd.Parameters.AddWithValue("@Name", model.Name);
-                        cmd.Parameters.AddWithValue("@IsActive", true);
-
-                        SqlParameter outputIdParam = new SqlParameter("@NewProductId", SqlDbType.Int)
-                        {
-                            Direction = ParameterDirection.Output
-                        };
-                        cmd.Parameters.Add(outputIdParam);
-
-                        await cmd.ExecuteNonQueryAsync();
-                        productId = (int)outputIdParam.Value;
+                        checkCmd.Parameters.AddWithValue("@Name", model.Name);
+                        object result = await checkCmd.ExecuteScalarAsync();
+                        productId = result != null ? Convert.ToInt32(result) : 0;
                     }
-                }
 
-                // Define paths for different image sizes
-                string basePath = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "Products", productId.ToString());
-                string largePath = Path.Combine(basePath, "Large");
-                string mediumPath = Path.Combine(basePath, "Medium");
-                string smallPath = Path.Combine(basePath, "Small");
-
-                // Ensure directories exist
-                Directory.CreateDirectory(largePath);
-                Directory.CreateDirectory(mediumPath);
-                Directory.CreateDirectory(smallPath);
-
-                var productImagesList = model.ProductImages.ToList();
-
-                for (int i = 0; i < productImagesList.Count; i++)
-                {
-                    var imageData = productImagesList[i];
-
-                    if (ImageFiles.Count > i && ImageFiles[i] != null && ImageFiles[i].Length > 0)
+                    // If product does not exist, insert it
+                    if (productId == 0)
                     {
-                        string fileName = Path.GetFileName(ImageFiles[i].FileName);
-                        string largeSavePath = Path.Combine(largePath, fileName);
-                        string mediumSavePath = Path.Combine(mediumPath, fileName);
-                        string smallSavePath = Path.Combine(smallPath, fileName);
-
-                        // Save images
-                        using (var stream = new FileStream(largeSavePath, FileMode.Create))
-                        {
-                            await ImageFiles[i].CopyToAsync(stream);
-                        }
-                        using (var stream = new FileStream(mediumSavePath, FileMode.Create))
-                        {
-                            await ImageFiles[i].CopyToAsync(stream);
-                        }
-                        using (var stream = new FileStream(smallSavePath, FileMode.Create))
-                        {
-                            await ImageFiles[i].CopyToAsync(stream);
-                        }
-
-                        // Insert image record
-                        using (SqlCommand cmd = new SqlCommand("AddProductImage", conn))
+                        using (SqlCommand cmd = new SqlCommand("AddProduct", conn))
                         {
                             cmd.CommandType = CommandType.StoredProcedure;
-                            cmd.Parameters.AddWithValue("@ProductId", productId);
-                            cmd.Parameters.AddWithValue("@Type", imageData.Type);
-                            cmd.Parameters.AddWithValue("@Color", imageData.Color);
-                            cmd.Parameters.AddWithValue("@LargeImage", largeSavePath.Replace(_webHostEnvironment.WebRootPath, ""));
-                            cmd.Parameters.AddWithValue("@MediumImage", mediumSavePath.Replace(_webHostEnvironment.WebRootPath, ""));
-                            cmd.Parameters.AddWithValue("@SmallImage", smallSavePath.Replace(_webHostEnvironment.WebRootPath, ""));
-                            cmd.Parameters.AddWithValue("@Description", imageData.Description ?? (object)DBNull.Value);
-                            cmd.Parameters.AddWithValue("@Quantity", imageData.Quantity);
-                            cmd.Parameters.AddWithValue("@MRP", imageData.MRP);
-                            cmd.Parameters.AddWithValue("@Discount", imageData.Discount);
-                            cmd.Parameters.AddWithValue("@Price", imageData.MRP - (imageData.MRP * imageData.Discount / 100));
-                            cmd.Parameters.AddWithValue("@ArrivingDays", imageData.ArrivingDays);
+                            cmd.Parameters.AddWithValue("@Name", model.Name);
                             cmd.Parameters.AddWithValue("@IsActive", true);
 
+                            SqlParameter outputIdParam = new SqlParameter("@NewProductId", SqlDbType.Int)
+                            {
+                                Direction = ParameterDirection.Output
+                            };
+                            cmd.Parameters.Add(outputIdParam);
+
                             await cmd.ExecuteNonQueryAsync();
+                            productId = (int)outputIdParam.Value;
                         }
+                    }
+
+                    // Define base path for product images
+                    string basePath = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "Products", productId.ToString());
+
+                    // Create directory if it does not exist
+                    if (!Directory.Exists(basePath))
+                    {
+                        Directory.CreateDirectory(basePath);
+                    }
+
+                    // Save Large Image
+                    if (!string.IsNullOrEmpty(model.LargeImage))
+                    {
+                        string largeImagePath = Path.Combine(basePath, "Large");
+                        if (!Directory.Exists(largeImagePath))
+                        {
+                            Directory.CreateDirectory(largeImagePath);
+                        }
+                        //Directory.CreateDirectory(Path.GetDirectoryName(largeImagePath));
+                        string filePath = Path.Combine(largeImagePath, model.LargeImage);
+                        // Save the file to the server
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await largeImageFile.CopyToAsync(stream);
+                        }
+                    }
+
+                    // Save Medium Image
+                    if (!string.IsNullOrEmpty(model.MediumImage))
+                    {
+                        string mediumImagePath = Path.Combine(basePath, "Medium");
+                        if (!Directory.Exists(mediumImagePath))
+                        {
+                            Directory.CreateDirectory(mediumImagePath);
+                        }
+                        string filePath = Path.Combine(mediumImagePath, model.MediumImage);
+                        // Save the file to the server
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await mediumImageFile.CopyToAsync(stream);
+                        }
+                    }
+
+                    // Save Small Image
+                    if (!string.IsNullOrEmpty(model.SmallImage))
+                    {
+                        string smallImagePath = Path.Combine(basePath, "Small");
+                        if (!Directory.Exists(smallImagePath))
+                        {
+                            Directory.CreateDirectory(smallImagePath);
+                        }
+                        string filePath = Path.Combine(smallImagePath, model.SmallImage);
+                        // Save the file to the server
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await smallImageFile.CopyToAsync(stream);
+                        }
+                    }
+
+                    // Insert image record into the database
+                    using (SqlCommand cmd = new SqlCommand("AddProductImage", conn))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.AddWithValue("@ProductId", productId);
+                        cmd.Parameters.AddWithValue("@Type", model.Type);
+                        cmd.Parameters.AddWithValue("@Color", model.Color);
+                        cmd.Parameters.AddWithValue("@LargeImage", $"/uploads/Products/{productId}/Large/{Path.GetFileName(model.LargeImage)}");
+                        cmd.Parameters.AddWithValue("@MediumImage", $"/uploads/Products/{productId}/Medium/{Path.GetFileName(model.MediumImage)}");
+                        cmd.Parameters.AddWithValue("@SmallImage", $"/uploads/Products/{productId}/Small/{Path.GetFileName(model.SmallImage)}");
+                        cmd.Parameters.AddWithValue("@Description", model.Description ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@Quantity", model.Quantity);
+                        cmd.Parameters.AddWithValue("@MRP", model.MRP);
+                        cmd.Parameters.AddWithValue("@Discount", model.Discount);
+                        cmd.Parameters.AddWithValue("@Price", model.MRP - (model.MRP * model.Discount / 100));
+                        cmd.Parameters.AddWithValue("@ArrivingDays", model.ArrivingDays);
+                        cmd.Parameters.AddWithValue("@IsActive", true);
+
+                        await cmd.ExecuteNonQueryAsync();
                     }
                 }
             }
 
-            return RedirectToAction("Index");
+            return Json(new { success = true });
         }
-
-
-        //[HttpPost]
-        //public async Task<IActionResult> Create(Products model, List<IFormFile> ImageFiles)
-        //{
-
-        //    int newProductId;
-
-        //    using (SqlConnection conn = new SqlConnection(_connectionString))
-        //    {
-        //        await conn.OpenAsync();
-        //        using (SqlCommand cmd = new SqlCommand("AddProduct", conn))
-        //        {
-        //            cmd.CommandType = CommandType.StoredProcedure;
-        //            cmd.Parameters.AddWithValue("@Name", model.Name);
-        //            cmd.Parameters.AddWithValue("@IsActive", true);
-
-        //            SqlParameter outputIdParam = new SqlParameter("@NewProductId", SqlDbType.Int)
-        //            {
-        //                Direction = ParameterDirection.Output
-        //            };
-        //            cmd.Parameters.Add(outputIdParam);
-
-        //            await cmd.ExecuteNonQueryAsync();
-
-        //            newProductId = (int)outputIdParam.Value;
-        //        }
-
-        //        // Define the directory path for this product's images
-        //        string uploadPath = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "Products", newProductId.ToString());
-
-        //        // Create directory if it does not exist
-        //        if (!Directory.Exists(uploadPath))
-        //        {
-        //            Directory.CreateDirectory(uploadPath);
-        //        }
-
-        //        var productImagesList = model.ProductImages.ToList();
-
-        //        // Insert images
-        //        for (int i = 0; i < model.ProductImages.Count; i++)
-        //        {
-        //            var imageData = productImagesList[i]; // Corrected reference
-        //            var imageFile = ImageFiles[i]; // Get corresponding file
-
-        //            if (imageFile != null && imageFile.Length > 0)
-        //            {
-        //                // Generate unique file name
-        //                string fileName = Path.GetFileName(imageFile.FileName);
-        //                string filePath = Path.Combine(uploadPath, fileName);
-
-        //                // Save the file to the server
-        //                using (var stream = new FileStream(filePath, FileMode.Create))
-        //                {
-        //                    await imageFile.CopyToAsync(stream);
-        //                }
-
-        //                // Save image path to database
-        //                using (SqlCommand cmd = new SqlCommand("AddProductImage", conn))
-        //                {
-        //                    cmd.CommandType = CommandType.StoredProcedure;
-        //                    cmd.Parameters.AddWithValue("@ProductId", newProductId);
-        //                    cmd.Parameters.AddWithValue("@Type", imageData.Type); // Corrected reference
-        //                    cmd.Parameters.AddWithValue("@Color", imageData.Color); // Corrected reference
-        //                    cmd.Parameters.AddWithValue("@Image", $"/uploads/Products/{newProductId}/{fileName}");
-        //                    cmd.Parameters.AddWithValue("@Description", imageData.Description);
-        //                    cmd.Parameters.AddWithValue("@Quantity", imageData.Quantity);
-        //                    cmd.Parameters.AddWithValue("@MRP", imageData.MRP);
-        //                    cmd.Parameters.AddWithValue("@Discount", imageData.Discount);
-        //                    cmd.Parameters.AddWithValue("@Price", imageData.MRP - (imageData.MRP * imageData.Discount / 100));
-        //                    cmd.Parameters.AddWithValue("@ArrivingDays", imageData.ArrivingDays);
-        //                    cmd.Parameters.AddWithValue("@IsActive", true);
-
-        //                    await cmd.ExecuteNonQueryAsync();
-        //                }
-        //            }
-        //        }
-        //    }
-
-        //    return RedirectToAction("Index");
-        //}
 
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
@@ -695,14 +636,14 @@ namespace ECommerce.Controllers
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                
+
                 using (SqlCommand updateCmd = new SqlCommand("UPDATE Coupan SET IsActive = 0 WHERE CoupanId = @CoupanId", conn))
                 {
                     updateCmd.Parameters.AddWithValue("@CoupanId", id);
                     await updateCmd.ExecuteNonQueryAsync();
                 }
                 return RedirectToAction("Coupan");
-            }            
+            }
         }
 
         [HttpGet]
@@ -797,7 +738,7 @@ namespace ECommerce.Controllers
 
                 using (SqlCommand cmd = new SqlCommand("GetOrdersWithDetails", conn))
                 {
-                    cmd.CommandType = CommandType.StoredProcedure;                   
+                    cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@OrderId", id); //  Use `id` from URL
 
                     using (SqlDataReader reader = await cmd.ExecuteReaderAsync())

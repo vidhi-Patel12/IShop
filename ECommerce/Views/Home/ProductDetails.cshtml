@@ -15,7 +15,7 @@
             <div class="main-image">
                 @if (productDetails != null)
                 {
-                    <img src="@productDetails.Image" id="mainProductImage" class="img-fluid">
+                    <img src="@productDetails.LargeImage" id="mainProductImage" class="img-fluid">
                     @if (productDetails.Discount > 0)
                     {
                         <span class="main-image discount-label">-@productDetails.Discount%</span>
@@ -29,7 +29,7 @@
                 {
                     bool isSelected = img.ProductsImageId == ViewBag.ProductImageId;
                     <a asp-action="ProductDetails" asp-route-id="@img.ProductsImageId">
-                        <img src="@img.Image" class="thumbnail @(isSelected ? "selected" : "")">
+                        <img src="@img.LargeImage" class="thumbnail @(isSelected ? "selected" : "")">
                     </a>
                 }
             </div>
@@ -94,7 +94,7 @@
                             <div class="col-md-3 mb-4">
                                 <div class="card">
                                     <a asp-action="ProductDetails" asp-route-id="@firstImage?.ProductsImageId">
-                                        <img src="@firstImage?.Image" class="card-img-top" alt="Product Image">
+                                        <img src="@firstImage?.LargeImage" class="card-img-top" alt="Product Image">
                                     </a>
                                     <div class="card-body text-center">
                                         <h5 class="card-title">@product.Name</h5>
@@ -129,7 +129,7 @@
 
         let price = @productDetails?.Price ?? 0;
         let productName = "@Html.Raw(Model.Name)";
-        let productImage = "@Html.Raw(productDetails?.Image)";
+        let productImage = "@Html.Raw(productDetails?.LargeImage)";
         let productType = "@Html.Raw(productDetails?.Type)";
         let productColor = "@Html.Raw(productDetails?.Color)";
         let productDescription = "@Html.Raw(productDetails?.Description)";

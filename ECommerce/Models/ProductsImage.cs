@@ -14,7 +14,11 @@ namespace ECommerce.Models
         [Required]
         public string Color { get; set; }
         [Required]
-        public string Image { get; set; }
+        public string LargeImage { get; set; }
+        [Required]
+        public string MediumImage { get; set; }
+        [Required]
+        public string SmallImage { get; set; }
         [Required]
         public string Description { get; set; }
         [Required]

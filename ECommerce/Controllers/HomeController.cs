@@ -60,7 +60,7 @@ namespace ECommerce.Controllers
                                     ProductId = productId,
                                     Type = reader.GetString(reader.GetOrdinal("Type")),
                                     Color = reader.GetString(reader.GetOrdinal("Color")),
-                                    Image = reader.GetString(reader.GetOrdinal("Image")),
+                                    LargeImage = reader.GetString(reader.GetOrdinal("Image")),
                                     Description = reader.GetString(reader.GetOrdinal("Description")),
                                     Quantity = reader.GetDouble(reader.GetOrdinal("Quantity")),
                                     MRP = reader.GetDouble(reader.GetOrdinal("MRP")),
@@ -144,7 +144,7 @@ namespace ECommerce.Controllers
                                 ProductId = reader.GetInt32(reader.GetOrdinal("ProductId")),
                                 Type = reader.GetString(reader.GetOrdinal("Type")),
                                 Color = reader.GetString(reader.GetOrdinal("Color")),
-                                Image = reader.GetString(reader.GetOrdinal("Image")),
+                                LargeImage = reader.GetString(reader.GetOrdinal("Image")),
                                 Description = reader.GetString(reader.GetOrdinal("Description")),
                                 Quantity = reader.GetDouble(reader.GetOrdinal("Quantity")),
                                 MRP = reader.GetDouble(reader.GetOrdinal("MRP")),
@@ -199,7 +199,7 @@ namespace ECommerce.Controllers
                                 var image = new ProductsImage
                                 {
                                     ProductsImageId = reader.GetInt32(reader.GetOrdinal("ProductsImageId")),
-                                    Image = reader.GetString(reader.GetOrdinal("Image")),
+                                    LargeImage = reader.GetString(reader.GetOrdinal("Image")),
                                     Price = reader.GetDouble(reader.GetOrdinal("Price"))
                                 };
 

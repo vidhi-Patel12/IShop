@@ -1,195 +1,288 @@
-﻿@{
-    ViewData["Title"] = "Admin";
-}
-@model List<Products>
-
+﻿@model List<Products>
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Home";
 }
-<!-- Hero Section -->
-
-<div class="container-fluid p-0">
-    <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
-        <div class="carousel-inner">
-            <div class="carousel-item active">
-                <img src="/images/slider-1.jpg" class="d-block w-100" alt="Fashion Look">
-                <div class="carousel-caption d-none d-md-block text-end">
-                    <h2 class="fw-bold text-black fs-2">MEGA STORE</h2>
-                    <h1 class="fw-bold text-black display-4">TRENDING <br> FASHION LOOK</h1>
-                    <p class="fs-5 text-black">New Clothes, New Passion.</p>
-                    <a href="#" class="btn btn-danger btn-lg">SHOP TODAY</a>
+<input type="hidden" id="hdnProductImageId"/>
+<!-- Slider -->
+<div class="tf-slideshow slider-style2 slider-effect-fade">
+    <div dir="ltr" class="swiper tf-sw-slideshow" data-preview="1" data-tablet="1" data-mobile="1" data-centered="false" data-space="0" data-space-mb="0" data-loop="true" data-auto-play="false">
+        <div class="swiper-wrapper">
+            <div class="swiper-slide">
+                <div class="wrap-slider">
+                    <img src="~/content/images/slider/slider-fashion-cosmetic.jpg" alt="fashion-slideshow">
+                    <div class="box-content">
+                        <div class="container">
+                            <div class="content-slider">
+                                <div class="box-title-slider">
+                                    <div class="fade-item fade-item-1 heading title-display text-white">Awaken Your <br> Natural Beauty</div>
+                                    <p class="fade-item fade-item-2 body-text-1 text-white">Discover the secret to rejuvenating your skin, one gentle touch at a <br> time with our special collection of cosmetics.</p>
+                                </div>
+                                <div class="fade-item fade-item-3 box-btn-slider">
+                                    <a href="shop-default-grid.html" class="tf-btn btn-fill btn-square btn-white"><span class="text">Shop Now</span></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="swiper-slide">
+                <div class="wrap-slider">
+                    <img src="~/content/images/slider/slider-fashion-cosmetic2.jpg" alt="fashion-slideshow">
+                    <div class="box-content">
+                        <div class="container">
+                            <div class="content-slider">
+                                <div class="box-title-slider">
+                                    <div class="fade-item fade-item-1 heading title-display text-white">Embrace Your <br> Radiance, Naturally</div>
+                                    <p class="fade-item fade-item-2 body-text-1 text-white">Dive into our collection and uncover the power of your true skin!</p>
+                                </div>
+                                <div class="fade-item fade-item-3 box-btn-slider">
+                                    <a href="shop-default-grid.html" class="tf-btn btn-fill btn-square btn-white"><span class="text">Shop Now</span></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="swiper-slide">
+                <div class="wrap-slider">
+                    <img src="~/content/images/slider/slider-fashion-cosmetic3.jpg" alt="fashion-slideshow">
+                    <div class="box-content">
+                        <div class="container">
+                            <div class="content-slider">
+                                <div class="box-title-slider">
+                                    <div class="fade-item fade-item-1 heading title-display text-white">Illuminate Your <br> Beauty, Naturally</div>
+                                    <p class="fade-item fade-item-2 body-text-1 text-white">Let us guide you through a journey of skin transformation, from <br> confidence to radiance.</p>
+                                </div>
+                                <div class="fade-item fade-item-3 box-btn-slider">
+                                    <a href="shop-default-grid.html" class="tf-btn btn-fill btn-square btn-white"><span class="text">Shop Now</span></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-<!-- FEATURED PRODUCTS -->
-<div class="container mt-4">
-    <h3 class="text-center font-weight-bold">FEATURED PRODUCTS</h3>
-
-    <hr style="background-color: red;height:3px;width:100px;border:none;margin-left:46%;" />
-    <br />
-    <div class="row">
-        @foreach (var product in Model)
-        {
-            var firstImage = product.ProductImages.FirstOrDefault();
-
-            <div class="col-md-3 col-sm-6 mb-4">
-                <div class="product-card position-relative shadow-sm p-2">
-                    <!-- Image Wrapper -->
-                    <div class="product-image-block position-relative">
-                        <a asp-action="ProductDetails" asp-route-id="@firstImage.ProductsImageId">
-                            <img src="@firstImage?.LargeImage" class="card-img-top product-image"
-                                 style="width: 100%; height: 270px; object-fit: cover; border-radius: 5px;"
-                                 alt="Product Image">
-                        </a>
-
-                        <!-- Discount Badge -->
-                        @if (firstImage?.Discount > 0)
-                        {
-                            <span class="position-absolute top-0 end-0 bg-dark text-white px-2 py-1 m-1 rounded small">
-                                -@firstImage.Discount%
-                            </span>
-                        }
-
-                        <!-- New Product Badge -->
-                        <span class="position-absolute top-0 start-0 bg-danger text-white px-2 py-1 m-1 rounded small">
-                            NEW PRODUCT
-                        </span>
-                    </div>
-                </div>
-
-                <h4 class="product-title text-center">
-                    <a class="product-link text-black" asp-action="ProductDetails" asp-route-id="@firstImage.ProductsImageId" style="text-decoration:none">
-                        @product.Name
-                    </a>
-                </h4>
-
-                <h6 class="product-price text-center">
-                    <del class="text-danger">₹@firstImage.MRP</del>
-                    <span class="text-success">₹@firstImage.Price</span>
-                </h6>
-                <div class="d-flex justify-content-center">
-                    <button class="btn btn-dark btn-sm w-50 add-to-cart-btn"
-                            data-name="@Html.Raw(product.Name)"
-                            data-image="@Html.Raw(firstImage?.LargeImage)"
-                            data-type="@Html.Raw(firstImage.Type)"
-                            data-color="@Html.Raw(firstImage.Color)"
-                            data-description="@Html.Raw(firstImage.Description)"
-                            data-price="@Json.Serialize(firstImage?.Price)"
-                            data-productid="@Json.Serialize(product?.ProductId)"
-                            data-productsimageid="@Json.Serialize(firstImage?.ProductsImageId)"
-                            data-arrivingDays="@firstImage.ArrivingDays ?? 0">
-                        ADD TO CART
-                    </button>
-                </div>
-            </div>
-        }
+    <div class="wrap-pagination">
+        <div class="container">
+            <div class="sw-dots sw-pagination-slider type-circle white-circle-line justify-content-center"></div>
+        </div>
     </div>
 </div>
+<!-- /Slider -->
+<!-- Marquee -->
+<section class="tf-marquee">
+    <div class="marquee-wrapper">
+        <div class="initial-child-container">
+            <div class="marquee-child-item">
+                <p class="text-btn-uppercase">Free shipping on all orders over ₹1500</p>
+            </div>
+            <div class="marquee-child-item">
+                <span class="icon icon-lightning-line"></span>
+            </div>
+            <div class="marquee-child-item">
+                <p class="text-btn-uppercase">Returns are free within 14 days</p>
+            </div>
+            <div class="marquee-child-item">
+                <span class="icon icon-lightning-line"></span>
+            </div>
+            <!-- 2 -->
+            <div class="marquee-child-item">
+                <p class="text-btn-uppercase">Free shipping on all orders over ₹1500</p>
+            </div>
+            <div class="marquee-child-item">
+                <span class="icon icon-lightning-line"></span>
+            </div>
+            <div class="marquee-child-item">
+                <p class="text-btn-uppercase">Returns are free within 14 days</p>
+            </div>
+            <div class="marquee-child-item">
+                <span class="icon icon-lightning-line"></span>
+            </div>
+            <!-- 3 -->
+            <div class="marquee-child-item">
+                <p class="text-btn-uppercase">Free shipping on all orders over ₹1500</p>
+            </div>
+            <div class="marquee-child-item">
+                <span class="icon icon-lightning-line"></span>
+            </div>
+            <div class="marquee-child-item">
+                <p class="text-btn-uppercase">Returns are free within 14 days</p>
+            </div>
+            <div class="marquee-child-item">
+                <span class="icon icon-lightning-line"></span>
+            </div>
+            <!-- 4 -->
+            <div class="marquee-child-item">
+                <p class="text-btn-uppercase">Free shipping on all orders over ₹1500</p>
+            </div>
+            <div class="marquee-child-item">
+                <span class="icon icon-lightning-line"></span>
+            </div>
+            <div class="marquee-child-item">
+                <p class="text-btn-uppercase">Returns are free within 14 days</p>
+            </div>
+            <div class="marquee-child-item">
+                <span class="icon icon-lightning-line"></span>
+            </div>
+            <!-- 5 -->
+            <div class="marquee-child-item">
+                <p class="text-btn-uppercase">Free shipping on all orders over ₹1500</p>
+            </div>
+            <div class="marquee-child-item">
+                <span class="icon icon-lightning-line"></span>
+            </div>
+            <div class="marquee-child-item">
+                <p class="text-btn-uppercase">Returns are free within 14 days</p>
+            </div>
+            <div class="marquee-child-item">
+                <span class="icon icon-lightning-line"></span>
+            </div>
+            <!-- 6 -->
+            <div class="marquee-child-item">
+                <p class="text-btn-uppercase">Free shipping on all orders over ₹1500</p>
+            </div>
+            <div class="marquee-child-item">
+                <span class="icon icon-lightning-line"></span>
+            </div>
+            <div class="marquee-child-item">
+                <p class="text-btn-uppercase">Returns are free within 14 days</p>
+            </div>
+            <div class="marquee-child-item">
+                <span class="icon icon-lightning-line"></span>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- /Marquee -->
+<!-- Top picks -->
+<section class="flat-spacing">
+    <div class="container">
+        <div class="heading-section text-center wow fadeInUp">
+            <h3 class="heading">Top Picks</h3>
+            <p class="subheading text-secondary">Fresh styles just in! Elevate your look.</p>
+        </div>
+        <div dir="ltr" class="swiper tf-sw-latest" data-preview="4" data-tablet="3" data-mobile="2" data-space-lg="30" data-space-md="30" data-space="15" data-pagination="1" data-pagination-md="1" data-pagination-lg="1">
+            <div class="swiper-wrapper">
+                @foreach (var product in Model)
+                {
+                    var productImage = product.ProductImages.FirstOrDefault();
 
-
-<script>
-         
-
-    document.addEventListener("DOMContentLoaded", function () {
-
-                function updateCartCount() {
-                    let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-                    let totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
-
-                    let cartItemCount = document.getElementById("cartItemCount");
-                    if (cartItemCount) {
-                        cartItemCount.innerText = totalItems;
-                    } else {
-                        console.error("cartItemCount element not found in DOM!");
-                    }
-
-                    console.log(`Cart updated: ${totalItems} items`);
+                    <div class="swiper-slide">
+                        <div class="card-product wow fadeInUp" data-wow-delay="0.1s">
+                            <div class="card-product-wrapper">
+                                <a asp-action="ProductDetails" asp-route-id="@productImage.ProductsImageId" class="product-img">
+                                    <img class="lazyload img-product" data-src="@productImage.LargeImage" src="@productImage.LargeImage" alt="image-product">
+                                    <img class="lazyload img-hover" data-src="@productImage.LargeImage" src="@productImage.LargeImage" alt="image-product">
+                                </a>
+                                @if(productImage.Discount > 0)
+                                {
+                                    <div class="on-sale-wrap"><span class="on-sale-item">-@productImage.Discount%</span></div>
+                                }
+                                @* <div class="list-product-btn">
+                                    <a href="#quickView" data-bs-toggle="modal" class="box-icon quickview tf-btn-loading">
+                                        <span class="icon icon-eye"></span>
+                                        <span class="tooltip">Quick View</span>
+                                    </a>
+                                </div> *@
+                                <div class="list-btn-main">
+                                    <a href="#shoppingCart" data-bs-toggle="modal" class="btn-main-product">Add To cart</a>
+                                </div>
+                            </div>
+                            <div class="card-product-info">
+                                <a asp-action="ProductDetails" asp-route-id="@productImage.ProductsImageId" class="title link">
+                                    @product.Name
+                                </a>
+                                @if(productImage.Discount > 0)
+                                {
+                                    <span class="price"><span class="old-price">₹@productImage.MRP</span> ₹@productImage.Price</span>
+                                }
+                                else
+                                {
+                                    <span class="price">₹@productImage.Price</span>
+                                }
+                                <ul class="list-color-product">
+                                    @foreach (var item in product.ProductImages)
+                                    {
+                                        <li class="list-color-item color-swatch active line">
+                                            <span class="swatch-value" style="background-color: @item.Color;"></span>
+                                            <img class="lazyload" data-src="@item.LargeImage" src="@item.LargeImage" alt="image-product">
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 }
+            </div>
+            <div class="sw-pagination-latest sw-dots type-circle justify-content-center"></div>
+        </div>
+    </div>
+</section>
+<!-- /Top picks -->
+<!-- Iconbox -->
+<section class="flat-spacing line-top-container">
+    <div class="container">
+        <div dir="ltr" class="swiper tf-sw-iconbox" data-preview="4" data-tablet="3" data-mobile-sm="2" data-mobile="1" data-space-lg="30" data-space-md="30" data-space="15" data-pagination="1" data-pagination-sm="2" data-pagination-md="3" data-pagination-lg="4">
+            <div class="swiper-wrapper">
+                <div class="swiper-slide">
+                    <div class="tf-icon-box">
+                        <div class="icon-box"><span class="icon icon-return"></span></div>
+                        <div class="content text-center">
+                            <h6>14-Day Returns</h6>
+                            <p class="text-secondary">Risk-free shopping with easy returns.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="tf-icon-box">
+                        <div class="icon-box"><span class="icon icon-shipping"></span></div>
+                        <div class="content text-center">
+                            <h6>Free Shipping Over ₹1500</h6>
+                            <p class="text-secondary">No extra costs, just the price you see.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="tf-icon-box">
+                        <div class="icon-box"><span class="icon icon-headset"></span></div>
+                        <div class="content text-center">
+                            <h6>24/7 Support</h6>
+                            <p class="text-secondary">24/7 support, always here just for you</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="tf-icon-box">
+                        <div class="icon-box"><span class="icon icon-sealCheck"></span></div>
+                        <div class="content text-center">
+                            <h6>Member Discounts</h6>
+                            <p class="text-secondary">Special prices for our loyal customers.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="sw-pagination-iconbox sw-dots type-circle justify-content-center"></div>
+        </div>
+    </div>
+</section>
+<!-- /Iconbox -->
 
 
-
-            function addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays) {
-                let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-
-                let existingItem = cartItems.find(item =>
-                    item.name === productName &&
-                    item.productid === productId &&
-                    item.productsimageid === productsImageId
-                );
-
-                if (existingItem) {
-                    existingItem.quantity += 1;
-                    existingItem.total = (existingItem.quantity * price).toFixed(2);
-                } else {
-                    cartItems.push({
-
-                        name: productName,
-                        image: productImage,
-                        type: productType,
-                        color: productColor,
-                        description: productDescription,
-                        quantity: 1,
-                        price: price,
-                        total: price.toFixed(2),
-                        productid: productId,
-                        productsimageid: productsImageId,
-                        arrivingDays: arrivingDays
-                    });
-                }
-
-                localStorage.setItem("cartItems", JSON.stringify(cartItems));
-                updateCartCount();
-                saveCartToDatabase();
+@* <script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript">
+    function QuickViewByProductImageId(ProductImageId){
+        $.ajax({
+            url: '/Home/QuickViewByProductImageId',
+            type: 'GET',
+            data: { productImageId: ProductImageId },
+            success: function (response) {
+                $("#productQuickView").html(response);
+            },
+            error: function () {
+                alert("Failed to load product images.");
             }
-
-            async function saveCartToDatabase() {
-                let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-
-                if (cartItems.length === 0) {
-                    console.log("Cart is empty. Nothing to save.");
-                    return;
-                }
-
-                console.log("Saving cart to database...", cartItems);
-
-                let response = await fetch("/Home/SaveCart", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(cartItems),
-                });
-
-                if (response.ok) {                    
-                    console.log("Cart saved successfully.");
-                     localStorage.setItem("cartItems", JSON.stringify(cartItems));
-                     updateCartCount();
-                } else {
-                    console.log("Failed to save cart.", response);
-                }
-               
-            }
-
-
-
-        document.querySelectorAll(".add-to-cart-btn").forEach(button => {
-            button.addEventListener("click", function () {
-                let productName = this.getAttribute("data-name");
-                let productImage = this.getAttribute("data-image");
-                let productType = this.getAttribute("data-type");
-                let productColor = this.getAttribute("data-color");
-                let productDescription = this.getAttribute("data-description");
-                let price = parseFloat(this.getAttribute("data-price")) || 0;
-                let productId = parseFloat(this.getAttribute("data-productid")) || 0;
-                let productsImageId = parseFloat(this.getAttribute("data-productsimageid")) || 0;
-                let arrivingDays = parseInt(this.getAttribute("data-arrivingDays")) || 0;
-
-                addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays);
-            });
         });
-
-        updateCartCount();
-    });
-
-</script>
+    }
+</script> *@

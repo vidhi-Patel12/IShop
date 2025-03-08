@@ -3,185 +3,315 @@
 @inject ApplicationDbContext _context
 
 <!DOCTYPE html>
-<html lang="en" data-bs-smooth-scroll="true">
+
+<!--[if IE 8 ]><html class="ie" xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US" lang="en-US"> <![endif]-->
+<!--[if (gte IE 9)|!(IE)]><!-->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US" lang="en-US">
+<!--<![endif]-->
+<!-- Mirrored from themesflat.co/html/modave/home-cosmetic.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 07 Mar 2025 10:36:29 GMT -->
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - ECommerce</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/ECommerce.styles.css" asp-append-version="true" />
+    <meta charset="utf-8">
+    <title>IShop - Multipurpose eCommerce</title>
+    <!--
+    <meta name="author" content="themesflat.com">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="description" content="Themesflat Modave, Multipurpose eCommerce Template">
+    -->
+    <!-- font -->
+    <link rel="stylesheet" href="~/content/fonts/fonts.css" />
+    <link rel="stylesheet" href="~/content/fonts/font-icons.css">
+    <link rel="stylesheet" href="~/content/css/bootstrap.min.css">
+    <link rel="stylesheet" href="~/content/css/swiper-bundle.min.css">
+    <link rel="stylesheet" href="~/content/css/animate.css">
+    <link rel="stylesheet" href="~/content/css/sib-styles.css">
+    <link rel="stylesheet" type="text/css" href="~/content/css/styles.css" />
+
+    <!-- Favicon and Touch Icons  -->
+    <link rel="shortcut icon" href="~/content/images/logo/favicon.png">
+    <link rel="apple-touch-icon-precomposed" href="~/content/images/logo/favicon.png">
+
 </head>
-<body>
-    <header>
+<body class="preload-wrapper">
 
-        <!-- Bootstrap & FontAwesome -->
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
+    <!-- Scroll Top -->
+    <button id="scroll-top">
+        <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g clip-path="url(#clip0_15741_24194)">
+                <path d="M3 11.9175L12 2.91748L21 11.9175H16.5V20.1675C16.5 20.3664 16.421 20.5572 16.2803 20.6978C16.1397 20.8385 15.9489 20.9175 15.75 20.9175H8.25C8.05109 20.9175 7.86032 20.8385 7.71967 20.6978C7.57902 20.5572 7.5 20.3664 7.5 20.1675V11.9175H3Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </g>
+            <defs>
+                <clipPath id="clip0_15741_24194">
+                    <rect width="24" height="24" fill="white" transform="translate(0 0.66748)" />
+                </clipPath>
+            </defs>
+        </svg>
+    </button>
 
-        <!-- FontAwesome -->
-        <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+    <!-- preload -->
+    <div class="preload preload-container">
+        <div class="preload-logo">
+            <div class="spinner"></div>
+        </div>
+    </div>
+    <!-- /preload -->
 
+    <div id="wrapper">
+        <header id="header" class="header-default">
+            <div class="container">
+                <div class="row wrapper-header align-items-center">
+                    <div class="col-md-4 col-3 d-xl-none">
+                        <a href="#mobileMenu" class="mobile-menu" data-bs-toggle="offcanvas" aria-controls="mobileMenu">
+                            <i class="icon icon-categories"></i>
+                        </a>
+                    </div>
+                    <div class="col-xl-3 col-md-4 col-6">
+                        <a href="index.html" class="logo-header">
+                            <img src="~/content/images/logo/ishop_logo.svg" alt="logo" class="logo">
+                        </a>
+                    </div>
+                    <div class="col-xl-6 d-none d-xl-block">
+                        <nav class="box-navigation text-center">
+                            <ul class="box-nav-ul d-flex align-items-center justify-content-center">
+                                <li class="menu-item active">
+                                    <a href="#" class="item-link">Home</a>
+                                </li>
+                                <li class="menu-item">
+                                    <a href="#" class="item-link">Products</a>
+                                </li>
+                                <li class="menu-item position-relative">
+                                    <a href="#" class="item-link">Pages<i class="icon icon-arrow-down"></i></a>
+                                    <div class="sub-menu submenu-default">
+                                        <ul class="menu-list">
+                                            <li><a href="my-account.html" class="menu-link-text">My Orders</a></li>
+                                            <li><a href="about-us.html" class="menu-link-text">About Us</a></li>
+                                            <li>
+                                                <a href="store-list.html" class="menu-link-text">Store List 1</a>
+                                            </li>
+                                            <li><a href="contact.html" class="menu-link-text">Contact Us 1</a></li>
+                                            <li><a href="coming-soon.html" class="menu-link-text">Coming Soon</a></li>
+                                            <li><a href="customer-feedback.html" class="menu-link-text">Customer Feedbacks</a></li>
+                                        </ul>
+                                    </div>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                    <div class="col-xl-3 col-md-4 col-3">
+                        @* @{
+                            int? IShopId = HttpContextAccessor.HttpContext?.Session.GetInt32("IShopId");
+                            string FirstName = null;
 
-        <!-- Custom CSS -->
-        <link href="~/css/userproductcss.css" rel="stylesheet" />
-        <link href="~/css/productdetails.css" rel="stylesheet" />
-        <link href="~/css/checkout.css" rel="stylesheet" />
-
-        <!-- Top Header -->
-        <div class="top-header bg-black text-white py-2">
-            <div class="container d-flex justify-content-between align-items-center">
-                <!-- Left Side: Language & Currency -->
-                <div>
-                    <span>IShop</span>
-                </div>
-
-                @{
-                    int? IShopId = HttpContextAccessor.HttpContext?.Session.GetInt32("IShopId");
-                    string FirstName = null;
-
-                    if (IShopId.HasValue)
-                    {
-                        var user = _context.Register.FirstOrDefault(u => u.IShopId == IShopId);
-                        if (user != null)
+                            if (IShopId.HasValue)
+                            {
+                                var user = _context.Register.FirstOrDefault(u => u.IShopId == IShopId);
+                                if (user != null)
+                                {
+                                    FirstName = user.FirstName;
+                                }
+                            }
+                        } *@
+                        <ul class="nav-icon d-flex justify-content-end align-items-center">
+                            <li class="nav-search">
+                                <a href="#search" data-bs-toggle="modal" class="nav-icon-item">
+                                    <svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        <path d="M21.35 21.0004L17 16.6504" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </a>
+                            </li>
+                            <li class="nav-account">
+                                <a href="#" class="nav-icon-item">
+                                    <svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </a>
+                                <div class="dropdown-account dropdown-login">
+                                    <div class="sub-top">
+                                        <a href="@Url.Action("Login", "Account")" class="tf-btn btn-reset">Login</a>
+                                        <p class="text-center text-secondary-2">Don’t have an account? <a href="@Url.Action("Register", "Account")">Register</a></p>
+                                    </div>
+                                </div>
+                            </li>
+                            @* <li class="nav-wishlist">
+                                <a href="wish-list.html" class="nav-icon-item">
+                                    <svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M20.8401 4.60987C20.3294 4.09888 19.7229 3.69352 19.0555 3.41696C18.388 3.14039 17.6726 2.99805 16.9501 2.99805C16.2276 2.99805 15.5122 3.14039 14.8448 3.41696C14.1773 3.69352 13.5709 4.09888 13.0601 4.60987L12.0001 5.66987L10.9401 4.60987C9.90843 3.57818 8.50915 2.99858 7.05012 2.99858C5.59109 2.99858 4.19181 3.57818 3.16012 4.60987C2.12843 5.64156 1.54883 7.04084 1.54883 8.49987C1.54883 9.95891 2.12843 11.3582 3.16012 12.3899L4.22012 13.4499L12.0001 21.2299L19.7801 13.4499L20.8401 12.3899C21.3511 11.8791 21.7565 11.2727 22.033 10.6052C22.3096 9.93777 22.4519 9.22236 22.4519 8.49987C22.4519 7.77738 22.3096 7.06198 22.033 6.39452C21.7565 5.72706 21.3511 5.12063 20.8401 4.60987V4.60987Z" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </a>
+                            </li> *@
+                            <li class="nav-cart">
+                                <a href="#shoppingCart" data-bs-toggle="modal" class="nav-icon-item">
+                                    <svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M16.5078 10.8734V6.36686C16.5078 5.17166 16.033 4.02541 15.1879 3.18028C14.3428 2.33514 13.1965 1.86035 12.0013 1.86035C10.8061 1.86035 9.65985 2.33514 8.81472 3.18028C7.96958 4.02541 7.49479 5.17166 7.49479 6.36686V10.8734M4.11491 8.62012H19.8877L21.0143 22.1396H2.98828L4.11491 8.62012Z" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    <span class="count-box">1</span>
+                                </a>
+                            </li>
+                        </ul>
+                        @* @if (IShopId.HasValue && !string.IsNullOrEmpty(FirstName))
                         {
-                            FirstName = user.FirstName;
-                        }
-                    }
-                }
-                <!-- Right Side: Sign In & Contact -->
-                <div style="margin-right:12%;">
-                    @*   <a href="#" class="text-white me-3" style="text-decoration:none;">Sign in</a> *@
-                    @if (IShopId.HasValue && !string.IsNullOrEmpty(FirstName))
-                    {
-                        <a asp-action="Logout" asp-controller="Account" class="text-white me-3" style="text-decoration:none;">
-                            Hello, @FirstName | SignOut
-                        </a>
-                    }
-                    else
-                    {
-                        <a href="@Url.Action("Login", "Account")" class="text-white me-3" style="text-decoration:none;">
-                            Sign in
-                        </a>
-                    }
-                    <a href="#" class="text-white" style="text-decoration:none;">Contact us</a>
+                            <a asp-action="Logout" asp-controller="Account" class="text-black d-flex justify-content-end align-items-center" style="text-decoration:none;">
+                                Welcome, @FirstName
+                            </a>
+                        } *@
+                    </div>
                 </div>
             </div>
+        </header>
+
+        <div>
+            @RenderBody()
         </div>
 
-        <!-- Main Navigation Bar -->
-        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-            <div class="container d-flex justify-content-between align-items-center w-100">
-                <div class="col-md-2">
-                    <a class="navbar-brand fw-bold" href="#">
-                        <img src="/images/logo.png" alt="Shopkart Lite" height="60">
-                        <span style="font-family: 'Brush Script MT', cursive;">IShop</span>
-                    </a>
-                </div>
-                <div class="col-md-8 text-right">
-                    <form class="d-flex float-end ms-3">
-                        <div class="position-relative">
-                            <input class="form-control ps-3 pe-5" type="search" placeholder="Search our catalog">
-                            <i class="fas fa-search position-absolute top-50 end-0 translate-middle-y me-3 text-muted"></i>
+        <footer id="footer" class="footer">
+            <div class="footer-wrap">
+                <div class="footer-body">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-lg-4">
+                                <div class="footer-infor">
+                                    <div class="footer-address">
+                                        <p>549 Oak St.Crystal Lake, IL 60014</p>
+                                        <a href="contact.html" class="tf-btn-default fw-6">GET DIRECTION<i class="icon-arrowUpRight"></i></a>
+                                    </div>
+                                    <ul class="footer-info">
+                                        <li>
+                                            <i class="icon-mail"></i>
+                                            <p>themesflat@gmail.com</p>
+                                        </li>
+                                        <li>
+                                            <i class="icon-phone"></i>
+                                            <p>315-666-6688</p>
+                                        </li>
+                                    </ul>
+                                    <ul class="tf-social-icon">
+                                        <li><a href="#" class="social-facebook"><i class="icon icon-fb"></i></a></li>
+                                        <li><a href="#" class="social-twiter"><i class="icon icon-x"></i></a></li>
+                                        <li><a href="#" class="social-instagram"><i class="icon icon-instagram"></i></a></li>
+                                        <li><a href="#" class="social-amazon"><i class="icon icon-amazon"></i></a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="footer-menu">
+                                    <div class="footer-col-block">
+                                        <div class="footer-heading text-button footer-heading-mobile">
+                                            Infomation
+                                        </div>
+                                        <div class="tf-collapse-content">
+                                            <ul class="footer-menu-list">
+                                                <li class="text-caption-1">
+                                                    <a href="about-us.html" class="footer-menu_item">About Us</a>
+                                                </li>
+                                                <li class="text-caption-1">
+                                                    <a href="contact.html" class="footer-menu_item">Contact us</a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="footer-col-block">
+                                        <div class="footer-heading text-button footer-heading-mobile">
+                                            Customer Services
+                                        </div>
+                                        <div class="tf-collapse-content">
+                                            <ul class="footer-menu-list">
+                                                <li class="text-caption-1">
+                                                    <a href="#" class="footer-menu_item">Shipping</a>
+                                                </li>
+                                                <li class="text-caption-1">
+                                                    <a href="#" class="footer-menu_item">Return & Refund</a>
+                                                </li>
+                                                <li class="text-caption-1">
+                                                    <a href="#" class="footer-menu_item">Privacy Policy</a>
+                                                </li>
+                                                <li class="text-caption-1">
+                                                    <a href="term-of-use.html" class="footer-menu_item">Terms & Conditions</a>
+                                                </li>
+                                                <li class="text-caption-1">
+                                                    <a href="FAQs.html" class="footer-menu_item">Orders FAQs</a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </form>
+                    </div>
                 </div>
-                <div class="col-md-2" style="margin-top:-15px;">
-                    <a asp-controller="Home" asp-action="Cart" class="btn btn-outline-dark ms-3 position-relative" id="cartButton">
-                        🛒 <span id="cartItemCount" class="position-absolute  start-100 translate-middle badge rounded-pill bg-danger">0</span>
-                    </a>
+                <div class="footer-bottom">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="footer-bottom-wrap">
+                                    <div class="left">
+                                        <p class="text-caption-1">©2024 Modave. All Rights Reserved.</p>
+                                    </div>
+                                    <div class="tf-payment">
+                                        <p class="text-caption-1">Payment:</p>
+                                        <ul>
+                                            <li>
+                                                <img src="~/content/images/payment/img-1.png" alt="">
+                                            </li>
+                                            <li>
+                                                <img src="~/content/images/payment/img-2.png" alt="">
+                                            </li>
+                                            <li>
+                                                <img src="~/content/images/payment/img-3.png" alt="">
+                                            </li>
+                                            <li>
+                                                <img src="~/content/images/payment/img-4.png" alt="">
+                                            </li>
+                                            <li>
+                                                <img src="~/content/images/payment/img-5.png" alt="">
+                                            </li>
+                                            <li>
+                                                <img src="~/content/images/payment/img-6.png" alt="">
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </nav>
-
-        <!-- Secondary Navigation Bar -->
-        <nav class="navbar navbar-expand-lg navbar-light custom-navbar">
-            <div class="container">
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item"><a class="nav-link" href="/Home/Index">HOME</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/Home/Index">SHOP</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/Home/Orders">Orders</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">ABOUT US</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">CONTACT US</a></li>
-                </ul>
-            </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main">
-            @RenderBody()
-        </main>
+        </footer>
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-dark text-light py-4">
-        <a href="#" class="btn btn-secondary text-light position-fixed bottom-0 end-0 m-3">
-            Top
-        </a>
-        <div class="container">
-            <div class="row">
-                <div class="col-md-4">
-                    <h5>Contact Us</h5>
-                    <p>Email: support@ishop.com</p>
-                    <p>Phone: +91 98765 43210</p>
-                </div>
-                <div class="col-md-4">
-                    <h5>Quick Links</h5>
-                    <ul class="list-unstyled">
-                        <li class="nav-item"><a class="nav-link text-light" href="/Home/Index">HOME</a></li>
-                        <li class="nav-item"><a class="nav-link text-light" href="/Home/Index">SHOP</a></li>
-                        <li class="nav-item"><a class="nav-link text-light" href="/Home/Orders">Orders</a></li>
-                        <li class="nav-item"><a class="nav-link text-light" href="#">ABOUT US</a></li>
-                        <li class="nav-item"><a class="nav-link text-light" href="#">CONTACT US</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-4">
-                    <h5>Subscribe</h5>
-                    <input type="email" class="form-control" placeholder="Your Email">
-                    <button class="btn btn-danger mt-2">Subscribe</button>
-                </div>
-            </div>
-        </div>
-    </footer>
+    <!-- Javascript -->
+    <script type="text/javascript" src="~/content/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="~/content/js/jquery.min.js"></script>
+    <script type="text/javascript" src="~/content/js/swiper-bundle.min.js"></script>
+    <script type="text/javascript" src="~/content/js/carousel.js"></script>
+    <script type="text/javascript" src="~/content/js/bootstrap-select.min.js"></script>
+    <script type="text/javascript" src="~/content/js/lazysize.min.js"></script>
+    <script type="text/javascript" src="~/content/js/count-down.js"></script>
+    <script type="text/javascript" src="~/content/js/wow.min.js"></script>
+    <script type="text/javascript" src="~/content/js/multiple-modal.js"></script>
+    <script type="text/javascript" src="~/content/js/main.js"></script>
 
-    @*  </footer> *@
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
-</body>
+    <script src="~/content/js/sibforms.js" defer></script>
 
-<!-- Include jQuery and DataTables -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" />
+    <script>
+        window.REQUIRED_CODE_ERROR_MESSAGE = 'Please choose a country code';
+        window.LOCALE = 'en';
+        window.EMAIL_INVALID_MESSAGE = window.SMS_INVALID_MESSAGE = "The information provided is invalid. Please review the field format and try again.";
 
+        window.REQUIRED_ERROR_MESSAGE = "This field cannot be left blank. ";
 
-<!-- Initialize DataTable -->
-<script>
-    $(document).ready(function () {
-        $('#ordersTable').DataTable({
-            "paging": true,      // Enable pagination
-            "searching": true,   // Enable search box
-            "ordering": true,    // Enable column sorting
-            "lengthMenu": [5, 10, 25, 50], // Show entries per page options
-            "language": {
-                "search": "Search Order:"
+        window.GENERIC_INVALID_MESSAGE = "The information provided is invalid. Please review the field format and try again.";
+
+        window.translation = {
+            common: {
+                selectedList: '{quantity} list selected',
+                selectedLists: '{quantity} lists selected'
             }
-        });
+        };
 
-        $("div.dataTables_filter input").css({
-            "margin-bottom": "8px",
-            "padding": "8px",
-            "border-radius": "5px",
-            "border": "1px solid #ccc"
-        });
+        var AUTOHIDE = Boolean(0);
+    </script>
+    <script src="~/content/js/parallax.min.js"></script>
 
-          $(document).ready(function () {
-                $('[data-bs-toggle="popover"]').popover();
-          });
-    });
-</script>
-
+</body>
 </html>

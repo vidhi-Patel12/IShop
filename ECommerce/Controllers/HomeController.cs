@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.Text.Json;
 using Newtonsoft.Json;
+using Microsoft.EntityFrameworkCore;
 
 namespace ECommerce.Controllers
 {
@@ -54,21 +55,19 @@ namespace ECommerce.Controllers
                             // Add only the first active image
                             if (!reader.IsDBNull(reader.GetOrdinal("ProductsImageId")))
                             {
-                                var image = new ProductsImage
-                                {
-                                    ProductsImageId = reader.GetInt32(reader.GetOrdinal("ProductsImageId")),
-                                    ProductId = productId,
-                                    Type = reader.GetString(reader.GetOrdinal("Type")),
-                                    Color = reader.GetString(reader.GetOrdinal("Color")),
-                                    LargeImage = reader.GetString(reader.GetOrdinal("Image")),
-                                    Description = reader.GetString(reader.GetOrdinal("Description")),
-                                    Quantity = reader.GetDouble(reader.GetOrdinal("Quantity")),
-                                    MRP = reader.GetDouble(reader.GetOrdinal("MRP")),
-                                    Discount = reader.GetInt32(reader.GetOrdinal("Discount")),
-                                    Price = reader.GetDouble(reader.GetOrdinal("Price")),
-                                    ArrivingDays = reader.GetInt32(reader.GetOrdinal("ArrivingDays")),
-                                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive"))
-                                };
+                                var image = new ProductsImage();
+                                image.ProductsImageId = reader.GetInt32(reader.GetOrdinal("ProductsImageId"));
+                                image.ProductId = productId;
+                                image.Type = reader.GetString(reader.GetOrdinal("Type"));
+                                image.Color = reader.GetString(reader.GetOrdinal("Color"));
+                                image.LargeImage = reader.GetString(reader.GetOrdinal("LargeImage"));
+                                image.Description = reader.GetString(reader.GetOrdinal("Description"));
+                                image.Quantity = reader.GetDouble(reader.GetOrdinal("Quantity"));
+                                image.MRP = reader.GetDouble(reader.GetOrdinal("MRP"));
+                                image.Discount = reader.GetInt32(reader.GetOrdinal("Discount"));
+                                image.Price = reader.GetDouble(reader.GetOrdinal("Price"));
+                                image.ArrivingDays = reader.GetInt32(reader.GetOrdinal("ArrivingDays"));
+                                image.IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive"));
 
                                 productDict[productId].ProductImages.Add(image);
                             }
@@ -80,6 +79,71 @@ namespace ECommerce.Controllers
             }
 
             return View(products);
+        }
+
+        public IActionResult QuickViewByProductImageId(int productImageId)
+        {
+            List<Products> products = new List<Products>();
+
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                conn.OpenAsync();
+
+                using (SqlCommand cmd = new SqlCommand("GetProductsAndImages", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        Dictionary<int, Products> productDict = new Dictionary<int, Products>();
+
+                        while (reader.Read())
+                        {
+                            int productId = reader.GetInt32(reader.GetOrdinal("ProductId"));
+
+                            if (!productDict.ContainsKey(productId))
+                            {
+                                productDict[productId] = new Products
+                                {
+                                    ProductId = productId,
+                                    Name = reader.GetString(reader.GetOrdinal("Name")),
+                                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                                    ProductImages = new List<ProductsImage>()
+                                };
+                            }
+
+                            // Add only the first active image
+                            if (!reader.IsDBNull(reader.GetOrdinal("ProductsImageId")))
+                            {
+                                var image = new ProductsImage();
+                                var imageId = reader.GetInt32(reader.GetOrdinal("ProductsImageId"));
+                                if(imageId == productImageId)
+                                {
+                                    image.ProductsImageId = reader.GetInt32(reader.GetOrdinal("ProductsImageId"));
+                                    image.ProductId = productId;
+                                    image.Type = reader.GetString(reader.GetOrdinal("Type"));
+                                    image.Color = reader.GetString(reader.GetOrdinal("Color"));
+                                    image.LargeImage = reader.GetString(reader.GetOrdinal("LargeImage"));
+                                    image.Description = reader.GetString(reader.GetOrdinal("Description"));
+                                    image.Quantity = reader.GetDouble(reader.GetOrdinal("Quantity"));
+                                    image.MRP = reader.GetDouble(reader.GetOrdinal("MRP"));
+                                    image.Discount = reader.GetInt32(reader.GetOrdinal("Discount"));
+                                    image.Price = reader.GetDouble(reader.GetOrdinal("Price"));
+                                    image.ArrivingDays = reader.GetInt32(reader.GetOrdinal("ArrivingDays"));
+                                    image.IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive"));
+
+                                    productDict[productId].ProductImages.Add(image);
+                                }
+                            }
+                        }
+
+                        products = productDict.Values.ToList();
+                    }
+                }
+            }
+
+            var result = products.Where(X => X.ProductImages.Count != 0);
+            return PartialView("_QuickView", result.ToList());
         }
 
         [HttpGet]
@@ -144,7 +208,7 @@ namespace ECommerce.Controllers
                                 ProductId = reader.GetInt32(reader.GetOrdinal("ProductId")),
                                 Type = reader.GetString(reader.GetOrdinal("Type")),
                                 Color = reader.GetString(reader.GetOrdinal("Color")),
-                                LargeImage = reader.GetString(reader.GetOrdinal("Image")),
+                                LargeImage = reader.GetString(reader.GetOrdinal("LargeImage")),
                                 Description = reader.GetString(reader.GetOrdinal("Description")),
                                 Quantity = reader.GetDouble(reader.GetOrdinal("Quantity")),
                                 MRP = reader.GetDouble(reader.GetOrdinal("MRP")),
@@ -199,7 +263,7 @@ namespace ECommerce.Controllers
                                 var image = new ProductsImage
                                 {
                                     ProductsImageId = reader.GetInt32(reader.GetOrdinal("ProductsImageId")),
-                                    LargeImage = reader.GetString(reader.GetOrdinal("Image")),
+                                    LargeImage = reader.GetString(reader.GetOrdinal("LargeImage")),
                                     Price = reader.GetDouble(reader.GetOrdinal("Price"))
                                 };
 

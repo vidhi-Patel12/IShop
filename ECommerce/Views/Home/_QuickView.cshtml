@@ -1,0 +1,79 @@
+﻿@model List<Products>
+<!-- quickView -->
+<div class="modal fullRight fade modal-quick-view" id="quickView">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            @foreach (var item in Model)
+            {
+                var productImage = item.ProductImages.FirstOrDefault();
+                <div class="tf-quick-view-image">
+                    <div class="wrap-quick-view wrapper-scroll-quickview">
+                        <div class="quickView-item item-scroll-quickview" data-scroll-quickview="beige">
+                            <img class="lazyload" data-src="@productImage.LargeImage" src="@productImage.LargeImage" alt="">
+                        </div>
+                    </div>
+                </div>
+                <div class="wrap">
+                    <div class="header">
+                        <h5 class="title">Quick View</h5>
+                        <span class="icon-close icon-close-popup" data-bs-dismiss="modal"></span>
+                    </div>
+                    <div class="tf-product-info-list">
+                        <div class="tf-product-info-heading">
+                            <div class="tf-product-info-name">
+                                <div class="text text-btn-uppercase">@productImage.Type</div>
+                                <h3 class="name">@item.Name</h3>
+                            </div>
+                            <div class="tf-product-info-desc">
+                                <div class="tf-product-info-price">
+                                    <h5 class="price-on-sale font-2">@productImage.Price</h5>
+                                    @if (productImage.Discount > 0)
+                                    {
+                                        <div class="compare-at-price font-2">@productImage.MRP</div>
+                                        <div class="badges-on-sale text-btn-uppercase">
+                                            -@productImage.Discount%
+                                        </div>
+                                    }
+                                </div>
+                                <p>The garments labelled as Committed are products that have been produced using sustainable fibres or processes, reducing their environmental impact.</p>
+                            </div>
+                        </div>
+                        <div class="tf-product-info-choose-option">
+                            <div class="variant-picker-item">
+                                <div class="variant-picker-label mb_12">
+                                    Colors:<span class="text-title variant-picker-label-value">Beige</span>
+                                </div>
+                                <div class="variant-picker-values">
+                                    <input id="values-beige1" type="radio" name="color2" checked>
+                                    <label class="hover-tooltip tooltip-bot radius-60 color-btn btn-scroll-quickview active" data-slide="0" data-price="79.99" for="values-beige1" data-value="Beige" data-scroll-quickview="beige">
+                                        <span class="btn-checkbox bg-color-beige1"></span>
+                                        <span class="tooltip">Beige</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="tf-product-info-quantity">
+                                <div class="title mb_12">Quantity:</div>
+                                <div class="wg-quantity">
+                                    <span class="btn-quantity btn-decrease">-</span>
+                                    <input class="quantity-product" type="text" name="number" value="1">
+                                    <span class="btn-quantity btn-increase">+</span>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="tf-product-info-by-btn mb_10">
+                                    <a class="btn-style-2 flex-grow-1 text-btn-uppercase fw-6 show-shopping-cart"><span>Add to cart -&nbsp;</span><span class="tf-qty-price total-price">$79.99</span></a>
+                                </div>
+                                <a href="#" class="btn-style-3 text-btn-uppercase">Buy it now</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+<!-- /quickView -->
+
+<script type="text/javascript" src="~/content/js/main.js"></script>
+
+<script src="~/content/js/sibforms.js" defer></script>

@@ -98,11 +98,13 @@
             <div class="modal-body">
                 <form id="productForm" method="post" enctype="multipart/form-data" asp-controller="Admin" asp-action="Create">
                     <div class="row">
+                        <input type="hidden" id="productId" name="productId" value="">
+                        <input type="hidden" id="productsImageId" name="productsImageId" value="">
                         <!-- Product Name -->
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label class="form-label fw-bold">Product Name</label>
-                                <input class="form-control" placeholder="Enter product name" required>
+                                <input id="productname" class="form-control" placeholder="Enter product name" required>
                                 <span class="text-danger"></span>
                             </div>
                         </div>
@@ -111,7 +113,7 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label class="form-label fw-bold">Type</label>
-                                <input name="ProductImagesType" class="form-control" placeholder="Type" required>
+                                <input id="productImagesType" name="ProductImagesType" class="form-control" placeholder="Type" required>
                             </div>
                         </div>
 
@@ -119,7 +121,7 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label class="form-label fw-bold">Color</label>
-                                <input name="ProductImagesColor" class="form-control" placeholder="Color" required>
+                                <input id="productImagesColor" name="ProductImagesColor" class="form-control" placeholder="Color" required>
                             </div>
                         </div>
                     </div>
@@ -207,7 +209,7 @@
                         </div>
                     </div>
                     <div class="d-flex float-end">
-                        <input type="button" value="Add More" id="addImage" onclick="AjaxSubmit()" class="btn btn-primary" />
+                        <input type="button" value="Save" id="saveButton" onclick="handleSave()" class="btn btn-primary" />
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     </div>
                 </form>
@@ -223,6 +225,18 @@
 
 <!-- Initialize DataTable -->
 <script type="text/javascript">
+
+    // Handle image preview
+           function previewImage(input, previewId) {
+               if (input.files && input.files[0]) {
+                   let reader = new FileReader();
+                   reader.onload = function (e) {
+                       $("#" + previewId).attr("src", e.target.result);
+                   };
+                   reader.readAsDataURL(input.files[0]);
+               }
+           }
+
         $(document).ready(function () {
             $('#productsTable').DataTable({
                 "paging": true,      // Enable pagination
@@ -254,16 +268,7 @@
                 productName = $(this).val();
             });
 
-            // Handle image preview
-            function previewImage(input, previewId) {
-                if (input.files && input.files[0]) {
-                    let reader = new FileReader();
-                    reader.onload = function (e) {
-                        $("#" + previewId).attr("src", e.target.result);
-                    };
-                    reader.readAsDataURL(input.files[0]);
-                }
-            }
+           
 
             // Attach change event to file inputs correctly
             $("#LargeImageUpload").change(function () {
@@ -374,4 +379,250 @@
                     }
                     });
            }
+
+
+       // Function to Edit Product
+        async function editProduct(productId,productsImageId) {
+                try {
+                    const url = `/Admin/Edit/${productId}?productsImageId=${productsImageId}`;
+
+                    // Fetch product data using async/await with $.ajax
+                    let product = await $.ajax({
+                       url: url,
+                        type: 'GET',
+                        dataType: 'json'
+                    });
+
+                    // Populate product details in the modal
+                    document.getElementById("ProductModalLabel").innerText = "Edit Product";
+                    document.getElementById("productId").value = product.productId;
+
+                    document.getElementById("productname").value = product.name;
+
+
+                    // Populate other fields as necessary
+
+                    // Clear existing images
+                    let imageContainer = document.getElementById("imageContainer");
+                    imageContainer.innerHTML = '';
+
+                    // Populate product images
+                        product.productImages.forEach((image, index) => {
+                            let imageEntry = document.createElement('div');
+                            imageEntry.className = 'row image-entry';
+
+                               document.getElementById("productsImageId").value = image.productsImageId;
+                               document.getElementById("productImagesType").value = image.type;
+                               document.getElementById("productImagesColor").value = image.color;
+
+                            imageEntry.innerHTML = `
+
+                                <div class="col-md-4 mt-3">
+                                     <label class="form-label fw-bold">Image (Large)</label>
+                                     <div class="img-preview-container" onclick="document.getElementById('LargeImageUpload').click();">
+                                         <img id="largePreviewImage" src="${image.largeImage || '/uploads/products/default.jpg'}"
+                                             class="img-thumbnail" style="width:100%; height:185px;">
+                                     </div>
+                                     <input type="file" id="LargeImageUpload" name="LargeImageUpload" class="form-control d-none"
+                                         accept="image/*" onchange="previewImage(this, 'largePreviewImage')">
+                                 </div>
+
+                            <div class="col-md-4 mt-3">
+                                <label class="form-label fw-bold">Image (Medium)</label>
+                                <div class="img-preview-container" onclick="document.getElementById('MediumImageUpload').click();">
+                                    <img id="mediumPreviewImage" src="${image.mediumImage || '/uploads/products/default.jpg'}" class="img-thumbnail" style="width:100%; height:185px;">
+                                </div>
+                                <input type="file" id="MediumImageUpload" name="MediumImageUpload" class="form-control d-none"
+                                accept="image/*" onchange="previewImage(this, 'mediumPreviewImage')">
+                            </div>
+
+                            <div class="col-md-4 mt-3">
+                                <label class="form-label fw-bold">Image (Small)</label>
+                                <div class="img-preview-container" onclick="document.getElementById('SmallImageUpload').click();">
+                                    <img id="smallPreviewImage" src="${image.smallImage || '/uploads/products/default.jpg'}" class="img-thumbnail" style="width:100%; height:185px;">
+                                </div>
+                                <input type="file" id="SmallImageUpload" name="SmallImageUpload" class="form-control d-none"
+                                accept="image/*" onchange="previewImage(this, 'smallPreviewImage')">
+                            </div>
+                            <div class="col-md-12 mt-3">
+                                    <label class="form-label fw-bold">Description</label>
+                                    <textarea name="ProductImagesDescription" class="form-control" placeholder="Enter product description" required>${image.description}</textarea>
+                                </div>
+                                <div class="col-md-4 mt-3">
+                                    <label class="form-label fw-bold">Quantity</label>
+                                    <input name="ProductImagesQuantity" class="form-control" placeholder="Quantity" value="${image.quantity}" required>
+                                </div>
+                                <div class="col-md-4 mt-3">
+                                    <label class="form-label fw-bold">MRP</label>
+                                    <input name="ProductImagesMRP" class="form-control" placeholder="MRP" value="${image.mrp}" required>
+                                </div>
+                                <div class="col-md-4 mt-3">
+                                    <label class="form-label fw-bold">Discount</label>
+                                    <input name="ProductImagesDiscount" class="form-control" placeholder="Discount" value="${image.discount}" required>
+                                </div>
+                                <div class="col-md-4 mt-3">
+                                    <label class="form-label fw-bold">Price</label>
+                                    <input name="price-input" class="form-control price-input" placeholder="Price" value="${image.price}" readonly>
+                                </div>
+                                  <div class="col-md-4 mt-3">
+                                    <label class="form-label fw-bold">Arriving Days</label>
+                                    <input name="ProductImagesArrivingDays" class="form-control" placeholder="Arriving Days" value="${image.arrivingDays}" required>
+                                </div>
+                                `;
+                            imageContainer.appendChild(imageEntry);
+
+                             $("#largePreviewImage").attr("src", product.largeImage || "https://via.placeholder.com/300");
+                             $("#mediumPreviewImage").attr("src", product.mediumImage || "https://via.placeholder.com/150");
+                             $("#smallPreviewImage").attr("src", product.smallImage || "https://via.placeholder.com/150");
+
+                             // Trigger price calculation
+                             calculatePrice();
+                        });
+
+
+                       // Attach event listeners to recalculate price when MRP or Discount changes
+                       $(document).on("input", "input[name^='ProductImagesMRP'], input[name^='ProductImagesDiscount']", function () {
+                                 calculatePrice();
+                       });
+                       // Show the modal
+                       let productModal = new bootstrap.Modal(document.getElementById("ProductModal"));
+                       productModal.show();
+                }
+                catch (error) {
+                             console.error('Error fetching product data:', error);
+                             alert('An error occurred while fetching product data.');
+                }
+        }
+
+         // Function to Calculate Price Based on MRP & Discount
+         function calculatePrice() {
+             $("input[name^='ProductImagesMRP']").each(function (index) {
+                                   let mrp = parseFloat($(this).val()) || 0;
+                                   let discount = parseFloat($(`input[name='ProductImagesDiscount']`).val()) || 0;
+                                   let price = mrp - (mrp * discount / 100); // Apply discount percentage
+                                   $(".price-input").val(price.toFixed(2)); // Update calculated price field
+                               });
+         }
+
+         // Automatically recalculate price when MRP or Discount changes
+         $(document).on("input", "input[name^='ProductImagesMRP'], input[name^='ProductImagesDiscount']", function () {
+                               calculatePrice();
+                           });
+
+       function handleSave() {
+           let productId = $("#productId").val();
+           let productsImageId = $("#productsImageId").val();
+
+           if (productId && productsImageId) {
+               updateProduct();  // If both exist, update product
+           } else {
+                  AjaxSubmit();  // If both are empty, add product
+           }
+       }
+
+       function updateProduct() {
+           //alert("Updating product...");
+
+           let productsList = [];
+
+           var largeImageInput = document.getElementById("LargeImageUpload");
+           var mediumImageInput = document.getElementById("MediumImageUpload");
+           var smallImageInput = document.getElementById("SmallImageUpload");
+
+           let productId = $("#productId").val();
+           let productsImageId = $("#productsImageId").val();
+
+           if (!productId || !productsImageId) {
+               alert("Product ID or Product Image ID is missing.");
+               return;
+           }
+
+           calculatePrice();
+
+           let productData = {
+               ProductId: productId,
+               ProductsImageId: productsImageId,
+               Name: $("#productForm input[placeholder='Enter product name']").val() || "",
+               Type: $(`input[name='ProductImagesType']`).val() || "",
+               Color: $(`input[name='ProductImagesColor']`).val() || "",
+               Description: $(`textarea[name='ProductImagesDescription']`).val() || "",
+               LargeImage: largeImageInput?.files?.length ? largeImageInput.files.item(0).name : null,
+               MediumImage: mediumImageInput?.files?.length ? mediumImageInput.files.item(0).name : null,
+               SmallImage: smallImageInput?.files?.length ? smallImageInput.files.item(0).name : null,
+               Quantity: $(`input[name='ProductImagesQuantity']`).val() || "0",
+               MRP: $(`input[name='ProductImagesMRP']`).val() || "0",
+               Discount: $(`input[name='ProductImagesDiscount']`).val() || "0",
+               Price: $(".price-input").val() || "0",
+               ArrivingDays: parseInt($(`input[name='ProductImagesArrivingDays']`).val()) || 0
+           };
+
+           productsList.push(productData);
+           console.log("Updated Product List:", productsList);
+
+           let url = `/Admin/Edit/${productId}?productsImageId=${productsImageId}`;
+           let data = new FormData($("#productForm")[0]);
+
+           productsList.forEach((product, index) => {
+               data.append(`productList[${index}].ProductId`, product.ProductId);
+               data.append(`productList[${index}].ProductsImageId`, product.ProductsImageId);
+               data.append(`productList[${index}].Name`, product.Name);
+               data.append(`productList[${index}].Type`, product.Type);
+               data.append(`productList[${index}].Color`, product.Color);
+               data.append(`productList[${index}].Description`, product.Description);
+               data.append(`productList[${index}].LargeImage`, product.LargeImage || "");
+               data.append(`productList[${index}].MediumImage`, product.MediumImage || "");
+               data.append(`productList[${index}].SmallImage`, product.SmallImage || "");
+               data.append(`productList[${index}].Quantity`, product.Quantity || "0");
+               data.append(`productList[${index}].MRP`, product.MRP || "0");
+               data.append(`productList[${index}].Discount`, product.Discount || "0");
+               data.append(`productList[${index}].Price`, product.Price || "0");
+               data.append(`productList[${index}].ArrivingDays`, product.ArrivingDays || "0");
+           });
+
+           let largeImageFile = $("#LargeImageUpload")[0]?.files[0];
+           let mediumImageFile = $("#MediumImageUpload")[0]?.files[0];
+           let smallImageFile = $("#SmallImageUpload")[0]?.files[0];
+
+           if (largeImageFile) data.append("largeImageFile", largeImageFile);
+           if (mediumImageFile) data.append("mediumImageFile", mediumImageFile);
+           if (smallImageFile) data.append("smallImageFile", smallImageFile);
+
+           // Debug: Check FormData contents
+           console.log("FormData Contents:");
+           for (let pair of data.entries()) {
+               console.log(pair[0], pair[1]);
+           }
+
+           $.ajax({
+               url: url,
+               type: 'POST',
+               data: data, // Use FormData instead of productsList
+               contentType: false,
+               processData: false,
+               success: function (response) {
+                   if (response.success) {
+                       alert("Product updated successfully!");
+
+                        //  Reset form fields but keep the product name
+                           $("#productForm")[0].reset();
+                           $("#LargeImageUpload, #MediumImageUpload, #SmallImageUpload").val("");
+
+                           $("#largePreviewImage").attr("src", "https://via.placeholder.com/300");
+                           $("#mediumPreviewImage").attr("src", "https://via.placeholder.com/150");
+                           $("#smallPreviewImage").attr("src", "https://via.placeholder.com/150");
+
+                           $("#productForm input[placeholder='Enter product name']").val(productData.Name);
+                           $("#ProductModal").modal("show");
+
+                           location.reload();
+                   } else {
+                       alert(response.message);
+                   }
+               },
+               error: function () {
+                   alert("Failed to update product.");
+               }
+           });
+       }
+
 </script>

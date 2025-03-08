@@ -60,7 +60,7 @@ namespace ECommerce.Controllers
                                     ProductId = productId,
                                     Type = reader.GetString(reader.GetOrdinal("Type")),
                                     Color = reader.GetString(reader.GetOrdinal("Color")),
-                                    LargeImage = reader.GetString(reader.GetOrdinal("Image")),
+                                    LargeImage = reader.GetString(reader.GetOrdinal("LargeImage")),
                                     Description = reader.GetString(reader.GetOrdinal("Description")),
                                     Quantity = reader.GetDouble(reader.GetOrdinal("Quantity")),
                                     MRP = reader.GetDouble(reader.GetOrdinal("MRP")),

@@ -211,119 +211,303 @@ namespace ECommerce.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Edit(int id)
+        public async Task<IActionResult> Edit(int id, int productsImageId)
         {
-            ProductsImage image = new ProductsImage();
-            string productName = "";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
+            try
             {
-                await conn.OpenAsync();
-
-                using (SqlCommand cmd = new SqlCommand(@"
-            SELECT pi.*, p.Name AS ProductName 
-            FROM ProductsImage pi
-            JOIN Products p ON pi.ProductId = p.ProductId
-            WHERE pi.ProductsImageId = @ProductsImageId", conn))
+                using (SqlConnection conn = new SqlConnection(_connectionString))
                 {
-                    cmd.Parameters.AddWithValue("@ProductsImageId", id);
+                    await conn.OpenAsync();
 
-                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    using (SqlCommand cmd = new SqlCommand("GetProductById", conn))
                     {
-                        if (await reader.ReadAsync())
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.AddWithValue("@ProductId", id);
+                        cmd.Parameters.AddWithValue("@ProductsImageId", productsImageId);
+
+                        using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                         {
-                            image.ProductsImageId = reader.GetInt32(reader.GetOrdinal("ProductsImageId"));
-                            image.ProductId = reader.GetInt32(reader.GetOrdinal("ProductId"));
-                            image.Type = reader.GetString(reader.GetOrdinal("Type"));
-                            image.Color = reader.GetString(reader.GetOrdinal("Color"));
-                            image.LargeImage = reader.GetString(reader.GetOrdinal("Image"));
-                            image.Description = reader.GetString(reader.GetOrdinal("Description"));
-                            image.Quantity = reader.GetDouble(reader.GetOrdinal("Quantity"));
-                            image.MRP = reader.GetDouble(reader.GetOrdinal("MRP"));
-                            image.Discount = reader.GetInt32(reader.GetOrdinal("Discount"));
-                            image.Price = reader.GetDouble(reader.GetOrdinal("Price"));
-                            image.ArrivingDays = reader.GetInt32(reader.GetOrdinal("ArrivingDays"));
-                            // Get Product Name
-                            productName = reader.GetString(reader.GetOrdinal("ProductName"));
+                            List<Products> product = new List<Products>();
+
+                            while (await reader.ReadAsync())
+                            {
+                                var products = new Products
+                                {
+                                    ProductId = reader.GetInt32(reader.GetOrdinal("ProductId")),
+                                    Name = reader.GetString(reader.GetOrdinal("Name")),
+                                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                                    // Initialize ProductImages as an empty list
+                                    ProductImages = new List<ProductsImage>()
+                                };
+
+                                if (!reader.IsDBNull(reader.GetOrdinal("ProductsImageId")))
+                                {
+                                    var productImage = new ProductsImage
+                                    {
+                                        ProductsImageId = reader.GetInt32(reader.GetOrdinal("ProductsImageId")),
+                                        Type = reader.GetString(reader.GetOrdinal("Type")),
+                                        Color = reader.GetString(reader.GetOrdinal("Color")),
+                                        LargeImage = Url.Content("~/uploads/products/" + reader.GetString(reader.GetOrdinal("LargeImage"))),  
+                                        MediumImage = Url.Content("~/uploads/products/" + reader.GetString(reader.GetOrdinal("MediumImage"))),
+                                        SmallImage = Url.Content("~/uploads/products/" + reader.GetString(reader.GetOrdinal("SmallImage"))),
+                                        Description = reader.GetString(reader.GetOrdinal("Description")),
+                                        Quantity = reader.GetDouble(reader.GetOrdinal("Quantity")),
+                                        MRP = reader.GetDouble(reader.GetOrdinal("MRP")),
+                                        Discount = reader.GetInt32(reader.GetOrdinal("Discount")),
+                                        Price = reader.GetDouble(reader.GetOrdinal("Price")),
+                                        ArrivingDays = reader.GetInt32(reader.GetOrdinal("ArrivingDays")),
+                                        IsActive = reader.GetBoolean(reader.GetOrdinal("ImageIsActive"))
+                                    };
+
+                                    products.ProductImages.Add(productImage);
+                                }
+
+                                product.Add(products);
+                            }
+
+                            if (product.Count == 0)
+                            {
+                                return NotFound(new { success = false, message = "Product not found." });
+                            }
+
+                            return Ok(product.FirstOrDefault());
                         }
                     }
                 }
             }
-
-            // Pass product name to View using ViewBag or ViewData
-            ViewBag.ProductName = productName;
-
-            return View(image);
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "Error fetching product data", error = ex.Message });
+            }
         }
 
+
         [HttpPost]
-        public async Task<IActionResult> Edit(ProductsImage model, IFormFile ImageFile, string ProductName, string ExistingImage)
+        public async Task<IActionResult> Edit(int id, int productsImageId, [FromForm] List<Products> productList, IFormFile? largeImageFile, IFormFile? mediumImageFile, IFormFile? smallImageFile)
         {
-            using (SqlConnection conn = new SqlConnection(_connectionString))
+            foreach (var model in productList)
             {
-                await conn.OpenAsync();
-
-                string imagePath = model.LargeImage;
-
-                // Upload new image if provided
-                if (ImageFile == null || ImageFile.Length == 0)
+                using (SqlConnection conn = new SqlConnection(_connectionString))
                 {
-                    imagePath = ExistingImage;
-                }
-                else
-                {
-                    // Upload new image
-                    string uploadPath = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "Products", model.ProductId.ToString());
-                    if (!Directory.Exists(uploadPath))
+                    await conn.OpenAsync();
+
+                    // Check if product exists
+                    using (SqlCommand checkCmd = new SqlCommand("SELECT COUNT(*) FROM Products WHERE ProductId = @ProductId", conn))
                     {
-                        Directory.CreateDirectory(uploadPath);
+                        checkCmd.Parameters.AddWithValue("@ProductId", model.ProductId);
+                        int count = (int)await checkCmd.ExecuteScalarAsync();
+
+                        if (count == 0)
+                        {
+                            return Json(new { success = false, message = "Product not found." });
+                        }
                     }
 
-                    string fileName = $"{model.ProductsImageId}_{Path.GetFileName(ImageFile.FileName)}";
-                    string filePath = Path.Combine(uploadPath, fileName);
-
-                    using (var stream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await ImageFile.CopyToAsync(stream);
-                    }
-
-                    imagePath = $"/uploads/Products/{model.ProductId}/{fileName}";
-                }
-
-                // Update Product Image Details
-                using (SqlCommand cmd = new SqlCommand(@"
-            UPDATE ProductsImage 
-            SET Type = @Type, Color = @Color, MRP = @MRP, Discount = @Discount, 
-                Price = @Price,ArrivingDays = @ArrivingDays, Image = @Image 
-            WHERE ProductsImageId = @ProductsImageId", conn))
-                {
-                    cmd.Parameters.AddWithValue("@ProductsImageId", model.ProductsImageId);
-                    cmd.Parameters.AddWithValue("@Type", model.Type);
-                    cmd.Parameters.AddWithValue("@Color", model.Color);
-                    cmd.Parameters.AddWithValue("@Description", model.Description);
-                    cmd.Parameters.AddWithValue("@Quantity", model.Quantity);
-                    cmd.Parameters.AddWithValue("@MRP", model.MRP);
-                    cmd.Parameters.AddWithValue("@Discount", model.Discount);
-                    cmd.Parameters.AddWithValue("@Price", model.MRP - (model.MRP * model.Discount / 100));
-                    cmd.Parameters.AddWithValue("@ArrivingDays", model.ArrivingDays);
-                    cmd.Parameters.AddWithValue("@Image", imagePath);
-
-                    await cmd.ExecuteNonQueryAsync();
-                }
-
-                if (!string.IsNullOrEmpty(ProductName))
-                {
-                    using (SqlCommand cmd = new SqlCommand("UPDATE Products SET Name = @Name WHERE ProductId = @ProductId", conn))
+                    // Update product details
+                    using (SqlCommand cmd = new SqlCommand("UPDATE Products SET Name = @Name, IsActive = @IsActive WHERE ProductId = @ProductId", conn))
                     {
                         cmd.Parameters.AddWithValue("@ProductId", model.ProductId);
-                        cmd.Parameters.AddWithValue("@Name", ProductName);
+                        cmd.Parameters.AddWithValue("@Name", model.Name);
+                        cmd.Parameters.AddWithValue("@IsActive", true);
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+
+                    // Define base path for product images
+                    string basePath = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "Products", model.ProductId.ToString());
+
+                    // Create directory if it does not exist
+                    if (!Directory.Exists(basePath))
+                    {
+                        Directory.CreateDirectory(basePath);
+                    }
+
+                    // Update Large Image
+                    if (largeImageFile != null)
+                    {
+                        string largeImagePath = Path.Combine(basePath, "Large");
+                        Directory.CreateDirectory(largeImagePath);
+                        string filePath = Path.Combine(largeImagePath, largeImageFile.FileName);
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await largeImageFile.CopyToAsync(stream);
+                        }
+                        model.LargeImage = $"/uploads/Products/{model.ProductId}/Large/{largeImageFile.FileName}";
+                    }
+
+                    // Update Medium Image
+                    if (mediumImageFile != null)
+                    {
+                        string mediumImagePath = Path.Combine(basePath, "Medium");
+                        Directory.CreateDirectory(mediumImagePath);
+                        string filePath = Path.Combine(mediumImagePath, mediumImageFile.FileName);
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await mediumImageFile.CopyToAsync(stream);
+                        }
+                        model.MediumImage = $"/uploads/Products/{model.ProductId}/Medium/{mediumImageFile.FileName}";
+                    }
+
+                    // Update Small Image
+                    if (smallImageFile != null)
+                    {
+                        string smallImagePath = Path.Combine(basePath, "Small");
+                        Directory.CreateDirectory(smallImagePath);
+                        string filePath = Path.Combine(smallImagePath, smallImageFile.FileName);
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await smallImageFile.CopyToAsync(stream);
+                        }
+                        model.SmallImage = $"/uploads/Products/{model.ProductId}/Small/{smallImageFile.FileName}";
+                    }
+
+                    // Update product image details in database
+                    using (SqlCommand cmd = new SqlCommand("UPDATE ProductsImage SET Type = @Type, Color = @Color, LargeImage = @LargeImage, MediumImage = @MediumImage, SmallImage = @SmallImage, Description = @Description, Quantity = @Quantity, MRP = @MRP, Discount = @Discount, Price = @Price, ArrivingDays = @ArrivingDays, IsActive = @IsActive WHERE ProductId = @ProductId AND ProductsImageId = ProductsImageId", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@ProductId", model.ProductId);
+                        cmd.Parameters.AddWithValue("@ProductsImageId", model.ProductsImageId);
+                        cmd.Parameters.AddWithValue("@Type", model.Type);
+                        cmd.Parameters.AddWithValue("@Color", model.Color);
+                        cmd.Parameters.AddWithValue("@LargeImage", $"/uploads/Products/{model.ProductId}/Large/{Path.GetFileName(model.LargeImage)}");
+                        cmd.Parameters.AddWithValue("@MediumImage", $"/uploads/Products/{model.ProductId}/Medium/{Path.GetFileName(model.MediumImage)}");
+                        cmd.Parameters.AddWithValue("@SmallImage", $"/uploads/Products/{model.ProductId}/Small/{Path.GetFileName(model.SmallImage)}");
+                        cmd.Parameters.AddWithValue("@Description", model.Description ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@Quantity", model.Quantity);
+                        cmd.Parameters.AddWithValue("@MRP", model.MRP);
+                        cmd.Parameters.AddWithValue("@Discount", model.Discount);
+                        cmd.Parameters.AddWithValue("@Price", model.MRP - (model.MRP * model.Discount / 100));
+                        cmd.Parameters.AddWithValue("@ArrivingDays", model.ArrivingDays);
+                        cmd.Parameters.AddWithValue("@IsActive", true);
+
                         await cmd.ExecuteNonQueryAsync();
                     }
                 }
             }
 
-            return RedirectToAction("Index");
+            return Json(new { success = true, message = "Product updated successfully." });
         }
+
+
+
+        //[HttpGet]
+        //public async Task<IActionResult> Edit(int id)
+        //{
+        //    ProductsImage image = new ProductsImage();
+        //    string productName = "";
+
+        //    using (SqlConnection conn = new SqlConnection(_connectionString))
+        //    {
+        //        await conn.OpenAsync();
+
+        //        using (SqlCommand cmd = new SqlCommand(@"
+        //    SELECT pi.*, p.Name AS ProductName 
+        //    FROM ProductsImage pi
+        //    JOIN Products p ON pi.ProductId = p.ProductId
+        //    WHERE pi.ProductsImageId = @ProductsImageId", conn))
+        //        {
+        //            cmd.Parameters.AddWithValue("@ProductsImageId", id);
+
+        //            using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+        //            {
+        //                if (await reader.ReadAsync())
+        //                {
+        //                    image.ProductsImageId = reader.GetInt32(reader.GetOrdinal("ProductsImageId"));
+        //                    image.ProductId = reader.GetInt32(reader.GetOrdinal("ProductId"));
+        //                    image.Type = reader.GetString(reader.GetOrdinal("Type"));
+        //                    image.Color = reader.GetString(reader.GetOrdinal("Color"));
+        //                    image.LargeImage = reader.GetString(reader.GetOrdinal("LargeImage"));
+        //                    image.MediumImage = reader.GetString(reader.GetOrdinal("MediumImage"));
+        //                    image.SmallImage = reader.GetString(reader.GetOrdinal("SmallImage"));
+        //                    image.Description = reader.GetString(reader.GetOrdinal("Description"));
+        //                    image.Quantity = reader.GetDouble(reader.GetOrdinal("Quantity"));
+        //                    image.MRP = reader.GetDouble(reader.GetOrdinal("MRP"));
+        //                    image.Discount = reader.GetInt32(reader.GetOrdinal("Discount"));
+        //                    image.Price = reader.GetDouble(reader.GetOrdinal("Price"));
+        //                    image.ArrivingDays = reader.GetInt32(reader.GetOrdinal("ArrivingDays"));
+        //                    // Get Product Name
+        //                    productName = reader.GetString(reader.GetOrdinal("ProductName"));
+        //                }
+        //            }
+        //        }
+        //    }
+
+        //    // Pass product name to View using ViewBag or ViewData
+        //    ViewBag.ProductName = productName;
+
+        //    return View(image);
+        //}
+
+        //[HttpPost]
+        //public async Task<IActionResult> Edit(ProductsImage model, IFormFile ImageFile, string ProductName, string ExistingImage)
+        //{
+        //    using (SqlConnection conn = new SqlConnection(_connectionString))
+        //    {
+        //        await conn.OpenAsync();
+
+        //        string imagePath = model.LargeImage;
+
+        //        // Upload new image if provided
+        //        if (ImageFile == null || ImageFile.Length == 0)
+        //        {
+        //            imagePath = ExistingImage;
+        //        }
+        //        else
+        //        {
+        //            // Upload new image
+        //            string uploadPath = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "Products", model.ProductId.ToString());
+        //            if (!Directory.Exists(uploadPath))
+        //            {
+        //                Directory.CreateDirectory(uploadPath);
+        //            }
+
+        //            string fileName = $"{model.ProductsImageId}_{Path.GetFileName(ImageFile.FileName)}";
+        //            string filePath = Path.Combine(uploadPath, fileName);
+
+        //            using (var stream = new FileStream(filePath, FileMode.Create))
+        //            {
+        //                await ImageFile.CopyToAsync(stream);
+        //            }
+
+        //            imagePath = $"/uploads/Products/{model.ProductId}/{fileName}";
+        //        }
+
+        //        // Update Product Image Details
+        //        using (SqlCommand cmd = new SqlCommand(@"
+        //    UPDATE ProductsImage 
+        //    SET Type = @Type, Color = @Color, MRP = @MRP, Discount = @Discount, 
+        //        Price = @Price,ArrivingDays = @ArrivingDays, LargeImage = @LargeImage,
+        //        MediumImage = @MediumImage,SmallImage=@SmallImage
+        //    WHERE ProductsImageId = @ProductsImageId", conn))
+        //        {
+        //            cmd.Parameters.AddWithValue("@ProductsImageId", model.ProductsImageId);
+        //            cmd.Parameters.AddWithValue("@Type", model.Type);
+        //            cmd.Parameters.AddWithValue("@Color", model.Color);
+        //            cmd.Parameters.AddWithValue("@Description", model.Description);
+        //            cmd.Parameters.AddWithValue("@Quantity", model.Quantity);
+        //            cmd.Parameters.AddWithValue("@MRP", model.MRP);
+        //            cmd.Parameters.AddWithValue("@Discount", model.Discount);
+        //            cmd.Parameters.AddWithValue("@Price", model.MRP - (model.MRP * model.Discount / 100));
+        //            cmd.Parameters.AddWithValue("@ArrivingDays", model.ArrivingDays);
+        //            cmd.Parameters.AddWithValue("@LargeImage", imagePath);
+        //            cmd.Parameters.AddWithValue("@MediumImage", imagePath);
+        //            cmd.Parameters.AddWithValue("@SmallImage", imagePath);
+
+
+        //            await cmd.ExecuteNonQueryAsync();
+        //        }
+
+        //        if (!string.IsNullOrEmpty(ProductName))
+        //        {
+        //            using (SqlCommand cmd = new SqlCommand("UPDATE Products SET Name = @Name WHERE ProductId = @ProductId", conn))
+        //            {
+        //                cmd.Parameters.AddWithValue("@ProductId", model.ProductId);
+        //                cmd.Parameters.AddWithValue("@Name", ProductName);
+        //                await cmd.ExecuteNonQueryAsync();
+        //            }
+        //        }
+        //    }
+
+        //    return RedirectToAction("Index");
+        //}
 
         [HttpPost]
         public async Task<IActionResult> Delete(int id, int productId)
@@ -452,7 +636,9 @@ namespace ECommerce.Controllers
                                     ProductId = productId,
                                     Type = reader.GetString(reader.GetOrdinal("Type")),
                                     Color = reader.GetString(reader.GetOrdinal("Color")),
-                                    LargeImage = reader.GetString(reader.GetOrdinal("Image")),
+                                    LargeImage = reader.GetString(reader.GetOrdinal("LargeImage")),
+                                    MediumImage = reader.GetString(reader.GetOrdinal("MediumImage")),
+                                    SmallImage = reader.GetString(reader.GetOrdinal("SmallImage")),
                                     Description = reader.GetString(reader.GetOrdinal("Description")),
                                     Quantity = reader.GetDouble(reader.GetOrdinal("Quantity")),
                                     MRP = reader.GetDouble(reader.GetOrdinal("MRP")),

@@ -11,7 +11,7 @@
             <div class="tf-breadcrumb-list">
                 <a href="@Url.Action("Index", "Home")" class="text text-caption-1">IShop</a>
                 <i class="icon icon-arrRight"></i>
-                <a href="@Url.Action("Products", "Admin")" class="text text-caption-1">Products</a>
+                <a href="@Url.Action("Products", "Home")" class="text text-caption-1">Products</a>
                 <i class="icon icon-arrRight"></i>
                 <span class="text text-caption-1">@Model.Name</span>
             </div>
@@ -99,13 +99,13 @@
                                     <div class="variant-picker-label mb_12">
                                         Colors:<span class="text-title variant-picker-label-value value-currentColor">@productDetails.Color</span>
                                     </div>
-                                    <div class="variant-picker-values">
-                                        @foreach (var item in product.ProductImages)
+                                    <div class="list-color-product">
+                                        @foreach (var item in Model.ProductImages)
                                         {
-                                            <li asp-action="ProductDetails" asp-route-id="@item.ProductsImageId" class="list-color-item color-swatch active line">
+                                            <a asp-action="ProductDetails" asp-route-id="@item.ProductsImageId" class="list-color-item color-swatch active line">
                                                 <span class="swatch-value" style="background-color: @item.Color;"></span>
-                                                <img class="lazyload" data-src="@item.LargeImage" src="@item.LargeImage" alt="image-product">
-                                            </li>
+                                                @*                                                 <img class="lazyload" data-src="@item.LargeImage" src="@item.LargeImage" alt="image-product"> *@
+                                            </a>
                                         }
                                     </div>
                                 </div>
@@ -114,18 +114,19 @@
                                     <div class="title mb_12">Quantity:</div>
                                     <div class="wg-quantity">
                                         <span class="btn-quantity btn-decrease">-</span>
-                                        <input class="quantity-product" type="text" name="number" value="1">
+                                        <input id="cartQuantity" class="quantity-product" type="text" name="number" value="1">
                                         <span class="btn-quantity btn-increase">+</span>
                                     </div>
                                 </div>
                                 <div>
                                     <div class="tf-product-info-by-btn mb_10">
-                                        <a href="#shoppingCart" data-bs-toggle="modal" class="btn-style-2 flex-grow-1 text-btn-uppercase fw-6 btn-add-to-cart"><span>Add to cart -&nbsp;</span><span class="tf-qty-price total-price">₹@productDetails.Price</span></a>
+                                        @* <a id="addToCartBtn" href="#" data-bs-toggle="modal" class="btn-style-2 flex-grow-1 text-btn-uppercase fw-6 btn-add-to-cart"><span>Add to cart -&nbsp;</span><span class="tf-qty-price total-price">₹@productDetails.Price</span></a> *@
+                                        <a id="addToCartBtn" href="#" data-bs-toggle="modal" class="btn-style-2 flex-grow-1 text-btn-uppercase fw-6 btn-add-to-cart"><span>Add to cart</span></a>
                                     </div>
-                                    <a href="#" class="btn-style-3 text-btn-uppercase">Buy it now</a>
+                                    @* <a href="#" class="btn-style-3 text-btn-uppercase">Buy it now</a> *@
                                 </div>
                                 <div class="tf-product-info-help">
-                                    <div class="tf-product-info-extra-link">
+                                    @* <div class="tf-product-info-extra-link">
                                         <a href="#delivery_return" data-bs-toggle="modal" class="tf-product-extra-icon">
                                             <div class="icon">
                                                 <i class="icon-shipping"></i>
@@ -144,12 +145,12 @@
                                             </div>
                                             <p class="text-caption-1">Share</p>
                                         </a>
-                                    </div>
+                                    </div> *@
                                     <div class="tf-product-info-time">
                                         <div class="icon">
                                             <i class="icon-timer"></i>
                                         </div>
-                                        <p class="text-caption-1">Estimated Delivery:&nbsp;&nbsp;<span>12-26 days</span> (International), <span>3-6 days</span> (United States)</p>
+                                        <p class="text-caption-1">Estimated Delivery:&nbsp;&nbsp;<span>3-10 days</span> (India), <span>10-25 days</span> (International)</p>
                                     </div>
                                     <div class="tf-product-info-return">
                                         <div class="icon">
@@ -159,14 +160,14 @@
                                     </div>
                                 </div>
                                 <ul class="tf-product-info-sku">
-                                    <li>
+                                    @* <li>
                                         <p class="text-caption-1">SKU:</p>
                                         <p class="text-caption-1 text-1">53453412</p>
                                     </li>
                                     <li>
                                         <p class="text-caption-1">Vendor:</p>
                                         <p class="text-caption-1 text-1">Modave</p>
-                                    </li>
+                                    </li> *@
                                     <li>
                                         <p class="text-caption-1">Available:</p>
                                         @if (productDetails.Quantity > 0)
@@ -268,7 +269,7 @@
                                 </div>
                                 <div class="w-100">
                                     <div class="text-btn-uppercase mb_12">Estimated delivery</div>
-                                    <p class="mb_6 font-2">Express: May 10 - May 17</p>
+                                    <p class="mb_6 font-2">Express: 3 - 25 Days</p>
                                     <p class="font-2">Sending from INDIA</p>
                                 </div>
                                 <div class="w-100">
@@ -322,55 +323,57 @@
                     <div class="swiper-wrapper">
                         @if (ViewBag.AllProducts != null && ((List<ECommerce.Models.Products>)ViewBag.AllProducts).Count > 0)
                         {
-                            @foreach (var product in (List<ECommerce.Models.Products>)ViewBag.AllProducts)
+                            var result = (List<ECommerce.Models.Products>)ViewBag.AllProducts;
+                            @foreach (var product in result.Take(4).ToList())
                             {
                                 var productImage = product.ProductImages.FirstOrDefault();
-
-                                <div class="swiper-slide">
-                                    <div class="card-product wow fadeInUp" data-wow-delay="0.1s">
-                                        <div class="card-product-wrapper">
-                                            <a asp-action="ProductDetails" asp-route-id="@productImage.ProductsImageId" class="product-img">
-                                                <img class="lazyload img-product" data-src="@productImage.LargeImage" src="@productImage.LargeImage" alt="image-product">
-                                                <img class="lazyload img-hover" data-src="@productImage.LargeImage" src="@productImage.LargeImage" alt="image-product">
-                                            </a>
-                                            @if (productImage.Discount > 0)
-                                            {
-                                                <div class="on-sale-wrap"><span class="on-sale-item">-@productImage.Discount%</span></div>
-                                            }
-                                            @* <div class="list-product-btn">
+                                if(productImage != null){
+                                    <div class="swiper-slide">
+                                        <div class="card-product wow fadeInUp" data-wow-delay="0.1s">
+                                            <div class="card-product-wrapper">
+                                                <a asp-action="ProductDetails" asp-route-id="@productImage.ProductsImageId" class="product-img">
+                                                    <img class="lazyload img-product" data-src="@productImage.LargeImage" src="@productImage.LargeImage" alt="image-product">
+                                                    <img class="lazyload img-hover" data-src="@productImage.LargeImage" src="@productImage.LargeImage" alt="image-product">
+                                                </a>
+                                                @if (productImage.Discount > 0)
+                                                {
+                                                    <div class="on-sale-wrap"><span class="on-sale-item">-@productImage.Discount%</span></div>
+                                                }
+                                                @* <div class="list-product-btn">
                                             <a href="#quickView" data-bs-toggle="modal" class="box-icon quickview tf-btn-loading">
                                                 <span class="icon icon-eye"></span>
                                                 <span class="tooltip">Quick View</span>
                                             </a>
                                         </div> *@
-                                            <div class="list-btn-main">
-                                                <a href="#shoppingCart" data-bs-toggle="modal" class="btn-main-product">Add To cart</a>
+                                                <div class="list-btn-main">
+                                                    <a asp-action="ProductDetails" asp-route-id="@productImage.ProductsImageId" data-bs-toggle="modal" class="btn-main-product">View product</a>
+                                                </div>
+                                            </div>
+                                            <div class="card-product-info">
+                                                <a asp-action="ProductDetails" asp-route-id="@productImage.ProductsImageId" class="title link">
+                                                    @product.Name
+                                                </a>
+                                                @if (productImage.Discount > 0)
+                                                {
+                                                    <span class="price"><span class="old-price">₹@productImage.MRP</span> ₹@productImage.Price</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="price">₹@productImage.Price</span>
+                                                }
+                                                <ul class="list-color-product">
+                                                    @foreach (var item in product.ProductImages)
+                                                    {
+                                                        <li class="list-color-item color-swatch active line">
+                                                            <span class="swatch-value" style="background-color: @item.Color;"></span>
+                                                            <img class="lazyload" data-src="@item.LargeImage" src="@item.LargeImage" alt="image-product">
+                                                        </li>
+                                                    }
+                                                </ul>
                                             </div>
                                         </div>
-                                        <div class="card-product-info">
-                                            <a asp-action="ProductDetails" asp-route-id="@productImage.ProductsImageId" class="title link">
-                                                @product.Name
-                                            </a>
-                                            @if (productImage.Discount > 0)
-                                            {
-                                                <span class="price"><span class="old-price">₹@productImage.MRP</span> ₹@productImage.Price</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="price">₹@productImage.Price</span>
-                                            }
-                                            <ul class="list-color-product">
-                                                @foreach (var item in product.ProductImages)
-                                                {
-                                                    <li class="list-color-item color-swatch active line">
-                                                        <span class="swatch-value" style="background-color: @item.Color;"></span>
-                                                        <img class="lazyload" data-src="@item.LargeImage" src="@item.LargeImage" alt="image-product">
-                                                    </li>
-                                                }
-                                            </ul>
-                                        </div>
                                     </div>
-                                </div>
+                                }                                
                             }
                         }
                     </div>
@@ -381,3 +384,112 @@
     </div>
 </section>
 <!-- /Ralated Products -->
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let addToCartBtn = document.getElementById("addToCartBtn");
+        let cartQuantity = document.getElementById("cartQuantity");
+        let cartItemCount = document.getElementById("cartItemCount");
+
+        let price = @productDetails?.Price ?? 0;
+        let productName = "@Html.Raw(Model.Name)";
+        let productImage = "@Html.Raw(productDetails?.LargeImage)";
+        let productType = "@Html.Raw(productDetails?.Type)";
+        let productColor = "@Html.Raw(productDetails?.Color)";
+        let productDescription = "@Html.Raw(productDetails?.Description)";
+        let productId  = @Model.ProductId ?? 0;
+        let productsImageId = @productDetails?.ProductsImageId ?? 0;
+        let arrivingDays = @productDetails?.ArrivingDays ?? 0;
+
+        // Load cart from localStorage
+        let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+        //  Function to Update Cart Count
+        function updateCartCount() {
+            let totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+            cartItemCount.innerText = totalItems;
+        }
+
+        //  Function to Add Item to Cart
+        function addToCart() {
+            let quantity = parseInt(cartQuantity.value);
+            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+            // Check if product already exists in cart
+           let existingItem = cartItems.find(item =>
+                item.name === productName &&
+                item.image === productImage &&
+                item.type === productType &&
+                item.color === productColor &&
+                item.description === productDescription &&
+                item.productid === productId &&
+                item.productsimageid === productsImageId &&
+                item.arrivingDays === arrivingDays
+            );
+            if (existingItem) {
+                existingItem.quantity += quantity;
+                existingItem.total = (existingItem.quantity * price).toFixed(2);
+            } else {
+                cartItems.push({
+                    name: productName,
+                    image: productImage,
+                    type: productType,
+                    color: productColor,
+                    description: productDescription,
+                    quantity: quantity,
+                    price: price,
+                    total: (price * quantity).toFixed(2),
+                    productid: productId,
+                    productsimageid: productsImageId,
+                    arrivingDays : arrivingDays
+                });
+            }
+
+            localStorage.setItem("cartItems", JSON.stringify(cartItems));
+            updateCartCount();
+            saveCartToDatabase();
+        }
+
+        async function saveCartToDatabase() {
+            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+            if (cartItems.length === 0) {
+                console.log("Cart is empty. Nothing to save.");
+                return;
+            }
+
+            console.log("Saving cart to database...", cartItems);
+
+            let response = await fetch("/Home/SaveCart", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(cartItems),
+            });
+
+            if (response.ok) {
+                console.log("Cart saved successfully.");
+                 localStorage.setItem("cartItems", JSON.stringify(cartItems));
+                 updateCartCount();
+            } else {
+                console.log("Failed to save cart.", response);
+            }
+        }
+
+        //  Event Listener for "Add to Cart" Button
+        function updateCartCount() {
+            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+            let totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+            cartItemCount.innerText = totalItems;
+        }
+
+        //  Event Listener for Add to Cart Button
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener("click", function () {
+                addToCart();
+                //alert("Item added to cart!");
+            });
+        }
+
+        updateCartCount();
+    });
+</script>

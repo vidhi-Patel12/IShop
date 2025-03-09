@@ -78,7 +78,8 @@ namespace ECommerce.Controllers
                 }
             }
 
-            return View(products);
+            var result = products.Count > 4 ? products.Take(4) : products;
+            return View(result.ToList());
         }
 
         public IActionResult QuickViewByProductImageId(int productImageId)
@@ -284,6 +285,66 @@ namespace ECommerce.Controllers
             ViewBag.AllProducts = allProducts;
 
             return View(product);
+        }
+
+        public async Task<IActionResult> Products()
+        {
+            List<Products> products = new List<Products>();
+
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+
+                using (SqlCommand cmd = new SqlCommand("GetProductsAndImages", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        Dictionary<int, Products> productDict = new Dictionary<int, Products>();
+
+                        while (await reader.ReadAsync())
+                        {
+                            int productId = reader.GetInt32(reader.GetOrdinal("ProductId"));
+
+                            if (!productDict.ContainsKey(productId))
+                            {
+                                productDict[productId] = new Products
+                                {
+                                    ProductId = productId,
+                                    Name = reader.GetString(reader.GetOrdinal("Name")),
+                                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                                    ProductImages = new List<ProductsImage>()
+                                };
+                            }
+
+                            // Add only the first active image
+                            if (!reader.IsDBNull(reader.GetOrdinal("ProductsImageId")))
+                            {
+                                var image = new ProductsImage();
+                                image.ProductsImageId = reader.GetInt32(reader.GetOrdinal("ProductsImageId"));
+                                image.ProductId = productId;
+                                image.Type = reader.GetString(reader.GetOrdinal("Type"));
+                                image.Color = reader.GetString(reader.GetOrdinal("Color"));
+                                image.LargeImage = reader.GetString(reader.GetOrdinal("LargeImage"));
+                                image.Description = reader.GetString(reader.GetOrdinal("Description"));
+                                image.Quantity = reader.GetDouble(reader.GetOrdinal("Quantity"));
+                                image.MRP = reader.GetDouble(reader.GetOrdinal("MRP"));
+                                image.Discount = reader.GetInt32(reader.GetOrdinal("Discount"));
+                                image.Price = reader.GetDouble(reader.GetOrdinal("Price"));
+                                image.ArrivingDays = reader.GetInt32(reader.GetOrdinal("ArrivingDays"));
+                                image.IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive"));
+
+                                productDict[productId].ProductImages.Add(image);
+                            }
+                        }
+
+                        products = productDict.Values.ToList();
+                    }
+                }
+            }
+
+            return View(products);
         }
 
         [HttpGet]

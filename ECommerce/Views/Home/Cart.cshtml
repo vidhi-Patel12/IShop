@@ -1,289 +1,164 @@
-﻿<html>
+﻿@model List<ShoppingCart>
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-<body>
-    <div class="container mt-4">
-        <h2>🛒 Shopping Cart</h2>
-        <hr />
+<!-- page-title -->
+<div class="page-title" style="background-image: url('@Url.Content("~/content/images/section/page-title.jpg")');">
+    <div class="container-full">
         <div class="row">
-            <div id="cartSummary"></div>
-        </div>
-
-        <!-- Empty Cart Message (Initially Hidden) -->
-        <div id="emptyCartMessage" class="text-center mt-4" style="display: none;">
-            <h5>No items in the cart</h5>
-            <p>Start shopping now!</p>
-            <a href="/Home/Index" class="btn btn-primary">Go to Shop</a>
-        </div>
-
-        <!-- Checkout Section (Initially Hidden) -->
-        <div id="cartSummarySection" style="display: none;">
-            <div class="float-end">
-                <div><h4><strong>Subtotal:</strong> ₹<span id="cartTotal">0.00</span></h4></div>
+            <div class="col-12">
+                <h3 class="heading text-center">Shopping Cart</h3>
             </div>
-            <br /><br />
-            <div>
-                <div class="float-end">
-                    <a id="checkoutLink" asp-controller="Home" asp-action="Checkout" class="btn btn-success mb-5">
-                        ✔ Proceed to Checkout
-                    </a>
+        </div>
+    </div>
+</div>
+<!-- /page-title -->
+<!-- Section cart -->
+<section class="flat-spacing">
+    <div id="cartSummary" class="container">
+        <div class="row">
+            <div class="col-xl-8">
+                <div class="tf-cart-sold">
+                    <div class="notification-sold bg-surface">
+                        <img class="icon" src="~/content/images/logo/icon-fire.png" alt="img">
+                        <div class="count-text">Your cart will expire in <div class="js-countdown time-count" data-timer="600" data-labels=":,:,:,"></div> minutes! Please checkout now before your items sell out!</div>
+                    </div>
+                    <div class="notification-progress">
+                        <div class="text">Buy <span class="fw-semibold text-primary">₹80</span> more to get <span class="fw-semibold">Free delivery</span></div>
+                        <div class="progress-cart">
+                            <div class="value" style="width: 0%;" data-progress="75">
+                                <span class="round"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <form>
+                    <table class="tf-table-page-cart">
+                        <thead>
+                            <tr>
+                                <th>Products</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Total Price</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="cartDisplay">
+                            @foreach (var item in Model)
+                            {
+                                <tr class="tf-cart-item file-delete">
+                                    <td class="tf-cart-item_product">
+                                        <a href="product-detail.html" class="img-box">
+                                            <img src="@item.Image" alt="product">
+                                        </a>
+                                        <div class="cart-info">
+                                            <a href="product-detail.html" class="cart-title link">@item.Name</a>
+                                            <div id="pColor">@item.Color</div>
+                                        </div>
+                                    </td>
+                                    <td data-cart-title="Price" class="tf-cart-item_price text-center">
+                                        <div class="cart-price"><span class="text-button new-price price-on-sale">₹@item.Price</span></div>
+                                    </td>
+                                    <td data-cart-title="Quantity" class="tf-cart-item_quantity">
+                                        <div class="wg-quantity mx-md-auto">
+                                            <span class="btn-quantity btn-decrease">-</span>
+                                            <input id="cartQuantity" type="text" class="quantity-product" name="number" value="@item.Quantity">
+                                            <span class="btn-quantity btn-increase">+</span>
+                                        </div>
+                                    </td>
+                                    <td data-cart-title="Total" class="tf-cart-item_total text-center">
+                                        <div class="cart-total text-button total-price">₹@item.Total</div>
+                                    </td>
+                                    <td data-cart-title="Remove" class="remove-cart"><span class="remove icon icon-close"></span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <div class="ip-discount-code">
+                        <input type="text" placeholder="Add voucher discount">
+                        <button class="tf-btn"><span class="text">Apply Code</span></button>
+                    </div>
+                    @* <div class="group-discount">
+                        <div class="box-discount">
+                            <div class="discount-top">
+                                <div class="discount-off">
+                                    <div class="text-caption-1">Discount</div>
+                                    <span class="sale-off text-btn-uppercase">10% OFF</span>
+                                </div>
+                                <div class="discount-from">
+                                    <p class="text-caption-1">For all orders <br> from 200$</p>
+                                </div>
+                            </div>
+                            <div class="discount-bot">
+                                <span class="text-btn-uppercase">Mo234231</span>
+                                <button class="tf-btn"><span class="text">Apply Code</span></button>
+                            </div>
+                        </div>
+                    </div> *@
+                </form>
+            </div>
+            <div id="cartSummarySection" class="col-xl-4">
+                <div class="fl-sidebar-cart">
+                    <div class="box-order bg-surface">
+                        <h5 class="title">Order Summary</h5>
+                        <div class="subtotal text-button d-flex justify-content-between align-items-center">
+                            <span>Subtotal</span>
+                            <span class="total">-$80.00</span>
+                        </div>
+                        <div class="discount text-button d-flex justify-content-between align-items-center">
+                            <span>Discounts</span>
+                            <span class="total">-$80.00</span>
+                        </div>
+                        <div class="ship">
+                            <span class="text-button">Shipping</span>
+                            <div class="flex-grow-1">
+                                <fieldset class="ship-item">
+                                    <input type="radio" name="ship-check" class="tf-check-rounded" id="free" checked>
+                                    <label for="free">
+                                        <span>Free Shipping</span>
+                                        <span class="price">$0.00</span>
+                                    </label>
+                                </fieldset>
+                                <fieldset class="ship-item">
+                                    <input type="radio" name="ship-check" class="tf-check-rounded" id="local">
+                                    <label for="local">
+                                        <span>Local:</span>
+                                        <span class="price">$35.00</span>
+                                    </label>
+                                </fieldset>
+                                <fieldset class="ship-item">
+                                    <input type="radio" name="ship-check" class="tf-check-rounded" id="rate">
+                                    <label for="rate">
+                                        <span>Flat Rate:</span>
+                                        <span class="price">$35.00</span>
+                                    </label>
+                                </fieldset>
+                            </div>
+                        </div>
+                        <h5 class="total-order d-flex justify-content-between align-items-center">
+                            <span>Total</span>
+                            <span class="total">$186,99</span>
+                        </h5>
+                        <div class="box-progress-checkout">
+                            <fieldset class="check-agree">
+                                <input type="checkbox" id="check-agree" class="tf-check-rounded">
+                                <label for="check-agree">
+                                    I agree with the <a href="term-of-use.html">terms and conditions</a>
+                                </label>
+                            </fieldset>
+                            <a href="checkout.html" class="tf-btn btn-reset">Process To Checkout</a>
+                            <p class="text-button text-center">Or continue shopping</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</body>
-</html>
-
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    let cartSummary = document.getElementById("cartSummary");
-    let cartTotal = document.getElementById("cartTotal");
-    let cartSummarySection = document.getElementById("cartSummarySection");
-    let emptyCartMessage = document.getElementById("emptyCartMessage");
-    let cartItemCount = document.getElementById("cartItemCount");
-    let checkoutLink = document.getElementById("checkoutLink");
-
-    let cartItems = JSON.parse(localStorage.getItem("cartItems")) || loadCartFromCookies() || [];
-    let totalPrice = 0;
-
-    function updateCartCount() {
-        let totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
-        if (cartItemCount) cartItemCount.innerText = totalItems;
-    }
-
-    function saveCartToCookies() {
-        document.cookie = `cartItems=${encodeURIComponent(JSON.stringify(cartItems))}; path=/; max-age=604800`;
-    }
-
-    function loadCartFromCookies() {
-        let cookies = document.cookie.split("; ");
-        for (let cookie of cookies) {
-            let [name, value] = cookie.split("=");
-            if (name === "cartItems" && value) {
-                try {
-                    return JSON.parse(decodeURIComponent(value));
-                } catch (error) {
-                    console.error("Error parsing cart cookie:", error);
-                    return [];
-                }
-            }
-        }
-        return [];
-    }
-
-        async function loadCartFromDatabase() {            
-            try {
-                let response = await fetch("/Home/Cart");
-                let data = await response.json();
-
-                if (data.success && data.cartItems.length > 0) {
-                    console.log("Cart loaded from database:", data.cartItems);
-                    localStorage.setItem("cartItems", JSON.stringify(data.cartItems));
-                    renderCart(); // Update UI
-                } else {
-                    console.log("No items in the cart.");
-                }
-            } catch (error) {
-                console.error("Error loading cart from database:", error);
-            }
-        }
-
-         async function saveCartToDatabase() {
-                console.log("Saving cart to database...", cartItems);
-
-                if (cartItems.length === 0) {
-                    console.log("Cart is empty. Calling delete API...");
-                    await deleteCartItem();  // Call delete function when cart is empty
-                    return;
-                }
-                
-                try {
-                    let response = await fetch("/Home/SaveCart", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(cartItems),
-                    });
-
-                    if (response.ok) {
-                        console.log("Cart saved successfully.");
-                        localStorage.setItem("cartItems", JSON.stringify(cartItems));
-                        updateCartCount();
-                    } else {
-                        console.log("Failed to save cart.", response);
-                    }
-                } catch (error) {
-                    console.error("Error saving cart:", error);
-                }
-         }
-
-    function renderCart() {
-        cartSummary.innerHTML = "";
-        totalPrice = 0;
-
-        if (cartItems.length === 0) {
-            cartSummarySection.style.display = "none";
-            emptyCartMessage.style.display = "block";
-            return;
-        } else {
-            cartSummarySection.style.display = "block";
-            emptyCartMessage.style.display = "none";
-        }
-
-        cartItems.forEach((item, index) => {
-            totalPrice += parseFloat(item.total);
-            cartSummary.innerHTML += `
-                <div class="row">
-                    <div class="col-md-4 mb-2">
-                        <img src="${item.image}" width="100%" height="270px">
-                    </div>
-                    <div class="col-md-6">
-                        <h5>${capitalizeWords(item.name)} | ${capitalizeWords(item.type)} | ${capitalizeWords(item.color)}</h5>
-                        <br/>
-                        <h6>${capitalizeWords(item.description)}</h6>
-                        <br/><br/>
-                        <div class="mb-0">
-                            <button class="btn btn-sm btn-outline-secondary decrease-qty" data-index="${index}">-</button>
-                            ${item.quantity}
-                            <button class="btn btn-sm btn-outline-secondary increase-qty" data-index="${index}">+</button> |
-                            <button class="btn btn-danger btn-sm remove-item" data-index="${index}">Remove</button>
-                        </div>
-                        <br/>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="float-end mt-0">
-                            <h5>₹${item.price}</h5>
-                            <br/><br/>
-                            <h5>₹${item.total}</h5>
-                        </div>
-                    </div>
-                </div>
-                <hr />
-            `;
-        });
-
-        cartTotal.innerText = totalPrice.toFixed(2);
-        attachEventListeners();
-        saveCartToCookies();
-        saveCartToDatabase();
-        }
-
-    function capitalizeWords(str) {
-        return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
-    }
-
-    async function updateQuantity(index, amount) {
-        if (!cartItems[index]) return;
-
-        let item = cartItems[index];
-        let newQty = item.quantity + amount;
-
-        if (newQty < 1) {
-            cartItems.splice(index, 1);
-                saveCartToLocalStorageAndCookies();
-            renderCart();
-
-            // Call API to delete item from DB
-            await deleteCartItem(item.productid, item.productsimageid);
-            updateCartCount();
-        } 
-        else 
-        {
-            let stockAvailable = await checkStockAvailability(item.productsimageid, newQty);
-            if (!stockAvailable) {
-                alert(`Not enough stock for ${item.name}.`);
-                return;
-            }
-            item.quantity = newQty;
-            item.total = (newQty * item.price).toFixed(2);
-            saveCartToLocalStorageAndCookies();
-            renderCart();
-        }
-
-        saveCartToLocalStorageAndCookies();
-        renderCart();
-    }
-
-    async function checkStockAvailability(productImageId, requestedQty) {
-        try {
-            let response = await fetch(`/Home/CheckStockAvailability?productImageId=${productImageId}&requestedQty=${requestedQty}`);
-            let data = await response.json();
-            return response.ok && data.success;
-        } catch (error) {
-            console.error("Error checking stock:", error);
-            return false;
-        }
-    }
-
-    function attachEventListeners() {
-         document.querySelectorAll(".remove-item").forEach(button => {
-             button.addEventListener("click", async function () {
-                            let index = this.getAttribute("data-index");
-                            let item = cartItems[index];
-
-                            if (!item) return;
-
-                            // Remove from local cart
-                            cartItems.splice(index, 1);
-                            saveCartToLocalStorageAndCookies();
-                            renderCart();
-
-                            // Call API to delete item from DB
-                            await deleteCartItem(item.productid, item.productsimageid);
-             });
-         });
-
-        document.querySelectorAll(".increase-qty").forEach(button => {
-            button.addEventListener("click", function () {
-                let index = this.getAttribute("data-index");
-                updateQuantity(index, 1);
-            });
-        });
-
-        document.querySelectorAll(".decrease-qty").forEach(button => {
-            button.addEventListener("click", function () {
-                let index = this.getAttribute("data-index");
-                updateQuantity(index, -1);
-            });
-        });
-
-        updateCartCount();
-    }
-
-        async function deleteCartItem(productId, productsImageId) {
-             try {
-                        let response = await fetch("/Home/DeleteCartItem", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ProductId: productId, ProductsImageId: productsImageId }),
-                        });
-
-                        let result = await response.json();
-
-                        if (result.success) {
-                            console.log("Item deleted successfully from the cart.");
-                            updateCartCount();
-                        } else {
-                            console.log("Failed to delete item from the cart.", result.message);
-                        }
-                    } catch (error) {
-                        console.error("Error deleting item from cart:", error);
-             }
-        }
-
-    function saveCartToLocalStorageAndCookies() {
-        localStorage.setItem("cartItems", JSON.stringify(cartItems));
-        saveCartToCookies();
-    }
-
-    checkoutLink.addEventListener("click", function () {
-        localStorage.setItem("checkoutItems", JSON.stringify(cartItems));
-        saveCartToCookies();
-        saveCartToDatabase();
-    });
-
-    loadCartFromDatabase();
-    renderCart();
-});
-
-</script>
+    <!-- Empty Cart Message (Initially Hidden) -->
+    <div id="emptyCartMessage" class="text-center mt-4" style="display: none;">
+        <h5>No items in the cart</h5>
+        <p>Start shopping now!</p>
+        <a href="/Home/Index" class="btn btn-primary">Shop Now</a>
+    </div>
+</section>
+<!-- /Section cart -->

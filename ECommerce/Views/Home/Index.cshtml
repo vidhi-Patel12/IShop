@@ -3,7 +3,7 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Home";
 }
-<input type="hidden" id="hdnProductImageId"/>
+<input type="hidden" id="hdnProductImageId" />
 <!-- Slider -->
 <div class="tf-slideshow slider-style2 slider-effect-fade">
     <div dir="ltr" class="swiper tf-sw-slideshow" data-preview="1" data-tablet="1" data-mobile="1" data-centered="false" data-space="0" data-space-mb="0" data-loop="true" data-auto-play="false">
@@ -19,7 +19,7 @@
                                     <p class="fade-item fade-item-2 body-text-1 text-white">Discover the secret to rejuvenating your skin, one gentle touch at a <br> time with our special collection of cosmetics.</p>
                                 </div>
                                 <div class="fade-item fade-item-3 box-btn-slider">
-                                    <a href="shop-default-grid.html" class="tf-btn btn-fill btn-square btn-white"><span class="text">Shop Now</span></a>
+                                    <a href="@Url.Action("Products", "Home")" class="tf-btn btn-fill btn-square btn-white"><span class="text">Shop Now</span></a>
                                 </div>
                             </div>
                         </div>
@@ -37,7 +37,7 @@
                                     <p class="fade-item fade-item-2 body-text-1 text-white">Dive into our collection and uncover the power of your true skin!</p>
                                 </div>
                                 <div class="fade-item fade-item-3 box-btn-slider">
-                                    <a href="shop-default-grid.html" class="tf-btn btn-fill btn-square btn-white"><span class="text">Shop Now</span></a>
+                                    <a href="@Url.Action("Products", "Home")" class="tf-btn btn-fill btn-square btn-white"><span class="text">Shop Now</span></a>
                                 </div>
                             </div>
                         </div>
@@ -55,7 +55,7 @@
                                     <p class="fade-item fade-item-2 body-text-1 text-white">Let us guide you through a journey of skin transformation, from <br> confidence to radiance.</p>
                                 </div>
                                 <div class="fade-item fade-item-3 box-btn-slider">
-                                    <a href="shop-default-grid.html" class="tf-btn btn-fill btn-square btn-white"><span class="text">Shop Now</span></a>
+                                    <a href="@Url.Action("Products", "Home")" class="tf-btn btn-fill btn-square btn-white"><span class="text">Shop Now</span></a>
                                 </div>
                             </div>
                         </div>
@@ -168,52 +168,65 @@
                 @foreach (var product in Model)
                 {
                     var productImage = product.ProductImages.FirstOrDefault();
-
-                    <div class="swiper-slide">
-                        <div class="card-product wow fadeInUp" data-wow-delay="0.1s">
-                            <div class="card-product-wrapper">
-                                <a asp-action="ProductDetails" asp-route-id="@productImage.ProductsImageId" class="product-img">
-                                    <img class="lazyload img-product" data-src="@productImage.LargeImage" src="@productImage.LargeImage" alt="image-product">
-                                    <img class="lazyload img-hover" data-src="@productImage.LargeImage" src="@productImage.LargeImage" alt="image-product">
-                                </a>
-                                @if(productImage.Discount > 0)
-                                {
-                                    <div class="on-sale-wrap"><span class="on-sale-item">-@productImage.Discount%</span></div>
-                                }
-                                @* <div class="list-product-btn">
+                    if (productImage != null)
+                    {
+                        <div class="swiper-slide">
+                            <div class="card-product wow fadeInUp" data-wow-delay="0.1s">
+                                <div class="card-product-wrapper">
+                                    <a asp-action="ProductDetails" asp-route-id="@productImage.ProductsImageId" class="product-img">
+                                        <img class="lazyload img-product" data-src="@productImage.LargeImage" src="@productImage.LargeImage" alt="image-product">
+                                        <img class="lazyload img-hover" data-src="@productImage.LargeImage" src="@productImage.LargeImage" alt="image-product">
+                                    </a>
+                                    @if (productImage.Discount > 0)
+                                    {
+                                        <div class="on-sale-wrap"><span class="on-sale-item">-@productImage.Discount%</span></div>
+                                    }
+                                    @* <div class="list-product-btn">
                                     <a href="#quickView" data-bs-toggle="modal" class="box-icon quickview tf-btn-loading">
                                         <span class="icon icon-eye"></span>
                                         <span class="tooltip">Quick View</span>
                                     </a>
                                 </div> *@
-                                <div class="list-btn-main">
-                                    <a href="#shoppingCart" data-bs-toggle="modal" class="btn-main-product">Add To cart</a>
+                                    <div class="list-btn-main">
+                                        <a href="#" data-bs-toggle="modal" class="btn-main-product add-to-cart-btn"
+                                           data-name="@Html.Raw(product.Name)"
+                                           data-image="@Html.Raw(productImage?.LargeImage)"
+                                           data-type="@Html.Raw(productImage.Type)"
+                                           data-color="@Html.Raw(productImage.Color)"
+                                           data-description="@Html.Raw(productImage.Description)"
+                                           data-price="@Json.Serialize(productImage?.Price)"
+                                           data-productid="@Json.Serialize(product?.ProductId)"
+                                           data-productsimageid="@Json.Serialize(productImage?.ProductsImageId)"
+                                           data-arrivingDays="@productImage.ArrivingDays ?? 0">
+                                            Add To cart
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="card-product-info">
+                                    <a asp-action="ProductDetails" asp-route-id="@productImage.ProductsImageId" class="title link">
+                                        @product.Name
+                                    </a>
+                                    @if (productImage.Discount > 0)
+                                    {
+                                        <span class="price"><span class="old-price">₹@productImage.MRP</span> ₹@productImage.Price</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="price">₹@productImage.Price</span>
+                                    }
+                                    <ul class="list-color-product">
+                                        @foreach (var item in product.ProductImages)
+                                        {
+                                            <li class="list-color-item color-swatch active line">
+                                                <span class="swatch-value" style="background-color: @item.Color;"></span>
+                                                <img class="lazyload" data-src="@item.LargeImage" src="@item.LargeImage" alt="image-product">
+                                            </li>
+                                        }
+                                    </ul>
                                 </div>
                             </div>
-                            <div class="card-product-info">
-                                <a asp-action="ProductDetails" asp-route-id="@productImage.ProductsImageId" class="title link">
-                                    @product.Name
-                                </a>
-                                @if(productImage.Discount > 0)
-                                {
-                                    <span class="price"><span class="old-price">₹@productImage.MRP</span> ₹@productImage.Price</span>
-                                }
-                                else
-                                {
-                                    <span class="price">₹@productImage.Price</span>
-                                }
-                                <ul class="list-color-product">
-                                    @foreach (var item in product.ProductImages)
-                                    {
-                                        <li class="list-color-item color-swatch active line">
-                                            <span class="swatch-value" style="background-color: @item.Color;"></span>
-                                            <img class="lazyload" data-src="@item.LargeImage" src="@item.LargeImage" alt="image-product">
-                                        </li>
-                                    }
-                                </ul>
-                            </div>
                         </div>
-                    </div>
+                    }
                 }
             </div>
             <div class="sw-pagination-latest sw-dots type-circle justify-content-center"></div>
@@ -269,20 +282,98 @@
 </section>
 <!-- /Iconbox -->
 
+@* <script src="~/lib/jquery/dist/jquery.min.js"></script> *@
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
 
-@* <script src="~/lib/jquery/dist/jquery.min.js"></script>
-<script type="text/javascript">
-    function QuickViewByProductImageId(ProductImageId){
-        $.ajax({
-            url: '/Home/QuickViewByProductImageId',
-            type: 'GET',
-            data: { productImageId: ProductImageId },
-            success: function (response) {
-                $("#productQuickView").html(response);
-            },
-            error: function () {
-                alert("Failed to load product images.");
+        function updateCartCount() {
+            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+            let totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+
+            let cartItemCount = document.getElementById("cartItemCount");
+            if (cartItemCount) {
+                cartItemCount.innerText = totalItems;
+            } else {
+                console.error("cartItemCount element not found in DOM!");
             }
+
+            console.log(`Cart updated: ${totalItems} items`);
+        }
+        
+        function addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays) {
+            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+            let existingItem = cartItems.find(item =>
+                item.name === productName &&
+                item.productid === productId &&
+                item.productsimageid === productsImageId
+            );
+
+            if (existingItem) {
+                existingItem.quantity += 1;
+                existingItem.total = (existingItem.quantity * price).toFixed(2);
+            } else {
+                cartItems.push({
+                    name: productName,
+                    image: productImage,
+                    type: productType,
+                    color: productColor,
+                    description: productDescription,
+                    quantity: 1,
+                    price: price,
+                    total: price.toFixed(2),
+                    productid: productId,
+                    productsimageid: productsImageId,
+                    arrivingDays: arrivingDays
+                });
+            }
+
+            localStorage.setItem("cartItems", JSON.stringify(cartItems));
+            updateCartCount();
+            saveCartToDatabase();
+        }
+
+        async function saveCartToDatabase() {
+            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+            if (cartItems.length === 0) {
+                console.log("Cart is empty. Nothing to save.");
+                return;
+            }
+
+            console.log("Saving cart to database...", cartItems);
+
+            let response = await fetch("/Home/SaveCart", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(cartItems),
+            });
+
+            if (response.ok) {
+                console.log("Cart saved successfully.");
+                 localStorage.setItem("cartItems", JSON.stringify(cartItems));
+                 updateCartCount();
+            } else {
+                console.log("Failed to save cart.", response);
+            }
+        }
+
+        document.querySelectorAll(".add-to-cart-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                let productName = this.getAttribute("data-name");
+                let productImage = this.getAttribute("data-image");
+                let productType = this.getAttribute("data-type");
+                let productColor = this.getAttribute("data-color");
+                let productDescription = this.getAttribute("data-description");
+                let price = parseFloat(this.getAttribute("data-price")) || 0;
+                let productId = parseFloat(this.getAttribute("data-productid")) || 0;
+                let productsImageId = parseFloat(this.getAttribute("data-productsimageid")) || 0;
+                let arrivingDays = parseInt(this.getAttribute("data-arrivingDays")) || 0;
+
+                addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays);
+            });
         });
-    }
-</script> *@
+
+        updateCartCount();
+    });
+</script>

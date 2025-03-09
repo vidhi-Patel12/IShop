@@ -17,7 +17,10 @@
                         <h2>Coupan List</h2>
                     </div>
                     <div class="col-md-2 mt-2">
-                        <a asp-action="AddOrUpdateCoupan" class="btn btn-success btn-sm">Add New Coupans</a>
+                        @* <a asp-action="AddOrUpdateCoupan" class="btn btn-success btn-sm">Add New Coupans</a> *@
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#coupanModal">
+                            Add Coupon
+                        </button>
                     </div>
                 </div>
                 <br />
@@ -41,9 +44,18 @@
                                 <td>@coupon.Discount%</td>
                                 <td>@coupon.ExpiryDate.ToString("yyyy-MM-dd")</td>
                                 <td>
-                                    <a asp-action="GetCoupanById" asp-route-id="@coupon.CoupanId" class="btn btn-success btn-sm">View</a>
+                                    @* <a asp-action="GetCoupanById" asp-route-id="@coupon.CoupanId" class="btn btn-success btn-sm">View</a> *@
+                                    <button type="button" class="btn btn-success btn-sm view-coupan" data-id="@coupon.CoupanId" data-bs-toggle="modal" data-bs-target="#coupanDetailsModal">
+                                        View
+                                    </button>
 
-                                    <a asp-action="AddOrUpdateCoupan" asp-route-id="@coupon.CoupanId" class="btn btn-primary btn-sm">Edit</a>
+                                    @* <a asp-action="AddOrUpdateCoupan" asp-route-id="@coupon.CoupanId" class="btn btn-primary btn-sm">Edit</a> *@
+                                    <button class="btn btn-primary edit-coupan" data-bs-toggle="modal" data-bs-target="#coupanModal"
+                                            data-id="@coupon.CoupanId">
+                                        Edit
+                                    </button>
+
+                                  
                                     <!-- Separate Delete Button for Each Image -->
                                     <form asp-action="DeleteCoupan" asp-route-id="@coupon.CoupanId" method="post" style="display:inline;">
                                         <button type="submit" class="btn btn-danger btn-sm"
@@ -59,6 +71,76 @@
             </div>
         </div>
         <div class="col-md-5">
+        </div>
+    </div>
+</div>
+<br/>
+
+
+<!-- Bootstrap Modal -->
+<div class="modal fade" id="coupanModal" tabindex="-1" aria-labelledby="coupanModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="coupanModalLabel">Add Coupon</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Coupon Form -->
+                <form id="coupanForm" asp-action="AddOrUpdateCoupan" method="post">
+                    <input type="hidden" name="CoupanId" id="CoupanId" />
+
+                    <div class="mb-3">
+                        <label>Coupan Name:</label>
+                        <input type="text" name="CoupanName" id="CoupanName" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Discount:</label>
+                        <input type="number" step="0.01" name="Discount" id="Discount" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Expiry Date:</label>
+                        <input type="date" name="ExpiryDate" id="ExpiryDate" class="form-control" required />
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Coupon Details Modal -->
+<div class="modal fade" id="coupanDetailsModal" tabindex="-1" aria-labelledby="coupanDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="coupanDetailsModalLabel">Coupon Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-5"><strong>Coupon Name:</strong></div>
+                    <div class="col-md-7" id="modalCoupanName"></div>
+
+                    <div class="col-md-5"><strong>Coupon Code:</strong></div>
+                    <div class="col-md-7" id="modalCoupanCode"></div>
+
+                    <div class="col-md-5"><strong>Discount:</strong></div>
+                    <div class="col-md-7" id="modalDiscount"></div>
+
+                    <div class="col-md-5"><strong>Expiry Date:</strong></div>
+                    <div class="col-md-7" id="modalExpiryDate"></div>
+                </div>
+            </div>
+            <div class="modal-footer">                
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
@@ -82,12 +164,95 @@
             }
         });
 
-         $("div.dataTables_filter input").css({
-        "margin-bottom": "8px",
-        "padding": "8px",
-        "border-radius": "5px",
-        "border": "1px solid #ccc"
-    });
+        $("div.dataTables_filter input").css({
+            "margin-bottom": "8px",
+            "padding": "8px",
+            "border-radius": "5px",
+            "border": "1px solid #ccc"
+        });
 
+         $(".view-coupan").click(function () {
+            var coupanId = $(this).data("id");
+
+            $.get("/Admin/GetCoupanById/" + coupanId, function (data) {
+                $("#modalCoupanName").text(data.coupanName);
+                $("#modalCoupanCode").text(data.coupanCode);
+                $("#modalDiscount").text(data.discount + " %");
+                $("#modalExpiryDate").text(data.expiryDate.split('T')[0]);
+
+                // Set the Edit button link
+                $("#modalEditBtn").attr("onclick", "editCoupon(" + coupanId + ")");
+
+                // Set the Delete form action
+                $("#modalDeleteForm").attr("action", "/Admin/DeleteCoupan/" + coupanId);
+            });
+        });
+
+         // Open modal for adding a new coupon
+        $("#coupanModal").on("show.bs.modal", function (event) {
+            var button = $(event.relatedTarget); // Button that triggered the modal
+            var modal = $(this);
+
+            if (button.hasClass("edit-coupan")) {
+                var coupanId = button.data("id");
+
+                // Fetch coupon details via AJAX
+                $.get("/Admin/GetCoupan/" + coupanId, function (data) {
+                    modal.find("#coupanModalLabel").text("Edit Coupon");
+                    modal.find("#CoupanId").val(data.coupanId);
+                    modal.find("#CoupanName").val(data.coupanName);
+                    modal.find("#Discount").val(data.discount);
+                    modal.find("#ExpiryDate").val(data.expiryDate.split('T')[0]);
+                });
+            } else {
+                // Reset form for new coupon
+                modal.find("#coupanModalLabel").text("Add Coupon");
+                modal.find("#coupanForm")[0].reset();
+                modal.find("#CoupanId").val("");
+            }
+        });
+
+
+        // Open modal for adding a new coupon
+        $("#coupanModal").on("show.bs.modal", function (event) {
+            var button = $(event.relatedTarget); // Button that triggered the modal
+            var modal = $(this);
+
+            if (button.hasClass("edit-coupan")) {
+                var coupanId = button.data("id");
+
+                // Fetch coupon details via AJAX
+                $.get("/Admin/AddOrUpdateCoupan/" + coupanId, function (data) {
+                    modal.find("#coupanModalLabel").text("Edit Coupon");
+                    modal.find("#CoupanId").val(data.coupanId);
+                    modal.find("#CoupanName").val(data.coupanName);
+                    modal.find("#Discount").val(data.discount);
+                    modal.find("#ExpiryDate").val(data.expiryDate.split('T')[0]); // Format date
+                });
+            } else {
+                // Reset form for adding a new coupon
+                modal.find("#coupanModalLabel").text("Add Coupon");
+                modal.find("#coupanForm")[0].reset();
+                modal.find("#CoupanId").val("");
+            }
+        });
+
+        // Submit form using AJAX
+        $("#coupanForm").submit(function (e) {
+            e.preventDefault(); // Prevent default form submission
+
+            $.ajax({
+                url: "/Admin/AddOrUpdateCoupan",
+                type: "POST",
+                data: $(this).serialize(),
+                success: function (response) {
+                    alert("Coupon saved successfully!");
+                    location.reload(); // Refresh page after saving
+                },
+                error: function (xhr, status, error) {
+                    alert("Error: " + xhr.responseText);
+                }
+            });
+        });
     });
 </script>

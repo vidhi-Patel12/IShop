@@ -8,6 +8,8 @@ namespace ECommerce.Models
         public int CoupanId { get; set; }
         [Required]
         public string CoupanName { get;set; }
+        public string CoupanType { get; set; }
+
         public string CoupanCode { get; set; }
         [Required]
         public double Discount { get; set; }

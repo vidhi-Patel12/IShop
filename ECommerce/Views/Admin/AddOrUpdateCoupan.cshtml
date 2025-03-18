@@ -1,4 +1,5 @@
-﻿@model ECommerce.Models.Coupan
+﻿﻿
+@model ECommerce.Models.Coupan
 
 @{
     ViewData["Title"] = Model?.CoupanId > 0 ? "Edit Coupon" : "Add Coupon";
@@ -19,6 +20,11 @@
                     <div class="mb-3">
                         <label>Coupan Name:</label>
                         <input type="text" name="CoupanName" class="form-control" value="@Model?.CoupanName" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Coupan Type:</label>
+                        <input type="text" name="CoupanType" class="form-control" value="@Model?.CoupanType" required />
                     </div>
 
                     <div class="mb-3">

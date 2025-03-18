@@ -17,8 +17,8 @@
 <section class="flat-spacing">
     <div id="cartSummary" class="container">
         <div class="row">
-            <div class="col-xl-8">
-                <div class="tf-cart-sold">
+            <div class="col-xl-12">
+               @*  <div class="tf-cart-sold">
                     <div class="notification-sold bg-surface">
                         <img class="icon" src="~/content/images/logo/icon-fire.png" alt="img">
                         <div class="count-text">Your cart will expire in <div class="js-countdown time-count" data-timer="600" data-labels=":,:,:,"></div> minutes! Please checkout now before your items sell out!</div>
@@ -31,9 +31,9 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> *@
                 <form>
-                    <table class="tf-table-page-cart">
+                    <table class="tf-table-page-cart" id="cartDisplay">
                         <thead>
                             <tr>
                                 <th>Products</th>
@@ -46,7 +46,7 @@
                         <tbody id="cartDisplay">
                             @foreach (var item in Model)
                             {
-                                <tr class="tf-cart-item file-delete">
+                                <tr class="tf-cart-item file-delete" data-productid="@item.ProductId" data-product-image-id="@item.ProductsImageId">
                                     <td class="tf-cart-item_product">
                                         <a href="product-detail.html" class="img-box">
                                             <img src="@item.Image" alt="product">
@@ -57,7 +57,7 @@
                                         </div>
                                     </td>
                                     <td data-cart-title="Price" class="tf-cart-item_price text-center">
-                                        <div class="cart-price"><span class="text-button new-price price-on-sale">₹@item.Price</span></div>
+                                        <div class="cart-price"><span id="productPrice" class="text-button new-price price-on-sale">₹@item.Price</span></div>
                                     </td>
                                     <td data-cart-title="Quantity" class="tf-cart-item_quantity">
                                         <div class="wg-quantity mx-md-auto">
@@ -67,17 +67,18 @@
                                         </div>
                                     </td>
                                     <td data-cart-title="Total" class="tf-cart-item_total text-center">
-                                        <div class="cart-total text-button total-price">₹@item.Total</div>
+                                        <div class="cart-total text-button total-price">₹<span class="total-price">@item.Total</span></div>
                                     </td>
-                                    <td data-cart-title="Remove" class="remove-cart"><span class="remove icon icon-close"></span></td>
+
+                                    <td data-cart-title="Remove" class="remove-cart"><span class="remove icon icon-close" data-index="@Model.IndexOf(item)"></span></td>
                                 </tr>
                             }
                         </tbody>
                     </table>
-                    <div class="ip-discount-code">
+                    @* <div class="ip-discount-code">
                         <input type="text" placeholder="Add voucher discount">
                         <button class="tf-btn"><span class="text">Apply Code</span></button>
-                    </div>
+                    </div> *@
                     @* <div class="group-discount">
                         <div class="box-discount">
                             <div class="discount-top">
@@ -97,61 +98,21 @@
                     </div> *@
                 </form>
             </div>
-            <div id="cartSummarySection" class="col-xl-4">
-                <div class="fl-sidebar-cart">
-                    <div class="box-order bg-surface">
-                        <h5 class="title">Order Summary</h5>
-                        <div class="subtotal text-button d-flex justify-content-between align-items-center">
-                            <span>Subtotal</span>
-                            <span class="total">-$80.00</span>
-                        </div>
-                        <div class="discount text-button d-flex justify-content-between align-items-center">
-                            <span>Discounts</span>
-                            <span class="total">-$80.00</span>
-                        </div>
-                        <div class="ship">
-                            <span class="text-button">Shipping</span>
-                            <div class="flex-grow-1">
-                                <fieldset class="ship-item">
-                                    <input type="radio" name="ship-check" class="tf-check-rounded" id="free" checked>
-                                    <label for="free">
-                                        <span>Free Shipping</span>
-                                        <span class="price">$0.00</span>
-                                    </label>
-                                </fieldset>
-                                <fieldset class="ship-item">
-                                    <input type="radio" name="ship-check" class="tf-check-rounded" id="local">
-                                    <label for="local">
-                                        <span>Local:</span>
-                                        <span class="price">$35.00</span>
-                                    </label>
-                                </fieldset>
-                                <fieldset class="ship-item">
-                                    <input type="radio" name="ship-check" class="tf-check-rounded" id="rate">
-                                    <label for="rate">
-                                        <span>Flat Rate:</span>
-                                        <span class="price">$35.00</span>
-                                    </label>
-                                </fieldset>
-                            </div>
-                        </div>
-                        <h5 class="total-order d-flex justify-content-between align-items-center">
-                            <span>Total</span>
-                            <span class="total">$186,99</span>
-                        </h5>
-                        <div class="box-progress-checkout">
-                            <fieldset class="check-agree">
-                                <input type="checkbox" id="check-agree" class="tf-check-rounded">
-                                <label for="check-agree">
-                                    I agree with the <a href="term-of-use.html">terms and conditions</a>
-                                </label>
-                            </fieldset>
-                            <a href="checkout.html" class="tf-btn btn-reset">Process To Checkout</a>
-                            <p class="text-button text-center">Or continue shopping</p>
+            <div class="col-xl-12" id="cartDisplay">
+                <div id="cartSummarySection" style="display: none;">
+                    <div class="float-end">
+                        <div><h4><strong>Subtotal:</strong> ₹<span id="cartTotal">0.00</span></h4></div>
+                    </div>
+                    <br /><br />
+                    <div>
+                        <div class="float-end">
+                            <a id="checkoutLink" asp-controller="Home" asp-action="Checkout" class="btn btn-success mb-5">
+                                ✔ Proceed to Checkout
+                            </a>
                         </div>
                     </div>
                 </div>
-            </div>
+            </div>           
         </div>
     </div>
     <!-- Empty Cart Message (Initially Hidden) -->
@@ -162,3 +123,439 @@
     </div>
 </section>
 <!-- /Section cart -->
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let cartDisplay = document.getElementById("cartDisplay");
+        let cartTotal = document.getElementById("cartTotal");
+        let cartSummarySection = document.getElementById("cartSummarySection");
+        let emptyCartMessage = document.getElementById("emptyCartMessage");
+        let cartItemCount = document.getElementById("cartItemCount");
+        let checkoutLink = document.getElementById("checkoutLink");
+
+        let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+                          
+        loadCartFromDatabase();
+        updateCartCount();
+        updateCartTotal();
+
+         checkoutLink.addEventListener("click", function () {
+             let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+              localStorage.setItem("checkoutItems", JSON.stringify(cartItems));
+              saveCartToDatabase();
+        });
+    });  
+    
+    async function loadCartFromDatabase() {
+          try {
+              let response = await fetch("/Home/Cart");
+
+              // Check if response is actually JSON
+              let text = await response.text();  // Get raw response text
+              //console.log("Raw API Response:", text); // Debugging
+
+              let data;
+              try {
+                  data = JSON.parse(text); // Try parsing JSON
+              } catch (jsonError) {
+                  //console.error("Invalid JSON response from API:", text);
+                  return; // Stop execution if JSON is invalid
+              }
+
+              if (data.success && data.cartItems.length > 0) {
+                  cartItems = data.cartItems;
+                   localStorage.setItem("cartItems", JSON.stringify(cartItems)); //  Ensure LocalStorage updates
+              } else {
+                  console.log("No items in the cart.");
+              }
+          } catch (error) {
+              console.error("Error loading cart from database:", error);
+          }
+      }
+
+    async function saveCartToDatabase() {
+            try {
+                let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+                if (cartItems.length === 0) {
+                    await deleteCartItem();
+                    return;
+                }
+
+                cartItems = cartItems.map(item => ({
+                    shoppingCartId: item.shoppingCartId || 0,
+                    iShopId: item.iShopId || 0,
+                    arrivingDays: item.arrivingDays || 0,
+                    color: item.color || "",
+                    description: item.description || "",
+                    image: item.image || "",
+                    name: item.name || "",
+                    price: parseFloat(item.price) || 0,
+                    productId: parseInt(item.productId) || 0,
+                    productsImageId: parseInt(item.productsImageId) || parseInt(item.productImageId), //  Ensure it's a number
+                    quantity: parseInt(item.quantity) || 1, //  Ensure it's an integer
+                    total: parseFloat(item.total) || 0,
+                    type: item.type || ""
+                }));
+
+                console.log(" Sending Cart Data to Backend:", cartItems);
+
+                let response = await fetch("/Home/SaveCart", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(cartItems),
+                });
+
+                if (response.ok) {
+                    console.log(" Cart saved successfully.");
+                    localStorage.setItem("cartItems", JSON.stringify(cartItems)); //  Ensure LocalStorage updates
+                    updateCartCount();                     
+                } else {
+                    console.error(" Failed to save cart.");
+                }
+            } catch (error) {
+                console.error(" Error saving cart:", error);
+            }
+        }
+
+     //Function to Check Stock Availability
+    async function checkStockAvailability(productImageId, requestedQty) {
+         try {
+             let response = await fetch(`/Home/CheckStockAvailability?productImageId=${productImageId}&requestedQty=${requestedQty}`);
+             let data = await response.json();
+             return response.ok && data.success; //  Return true if stock is available
+         } catch (error) {
+             console.error(" Error checking stock:", error);
+             return false; //  If error occurs, assume stock is not available
+         }
+     }
+
+    function updateCartTotal() {
+          let cartTotal = 0;
+
+          document.querySelectorAll(".total-price").forEach(totalElement => {
+              let totalValue = parseFloat(totalElement.textContent.replace("₹", "").trim());
+              if (!isNaN(totalValue)) {
+                  cartTotal += totalValue; //  Add each item's total to cart total
+              }
+          });
+
+          let cartTotalElement = document.getElementById("cartTotal");
+          if (cartTotalElement) {
+              cartTotalElement.textContent = cartTotal.toFixed(2); //  Update subtotal
+          }
+
+          //  Show or hide cart summary section
+          let cartSummarySection = document.getElementById("cartSummarySection");
+          if (cartSummarySection) {
+              cartSummarySection.style.display = cartTotal > 0 ? "block" : "none";
+          }
+     }
+
+    // document.addEventListener("click", async function (event) {
+    //         if (event.target.classList.contains("btn-increase") || event.target.classList.contains("btn-decrease")) {
+    //         let cartItem = event.target.closest(".tf-cart-item");
+    //         if (!cartItem) {
+    //             console.log(" cartItem is missing!");
+    //             return;
+    //         }
+
+    //         let quantityInput = cartItem.querySelector(".quantity-product");
+    //         let priceElement = cartItem.querySelector(".new-price");
+    //         let totalElement = cartItem.querySelector(".total-price");
+
+    //         let productsImageId = parseInt(cartItem.getAttribute("data-product-image-id"), 10);
+    //         let productId = parseInt(cartItem.getAttribute("data-productid"), 10);
+
+    //         if (!quantityInput || !priceElement || !totalElement || isNaN(productsImageId) || isNaN(productId)) {
+    //             console.log(" Missing elements inside cartItem!");
+    //             return;
+    //         }
+
+    //         let quantity = parseInt(quantityInput.value);
+    //         let unitPrice = parseFloat(priceElement.textContent.replace("₹", "").trim());
+
+    //         if (isNaN(unitPrice)) {
+    //             console.log(" unitPrice is NaN! Check if the price element has a valid number.");
+    //             return;
+    //         }
+
+    //         event.target.disabled = true;
+    //         setTimeout(() => { event.target.disabled = false; }, 500);
+
+    //         if (event.target.classList.contains("btn-increase")) {
+    //             let isAvailable = await checkStockAvailability(productsImageId, quantity + 1);
+    //             if (!isAvailable) {
+    //                 alert(" Stock limit reached! Cannot increase quantity.");
+    //                 return;
+    //             }
+    //             quantity + 1; //  Fix Increment
+    //         } else if (event.target.classList.contains("btn-decrease") && quantity > 1) {
+    //             quantity - 1; //  Fix Decrement
+    //         }
+
+    //         quantityInput.value = quantity;
+    //         let newTotal = parseFloat((quantity * unitPrice).toFixed(2)); //  Fix `total` calculation
+    //         totalElement.textContent = `₹${newTotal.toFixed(2)}`;
+
+    //         let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+    //         console.log(" Before Update:", cartItems);
+
+    //         //  Update only the correct item while keeping all fields
+    //         let updatedCartItems = cartItems.map(item => {
+    //             if (parseInt(item.productsImageId) === productsImageId && parseInt(item.productId) === productId) {
+    //                 return {
+    //                     ...item,
+    //                     productsImageId: productsImageId, //  Ensure correct productsImageId is used
+    //                     quantity: quantity,
+    //                     //total: newTotal, //  Ensure total is updated correctly
+    //                 };
+    //             }
+    //             return item;
+    //         });
+
+    //         console.log("🔍 After Update:", updatedCartItems);
+    //         localStorage.setItem("cartItems", JSON.stringify(updatedCartItems));
+
+    //         console.log("Updated cart items:", updatedCartItems);
+
+    //         await saveCartToDatabase();
+
+    //         updateCartTotal();            
+    //         updateCartCount();            
+    //         //localStorage.removeItem("cartItems");
+    //     }
+    // });
+
+    document.addEventListener("click", async function (event) {
+        if (event.target.classList.contains("btn-increase") || event.target.classList.contains("btn-decrease")) {
+            let cartItem = event.target.closest(".tf-cart-item");
+            if (!cartItem) {
+                console.log("cartItem is missing!");
+                return;
+            }
+
+            let quantityInput = cartItem.querySelector(".quantity-product");
+            let priceElement = cartItem.querySelector(".new-price");
+            let totalElement = cartItem.querySelector(".total-price");
+
+            let productsImageId = parseInt(cartItem.getAttribute("data-product-image-id"), 10);
+            let productId = parseInt(cartItem.getAttribute("data-productid"), 10);
+            let image = cartItem.querySelector("img")?.src || "";
+            let name = cartItem.querySelector(".cart-title")?.textContent.trim() || "";
+            let color = cartItem.querySelector("#pColor")?.textContent.trim() || "";
+            let description = cartItem.getAttribute("data-description") || "";
+            let arrivingDays = cartItem.getAttribute("data-arriving-days") || "";
+            let type = cartItem.getAttribute("data-type") || "";
+
+            if (!quantityInput || !priceElement || !totalElement || isNaN(productsImageId) || isNaN(productId)) {
+                console.log("Missing elements inside cartItem!");
+                return;
+            }
+
+            let quantity = parseInt(quantityInput.value);
+            let price = parseFloat(priceElement.textContent.replace("₹", "").trim());
+
+            if (isNaN(price)) {
+                console.log("unitPrice is NaN! Check if the price element has a valid number.");
+                return;
+            }
+
+            event.target.disabled = true;
+            setTimeout(() => { event.target.disabled = false; }, 500);
+
+            if (event.target.classList.contains("btn-increase")) {
+                let isAvailable = await checkStockAvailability(productsImageId, quantity + 1);
+                if (!isAvailable) {
+                    // alert("Stock limit reached! Cannot increase quantity.");
+                    showMessageModal("success", "Stock limit reached! Cannot increase quantity.");
+                    return;
+                }
+                quantity + 1;
+            } else if (event.target.classList.contains("btn-decrease") && quantity > 1) {
+                quantity - 1;
+            }
+
+            quantityInput.value = quantity;
+            let newTotal = parseFloat((quantity * price).toFixed(2));
+            totalElement.textContent = `₹${newTotal.toFixed(2)}`;
+
+            // Fetch all cart data
+            let cartData = [];
+            document.querySelectorAll("#cartDisplay .tf-cart-item").forEach(item => {
+                let itemData = {
+                    productId: parseInt(item.getAttribute("data-productid"), 10),
+                    productsImageId: parseInt(item.getAttribute("data-product-image-id"), 10),
+                    quantity: parseInt(item.querySelector(".quantity-product").value),
+                    price: parseFloat(item.querySelector(".new-price").textContent.replace("₹", "").trim()),
+                    total: parseFloat(item.querySelector(".total-price").textContent.replace("₹", "").trim()),
+                    image: item.querySelector("img")?.src || "",
+                    name: item.querySelector(".cart-title")?.textContent.trim() || "",
+                    color: item.querySelector("#pColor")?.textContent.trim() || "",
+                    description: item.getAttribute("data-description") || "",
+                    arrivingDays: item.getAttribute("data-arriving-days") || "",
+                    type: item.getAttribute("data-type") || ""
+                };
+
+                cartData.push(itemData);
+            });
+
+            console.log(" Updated Cart Data:", cartData);
+
+            localStorage.setItem("cartItems", JSON.stringify(cartData));
+
+            await saveCartToDatabase();
+            updateCartTotal();
+            updateCartCount();
+        }
+    });
+
+
+    document.addEventListener("click", async function (event) {
+        if (event.target.classList.contains("remove")) {
+            let cartItem = event.target.closest(".tf-cart-item");
+            if (!cartItem) {
+                console.log("Cart item not found!");
+                return;
+            }
+            
+            let productsImageId = parseInt(cartItem.getAttribute("data-product-image-id"), 10);
+            // let productId = parseInt(cartItem.getAttribute("data-productid"), 10);
+            // alert("productid : ",productId);
+
+            if (isNaN(productsImageId)) {
+                console.log("Invalid product IDs!");
+                return;
+            }
+
+            try {
+                await deleteCartItem(productsImageId);
+                console.log(`Item ${productsImageId} deleted from database successfully.`);
+                 // Remove item from DOM
+            cartItem.remove();
+
+            // Update cart data in local storage
+            saveCartToDatabase();
+            loadCartFromDatabase();
+            } catch (error) {
+                console.error("Error deleting item from database:", error);
+            }
+        }
+    });
+
+    async function deleteCartItem(productsImageId) {
+        if (!productsImageId) {
+            console.error("Invalid product or image ID:", productsImageId);
+            return;
+        }
+
+        try {
+            let response = await fetch("/Home/DeleteCartItem", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ProductsImageId: productsImageId }),
+            });
+
+            let result = await response.json();
+
+            if (result.success) {
+                console.log("Item deleted successfully from the cart.");
+            } else {
+                console.log("Failed to delete item from the cart.");
+            }
+
+            updateCartTotal();
+            updateCartCount();
+        } catch (error) {
+            console.error("Error deleting item from cart:", error);
+        }
+    }
+
+    function updateCartCount() {
+        let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+        // Create a new map to store cart items with all details
+        let updatedCart = new Map();
+
+        document.querySelectorAll(".tf-cart-item").forEach(cartItem => {
+            let productsImageId = cartItem.getAttribute("data-product-image-id");
+            let productId = cartItem.getAttribute("data-productid");
+            let quantityInput = cartItem.querySelector(".quantity-product");
+
+            if (productsImageId && quantityInput) {
+                let newQuantity = parseInt(quantityInput.value, 10);
+                let price = parseFloat(cartItem.querySelector(".new-price").textContent.replace("₹", "").trim());
+                let total = parseFloat((newQuantity * price).toFixed(2));
+                let image = cartItem.querySelector("img")?.src || "";
+                let name = cartItem.querySelector(".cart-title")?.textContent.trim() || "";
+                let color = cartItem.querySelector("#pColor")?.textContent.trim() || "";
+                let description = cartItem.getAttribute("data-description") || "";
+                let arrivingDays = cartItem.getAttribute("data-arriving-days") || "";
+                let type = cartItem.getAttribute("data-type") || "";
+
+                // Store complete item details in the map
+                updatedCart.set(productsImageId, {
+                    productsImageId,
+                    productId,
+                    quantity: newQuantity,
+                    price,
+                    total,
+                    image,
+                    name,
+                    color,
+                    description,
+                    arrivingDays,
+                    type
+                });
+            }
+        });
+
+        // Convert map to an array
+        let updatedCartArray = Array.from(updatedCart.values());
+
+        let oldCartString = JSON.stringify(cartItems);
+        let newCartString = JSON.stringify(updatedCartArray);
+
+        // Only update `localStorage` if there are changes
+        if (oldCartString !== newCartString) {
+            localStorage.setItem("cartItems", newCartString);
+        }
+
+        // Calculate total quantity
+        let totalItems = updatedCartArray.reduce((total, item) => total + item.quantity, 0);
+
+        // Update UI
+        let cartItemCount = document.getElementById("cartItemCount");
+        if (cartItemCount) {
+            cartItemCount.innerText = totalItems;
+        }
+    }
+
+    function showMessageModal(type, message) {
+         let modalTitle = document.getElementById("messageModalLabel");
+         let modalBody = document.getElementById("messageText");
+         let modalHeader = document.querySelector("#messageModal .modal-header");
+
+         // Update the modal based on type (success or error)
+         if (type === "success") {
+             modalTitle.innerText = "Success";
+             modalBody.innerHTML = `✅ ${message}`;
+             modalHeader.classList.add("bg-success", "text-white");
+             modalHeader.classList.remove("bg-danger");
+         } else if (type === "error") {
+             modalTitle.innerText = "Error";
+             modalBody.innerHTML = `❌ ${message}`;
+             modalHeader.classList.add("bg-danger", "text-white");
+             modalHeader.classList.remove("bg-success");
+         }
+
+         // Show the modal
+         let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
+         messageModal.show();
+    }
+
+</script>
+
+
+

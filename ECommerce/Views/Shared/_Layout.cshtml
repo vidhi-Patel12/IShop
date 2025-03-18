@@ -82,7 +82,7 @@
                                     <a href="#" class="item-link">Pages<i class="icon icon-arrow-down"></i></a>
                                     <div class="sub-menu submenu-default">
                                         <ul class="menu-list">
-                                            <li><a href="#" class="menu-link-text">My Orders</a></li>
+                                            <li><a href="@Url.Action("Orders", "Home")" class="menu-link-text">My Orders</a></li>
                                             <li><a href="#" class="menu-link-text">About Us</a></li>
                                             <li>
                                                 <a href="#" class="menu-link-text">Store List 1</a>
@@ -278,6 +278,25 @@
         </footer>
     </div>
 
+    <!-- Common Modal for Success & Error Messages -->
+    <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="messageModalLabel">Message</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <h5 id="messageText">Your message here.</h5>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <!-- Javascript -->
     <script type="text/javascript" src="~/content/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="~/content/js/jquery.min.js"></script>
@@ -289,6 +308,11 @@
     <script type="text/javascript" src="~/content/js/wow.min.js"></script>
     <script type="text/javascript" src="~/content/js/multiple-modal.js"></script>
     <script type="text/javascript" src="~/content/js/main.js"></script>
+
+    <!-- Include jQuery and DataTables -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" />
 
     <script src="~/content/js/sibforms.js" defer></script>
 
@@ -309,6 +333,31 @@
         };
 
         var AUTOHIDE = Boolean(0);
+
+        function showMessageModal(type, message) {
+            let modalTitle = document.getElementById("messageModalLabel");
+            let modalBody = document.getElementById("messageText");
+            let modalHeader = document.querySelector("#messageModal .modal-header");
+
+            // Update the modal based on type (success or error)
+            if (type === "success") {
+                modalTitle.innerText = "Success";
+                modalBody.innerHTML = `✅ ${message}`;
+                modalHeader.classList.add("bg-success", "text-white");
+                modalHeader.classList.remove("bg-danger");
+            } else if (type === "error") {
+                modalTitle.innerText = "Error";
+                modalBody.innerHTML = `❌ ${message}`;
+                modalHeader.classList.add("bg-danger", "text-white");
+                modalHeader.classList.remove("bg-success");
+            }
+
+            // Show the modal
+            let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
+            messageModal.show();
+        }
+
+
     </script>
     <script src="~/content/js/parallax.min.js"></script>
 

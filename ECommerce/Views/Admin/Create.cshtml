@@ -1,4 +1,5 @@
-﻿@model ECommerce.Models.Products
+﻿﻿
+@model ECommerce.Models.Products
 
 @{
     ViewData["Title"] = "Add Product";
@@ -31,20 +32,42 @@
                 processData: false,
                 contentType: false,
                 success: function (response) {
-                    if (response.success) {
-                        alert("Product added successfully!");
+                    if (response.success) {                        
+                        showMessageModal("success", "Product added successfully!");
                         $("#ProductModal").modal("hide");
                         location.reload();
                     } else {
-                        alert(response.message);
+                        showMessageModal("error", `Error: ${response.message}`);
                     }
                 },
                 error: function () {
-                    alert("Failed to save the product.");
+                    showMessageModal("error", "Failed to save the product.");
                 }
             });
         });
+
+        function showMessageModal(type, message) {
+         let modalTitle = document.getElementById("messageModalLabel");
+         let modalBody = document.getElementById("messageText");
+         let modalHeader = document.querySelector("#messageModal .modal-header");
+
+         // Update the modal based on type (success or error)
+         if (type === "success") {
+             modalTitle.innerText = "Success";
+             modalBody.innerHTML = `✅ ${message}`;
+             modalHeader.classList.add("bg-success", "text-white");
+             modalHeader.classList.remove("bg-danger");
+         } else if (type === "error") {
+             modalTitle.innerText = "Error";
+             modalBody.innerHTML = `❌ ${message}`;
+             modalHeader.classList.add("bg-danger", "text-white");
+             modalHeader.classList.remove("bg-success");
+         }
+
+         // Show the modal
+         let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
+         messageModal.show();
+    }
+
     });
 </script>
-
-

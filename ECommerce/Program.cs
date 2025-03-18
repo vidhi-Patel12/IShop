@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using ECommerce.Data;
 using Microsoft.AspNetCore.DataProtection;
+using ECommerce.Models;
+using Microsoft.AspNetCore.Rewrite;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +31,17 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+builder.Services.Configure<RouteOptions>(options =>
+{
+    options.ConstraintMap.Add("slug", typeof(SlugConstraint));
+    options.ConstraintMap.Add("typeslug", typeof(SlugConstraint));
+    options.ConstraintMap.Add("colorslug", typeof(SlugConstraint));
+
+});
+
+var options = new RewriteOptions()
+    .AddRedirect("^(.*)/$", "$1"); // Remove trailing slash
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -46,9 +59,14 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseRewriter(options);
+app.UseLowercaseUrls(); // Enforce lowercase URLs
+
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}"
+);
+
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers();

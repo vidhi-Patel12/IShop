@@ -8,7 +8,8 @@ namespace ECommerce.Models
         [Key]
         public int ProductId { get; set; }
         [Required]
-        public string Name { get; set; }       
+        public string Name { get; set; }
+        public string? Slug {get; set;}
         public bool IsActive { get; set; }
 
         [NotMapped]
@@ -17,6 +18,9 @@ namespace ECommerce.Models
         public IFormFile MediumImageFile { get; set; }
         [NotMapped]
         public IFormFile SmallImageFile { get; set; }
+
         public virtual ICollection<ProductsImage> ProductImages { get; set; } = new List<ProductsImage>();
+
+
     }
 }

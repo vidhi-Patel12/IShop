@@ -2,8 +2,66 @@
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Product";
-    var productDetails = Model.ProductImages.FirstOrDefault(x => x.ProductsImageId == @ViewBag.ProductImageId);
+   // var productDetails = Model.ProductImages.FirstOrDefault(x => x.ProductsImageId == @ViewBag.ProductImageId);
+    var productDetails = Model?.ProductImages?.FirstOrDefault(x => x.ProductsImageId == ViewBag.ProductImageId);
+
 }
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/easyzoom/2.5.2/easyzoom.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/easyzoom/2.5.2/easyzoom.min.js"></script>
+
+<style>
+   /*  .image-container {
+        position: relative;
+        width: 400px;  Adjust as needed 
+         height: 400px;
+         border: 1px solid #ddd; 
+    } */ 
+
+    .swiper-slide img {
+            width: 100%;
+            height: 100%;
+    }
+
+    #zoomLens {
+        position: absolute;
+        width: 100px;
+        height: 100px;
+        border: 1px solid #000;
+        background: rgba(0,0,0,0.2);
+        cursor: pointer;
+        display: none;
+    }
+
+    #zoomContainer {
+        position: absolute;
+        left: 600px; /* Adjust position for side-by-side zoom */
+        top: 0;
+        width: 400px;
+        height: 400px;
+        overflow: hidden;
+        border: 1px solid #ddd;
+        display: none; /* Hide until hover */
+    }
+
+    #zoomResult {
+        width: 800px; /* Adjust zoom level */
+        height: 800px;
+        background-size: 800px 800px;
+        background-repeat: no-repeat;
+        transition: background-position 0.1s linear;
+        background-color: white;
+    }
+
+    #zoomLens, #zoomContainer {
+    transition: opacity 10.3s ease-in-out; /* Smooth appearance */
+    opacity: 0; /* Initially hidden */
+}
+
+</style>
+
+
 <!-- breadcrumb -->
 <div class="tf-breadcrumb">
     <div class="container">
@@ -32,19 +90,44 @@
                                 <div class="swiper-wrapper stagger-wrap">
                                     <div class="swiper-slide stagger-item" data-color="gray">
                                         <div class="item">
-                                            <img class="lazyload" data-src="@productDetails.LargeImage" src="@productDetails.LargeImage" alt="">
+                                            <img class="lazyload" data-src="@productDetails.SmallImage" src="@productDetails.SmallImage" alt="">
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div dir="ltr" class="swiper tf-product-media-main" id="gallery-swiper-started">
+                            @* <div dir="ltr" class="swiper tf-product-media-main" id="gallery-swiper-started">
                                 <div class="swiper-wrapper">
                                     <div class="swiper-slide" data-color="gray">
-                                        <a href="@productDetails.LargeImage" target="_blank" class="item" data-pswp-width="600px" data-pswp-height="800px">
-                                            <img class="tf-image-zoom lazyload" data-zoom="@productDetails.LargeImage" data-src="@productDetails.LargeImage" src="@productDetails.LargeImage" alt="">
-                                        </a>
+                                        <div class="easyzoom easyzoom--overlay">
+                                            <a href="@productDetails.LargeImage" target="_blank" class="item" data-pswp-width="600px" data-pswp-height="800px">
+                                                <img class="tf-image-zoom lazyload" data-zoom="@productDetails.LargeImage" data-src="@productDetails.LargeImage" src="@productDetails.LargeImage" alt="Product Image">
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
+                            </div> *@
+                            <div class="tf-product-media-wrap sticky-top">
+                                <div class="thumbs-slider">
+                                    <div class="swiper tf-product-media-main" id="gallery-swiper-started">
+                                        <div class="swiper-wrapper">
+                                            <div class="swiper-slide">
+                                                <!-- Container for Zoom Effect -->
+                                                @* <div class="image-container"> *@
+                                                    <img id="mainImage" class="tf-image-zoom lazyload"
+                                                         src="@productDetails.LargeImage"
+                                                         data-src="@productDetails.LargeImage"
+                                                         alt="Product Image">
+                                                    <div id="zoomLens"></div>
+                                               @*  </div> *@
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Side Zoom Window -->
+                            <div id="zoomContainer">
+                                <div id="zoomResult"></div>
                             </div>
                         </div>
                     </div>
@@ -100,11 +183,15 @@
                                         Colors:<span class="text-title variant-picker-label-value value-currentColor">@productDetails.Color</span>
                                     </div>
                                     <div class="list-color-product">
+                                        @{
+                                            int? productImageId = ViewBag.ProductImageId;
+                                        }
                                         @foreach (var item in Model.ProductImages)
                                         {
-                                            <a asp-action="ProductDetails" asp-route-id="@item.ProductsImageId" class="list-color-item color-swatch active line">
+                                            <a asp-action="ProductDetails" asp-route-slug="@Model.Slug" asp-route-typeslug="@item.TypeSlug"
+                                               asp-route-colorslug="@item.ColorSlug" class="list-color-item color-swatch active line">
                                                 <span class="swatch-value" style="background-color: @item.Color;"></span>
-                                                @*                                                 <img class="lazyload" data-src="@item.LargeImage" src="@item.LargeImage" alt="image-product"> *@
+                                                @*<img class="lazyload" data-src="@item.LargeImage" src="@item.LargeImage" alt="image-product"> *@
                                             </a>
                                         }
                                     </div>
@@ -327,11 +414,13 @@
                             @foreach (var product in result.Take(4).ToList())
                             {
                                 var productImage = product.ProductImages.FirstOrDefault();
-                                if(productImage != null){
+                                if (productImage != null)
+                                {
                                     <div class="swiper-slide">
                                         <div class="card-product wow fadeInUp" data-wow-delay="0.1s">
                                             <div class="card-product-wrapper">
-                                                <a asp-action="ProductDetails" asp-route-id="@productImage.ProductsImageId" class="product-img">
+                                                <a asp-action="ProductDetails" asp-route-slug="@product.Slug" asp-route-typeslug="@productImage.TypeSlug"
+                                                   asp-route-colorslug="@productImage.ColorSlug" class="product-img">
                                                     <img class="lazyload img-product" data-src="@productImage.LargeImage" src="@productImage.LargeImage" alt="image-product">
                                                     <img class="lazyload img-hover" data-src="@productImage.LargeImage" src="@productImage.LargeImage" alt="image-product">
                                                 </a>
@@ -346,11 +435,13 @@
                                             </a>
                                         </div> *@
                                                 <div class="list-btn-main">
-                                                    <a asp-action="ProductDetails" asp-route-id="@productImage.ProductsImageId" data-bs-toggle="modal" class="btn-main-product">View product</a>
+                                                    <a asp-action="ProductDetails" asp-route-slug="@product.Slug" asp-route-typeslug="@productImage.TypeSlug"
+                                                       asp-route-colorslug="@productImage.ColorSlug" class="btn-main-product">View product</a>
                                                 </div>
                                             </div>
                                             <div class="card-product-info">
-                                                <a asp-action="ProductDetails" asp-route-id="@productImage.ProductsImageId" class="title link">
+                                                <a asp-action="ProductDetails" asp-route-slug="@product.Slug" asp-route-typeslug="@productImage.TypeSlug"
+                                                   asp-route-colorslug="@productImage.ColorSlug" class="title link">
                                                     @product.Name
                                                 </a>
                                                 @if (productImage.Discount > 0)
@@ -373,7 +464,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                }                                
+                                }
                             }
                         }
                     </div>
@@ -384,112 +475,270 @@
     </div>
 </section>
 <!-- /Ralated Products -->
+<!-- Common Modal for Success & Error Messages -->
+<div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="messageModalLabel">Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <h5 id="messageText">Your message here.</h5>
+            </div>
+            <br />
+            <hr />
+            <div class="row">
+                <div class="col-md-2"></div>
+                <div class="col-md-5">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Continue Shopping</button>
+                </div>
+                <div class="col-md-5">
+                    <a asp-controller="Home" asp-action="Cart" class="btn btn-secondary">Go To Cart</a>
+                </div>
+            </div>
+            <br />
+        </div>
+    </div>
+</div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
+   document.addEventListener("DOMContentLoaded", function () {
+        let mainImage = document.getElementById("mainImage");
+        let zoomLens = document.getElementById("zoomLens");
+        let zoomResult = document.getElementById("zoomResult");
+        let zoomContainer = document.getElementById("zoomContainer");
+
+        let hideTimeout; // Variable to store timeout
+
+
         let addToCartBtn = document.getElementById("addToCartBtn");
         let cartQuantity = document.getElementById("cartQuantity");
-        let cartItemCount = document.getElementById("cartItemCount");
-
+        
         let price = @productDetails?.Price ?? 0;
         let productName = "@Html.Raw(Model.Name)";
         let productImage = "@Html.Raw(productDetails?.LargeImage)";
         let productType = "@Html.Raw(productDetails?.Type)";
         let productColor = "@Html.Raw(productDetails?.Color)";
         let productDescription = "@Html.Raw(productDetails?.Description)";
-        let productId  = @Model.ProductId ?? 0;
+        let productId = @Model.ProductId ?? 0;
         let productsImageId = @productDetails?.ProductsImageId ?? 0;
         let arrivingDays = @productDetails?.ArrivingDays ?? 0;
 
-        // Load cart from localStorage
-        let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+        // Set zoom background image
+        zoomResult.style.backgroundImage = `url(${mainImage.src})`;
 
-        //  Function to Update Cart Count
-        function updateCartCount() {
-            let totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
-            cartItemCount.innerText = totalItems;
+        // Smooth show effect
+        mainImage.addEventListener("mouseenter", () => {
+            clearTimeout(hideTimeout); // Stop hiding
+            zoomLens.style.opacity = 1;
+            zoomContainer.style.opacity = 1;
+            zoomContainer.style.display = "block";
+            zoomLens.style.display = "block";
+        });
+
+        // Smooth hide effect with delay
+        mainImage.addEventListener("mouseleave", () => {
+            hideTimeout = setTimeout(() => {
+                zoomLens.style.opacity = 0;
+                zoomContainer.style.opacity = 0;
+                setTimeout(() => {
+                    zoomLens.style.display = "none";
+                    zoomContainer.style.display = "none";
+                }, 700); // Delay hiding to match transition
+            }, 200); // 200ms delay before hiding
+        });
+
+        // Throttle function to slow down zoom movement
+        function throttle(fn, limit) {
+            let lastCall = 0;
+            return function (...args) {
+                let now = new Date().getTime();
+                if (now - lastCall < limit) return;
+                lastCall = now;
+                return fn(...args);
+            };
         }
 
-        //  Function to Add Item to Cart
-        function addToCart() {
-            let quantity = parseInt(cartQuantity.value);
-            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+        function zoom(e) {
+            let pos = getCursorPos(e);
+            let x = pos.x - (zoomLens.offsetWidth / 2);
+            let y = pos.y - (zoomLens.offsetHeight / 2);
 
-            // Check if product already exists in cart
-           let existingItem = cartItems.find(item =>
-                item.name === productName &&
-                item.image === productImage &&
-                item.type === productType &&
-                item.color === productColor &&
-                item.description === productDescription &&
-                item.productid === productId &&
-                item.productsimageid === productsImageId &&
-                item.arrivingDays === arrivingDays
-            );
-            if (existingItem) {
-                existingItem.quantity += quantity;
-                existingItem.total = (existingItem.quantity * price).toFixed(2);
+            if (x > mainImage.width - zoomLens.offsetWidth) x = mainImage.width - zoomLens.offsetWidth;
+            if (x < 0) x = 0;
+            if (y > mainImage.height - zoomLens.offsetHeight) y = mainImage.height - zoomLens.offsetHeight;
+            if (y < 0) y = 0;
+
+            zoomLens.style.left = x + "px";
+            zoomLens.style.top = y + "px";
+
+            zoomResult.style.backgroundPosition = `-${x * 2}px -${y * 2}px`;
+        }
+
+        function getCursorPos(e) {
+            let rect = mainImage.getBoundingClientRect();
+            return {
+                x: e.pageX - rect.left - window.scrollX,
+                y: e.pageY - rect.top - window.scrollY
+            };
+        }
+
+        // Add throttling to slow down zoom effect
+        let throttledZoom = throttle(zoom, 80); // Adjust delay to slow down
+
+        mainImage.addEventListener("mousemove", throttledZoom);
+        zoomLens.addEventListener("mousemove", throttledZoom);
+
+
+       
+
+        function updateCartCount() {
+            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+            let totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+            let cartItemCount = document.getElementById("cartItemCount");
+
+            if (cartItemCount) {
+                cartItemCount.innerText = totalItems;
             } else {
-                cartItems.push({
-                    name: productName,
-                    image: productImage,
-                    type: productType,
-                    color: productColor,
-                    description: productDescription,
-                    quantity: quantity,
-                    price: price,
-                    total: (price * quantity).toFixed(2),
-                    productid: productId,
-                    productsimageid: productsImageId,
-                    arrivingDays : arrivingDays
-                });
+                console.error("cartItemCount element not found in DOM!");
             }
 
-            localStorage.setItem("cartItems", JSON.stringify(cartItems));
-            updateCartCount();
-            saveCartToDatabase();
+            console.log(`Cart updated: ${totalItems} items`);
         }
 
-        async function saveCartToDatabase() {
-            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+        async function addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays) {
+            try {
+                let response = await fetch(`/Home/CheckCartItem`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ productId, productsImageId })
+                });
 
-            if (cartItems.length === 0) {
-                console.log("Cart is empty. Nothing to save.");
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                let result = await response.json();
+                let quantity = parseInt(cartQuantity.value);
+                let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];            
+                let existingItem = cartItems.find(item => item.productid === productId && item.productsimageid === productsImageId);
+
+                if (result.exists && existingItem) {
+                    existingItem.quantity += 1;
+                    existingItem.total = (existingItem.quantity * price).toFixed(2);
+                } else {
+                       localStorage.removeItem("cartItems");
+                       cartItems = [{
+                             name: productName,
+                             image: productImage,
+                             type: productType,
+                             color: productColor,
+                             description: productDescription,
+                             quantity: quantity,
+                             price: price,
+                             total: price.toFixed(2),
+                             productid: productId,
+                             productsimageid: productsImageId,
+                             arrivingDays: arrivingDays
+                         }];
+                }
+
+                localStorage.setItem("cartItems", JSON.stringify(cartItems));
+
+                console.log("Updated cartItems:", cartItems);            
+                saveCartToDatabase();
+                loadCartFromDatabase();
+                updateCartCount();
+
+                showMessageModal("success", "Item Added.");
+
+            } catch (error) {
+                console.error("Error checking cart item:", error);
+            }
+        }
+
+    async function saveCartToDatabase() {
+        let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+        if (cartItems.length === 0) {
+            console.log("Cart is empty. Nothing to save.");
+            return;
+        }
+
+        let response = await fetch("/Home/SaveCart", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(cartItems),
+        });
+
+        if (response.ok) {
+            console.log("Cart saved successfully.");
+            updateCartCount();
+            loadCartFromDatabase();
+        } else {
+            console.log("Failed to save cart.", response);
+        }
+    }
+
+    async function loadCartFromDatabase() {
+        try {
+            let response = await fetch("/Home/Cart");
+            let text = await response.text();
+
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (jsonError) {
                 return;
             }
 
-            console.log("Saving cart to database...", cartItems);
-
-            let response = await fetch("/Home/SaveCart", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(cartItems),
-            });
-
-            if (response.ok) {
-                console.log("Cart saved successfully.");
-                 localStorage.setItem("cartItems", JSON.stringify(cartItems));
-                 updateCartCount();
+            if (data.success && data.cartItems.length > 0) {
+                localStorage.setItem("cartItems", JSON.stringify(data.cartItems));
+                updateCartCount();
             } else {
-                console.log("Failed to save cart.", response);
+                console.log("No items in the cart.");
             }
+        } catch (error) {
+            console.error("Error loading cart from database:", error);
         }
+    }
 
-        //  Event Listener for "Add to Cart" Button
-        function updateCartCount() {
-            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-            let totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
-            cartItemCount.innerText = totalItems;
-        }
-
-        //  Event Listener for Add to Cart Button
-        if (addToCartBtn) {
+    if (addToCartBtn) {
             addToCartBtn.addEventListener("click", function () {
-                addToCart();
-                //alert("Item added to cart!");
+            addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays);
+             //alert("Item added to cart!");
             });
-        }
+    }
 
-        updateCartCount();
-    });
+    loadCartFromDatabase();
+    updateCartCount();
+
+    function showMessageModal(type, message) {
+         let modalTitle = document.getElementById("messageModalLabel");
+         let modalBody = document.getElementById("messageText");
+         let modalHeader = document.querySelector("#messageModal .modal-header");
+
+         // Update the modal based on type (success or error)
+         if (type === "success") {
+             modalTitle.innerText = "Success";
+             modalBody.innerHTML = `✅ ${message}`;
+             modalHeader.classList.add("bg-success", "text-white");
+             modalHeader.classList.remove("bg-danger");
+         } else if (type === "error") {
+             modalTitle.innerText = "Error";
+             modalBody.innerHTML = `❌ ${message}`;
+             modalHeader.classList.add("bg-danger", "text-white");
+             modalHeader.classList.remove("bg-success");
+         }
+
+         // Show the modal
+         let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
+         messageModal.show();
+    }
+
+   });
 </script>
+
+
+

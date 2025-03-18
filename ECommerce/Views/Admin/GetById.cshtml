@@ -105,9 +105,8 @@
                     var productDetails = Model.ProductImages.FirstOrDefault(img => img.ProductsImageId == ViewBag.SelectedImageId);
 
                     if (productDetails != null)
-                    {                       
-                        <a asp-action="Edit" asp-route-id="@productDetails.ProductsImageId" class="btn btn-primary">Edit</a>
-
+                    {                   
+                        
                         <form asp-action="Delete" asp-route-id="@productDetails.ProductsImageId" method="post" style="display:inline;">
                             <button type="submit" class="btn btn-danger"
                                     onclick="return confirm('Are you sure you want to delete this image?');">

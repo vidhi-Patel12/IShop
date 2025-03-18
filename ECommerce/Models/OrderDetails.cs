@@ -17,7 +17,7 @@
         // Product Details
         public string ProductName { get; set; }
         public int ProductsImageId { get; set; }
-        public string Image { get; set; }
+        public string LargeImage { get; set; }
         public string Type { get; set; }
         public string Color { get; set; }
 

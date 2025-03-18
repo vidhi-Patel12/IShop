@@ -173,9 +173,10 @@
                         <div class="swiper-slide">
                             <div class="card-product wow fadeInUp" data-wow-delay="0.1s">
                                 <div class="card-product-wrapper">
-                                    <a asp-action="ProductDetails" asp-route-id="@productImage.ProductsImageId" class="product-img">
-                                        <img class="lazyload img-product" data-src="@productImage.LargeImage" src="@productImage.LargeImage" alt="image-product">
-                                        <img class="lazyload img-hover" data-src="@productImage.LargeImage" src="@productImage.LargeImage" alt="image-product">
+                                    <a asp-action="ProductDetails" asp-route-slug="@product.Slug" asp-route-typeslug="@productImage.TypeSlug"
+                                       asp-route-colorslug="@productImage.ColorSlug" class="product-img">
+                                        <img class="lazyload img-product" data-src="@productImage.MediumImage" src="@productImage.MediumImage" alt="image-product">
+                                        <img class="lazyload img-hover" data-src="@productImage.MediumImage" src="@productImage.MediumImage" alt="image-product">
                                     </a>
                                     @if (productImage.Discount > 0)
                                     {
@@ -203,7 +204,8 @@
                                     </div>
                                 </div>
                                 <div class="card-product-info">
-                                    <a asp-action="ProductDetails" asp-route-id="@productImage.ProductsImageId" class="title link">
+                                    <a asp-action="ProductDetails" asp-route-slug="@product.Slug" asp-route-typeslug="@productImage.TypeSlug"
+                                       asp-route-colorslug="@productImage.ColorSlug" class="title link">
                                         @product.Name
                                     </a>
                                     @if (productImage.Discount > 0)
@@ -281,10 +283,38 @@
     </div>
 </section>
 <!-- /Iconbox -->
+<!-- Common Modal for Success & Error Messages -->
+<div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="messageModalLabel">Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <h5 id="messageText">Your message here.</h5>
+            </div>
+            <br />
+            <hr />
+            <div class="row">
+                <div class="col-md-2"></div>
+                <div class="col-md-5">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Continue Shopping</button>
+                </div>
+                <div class="col-md-5">
+                    <a asp-controller="Home" asp-action="Cart" class="btn btn-secondary">Go To Cart</a>
+                </div>
+            </div>
+            <br />
+        </div>
+    </div>
+</div>
 
 @* <script src="~/lib/jquery/dist/jquery.min.js"></script> *@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+         loadCartFromDatabase();
+         updateCartCount();
 
         function updateCartCount() {
             let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
@@ -299,39 +329,40 @@
 
             console.log(`Cart updated: ${totalItems} items`);
         }
-        
-        function addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays) {
-            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
 
-            let existingItem = cartItems.find(item =>
-                item.name === productName &&
-                item.productid === productId &&
-                item.productsimageid === productsImageId
-            );
+        // function addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays) {
+        //     let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+        //     console.log(cartItems,305);
 
-            if (existingItem) {
-                existingItem.quantity += 1;
-                existingItem.total = (existingItem.quantity * price).toFixed(2);
-            } else {
-                cartItems.push({
-                    name: productName,
-                    image: productImage,
-                    type: productType,
-                    color: productColor,
-                    description: productDescription,
-                    quantity: 1,
-                    price: price,
-                    total: price.toFixed(2),
-                    productid: productId,
-                    productsimageid: productsImageId,
-                    arrivingDays: arrivingDays
-                });
-            }
+        //     let existingItem = cartItems.find(item =>
+        //         item.name === productName &&
+        //         item.productid === productId &&
+        //         item.productsimageid === productsImageId
+        //     );
 
-            localStorage.setItem("cartItems", JSON.stringify(cartItems));
-            updateCartCount();
-            saveCartToDatabase();
-        }
+        //     if (existingItem) {
+        //         existingItem.quantity += 1;
+        //         existingItem.total = (existingItem.quantity * price).toFixed(2);
+        //     } else {
+        //         cartItems.push({
+        //             name: productName,
+        //             image: productImage,
+        //             type: productType,
+        //             color: productColor,
+        //             description: productDescription,
+        //             quantity: 1,
+        //             price: price,
+        //             total: price.toFixed(2),
+        //             productid: productId,
+        //             productsimageid: productsImageId,
+        //             arrivingDays: arrivingDays
+        //         });
+        //     }
+
+        //     localStorage.setItem("cartItems", JSON.stringify(cartItems));
+        //     updateCartCount();
+        //     saveCartToDatabase();
+        // }
 
         async function saveCartToDatabase() {
             let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
@@ -351,8 +382,8 @@
 
             if (response.ok) {
                 console.log("Cart saved successfully.");
-                 localStorage.setItem("cartItems", JSON.stringify(cartItems));
-                 updateCartCount();
+                 //localStorage.setItem("cartItems", JSON.stringify(cartItems));
+                 loadCartFromDatabase();
             } else {
                 console.log("Failed to save cart.", response);
             }
@@ -371,9 +402,122 @@
                 let arrivingDays = parseInt(this.getAttribute("data-arrivingDays")) || 0;
 
                 addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays);
+
+                 //showMessageModal("success", "Added to Cart Successfully");
             });
+            updateCartCount();
         });
 
-        updateCartCount();
+        async function addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays) {
+            try {
+            // Step 1: Check if the product exists in the database
+            let response = await fetch(`/Home/CheckCartItem`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ productId, productsImageId })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            let result = await response.json();
+
+            // Step 2: Ensure cartItems is not null
+            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+            let existingItem = cartItems.find(item => item.productid === productId && item.productsimageid === productsImageId);
+
+            if (result.exists && existingItem) {
+                // Step 3: If exists in DB and LocalStorage, update quantity
+                existingItem.quantity += 1;
+                existingItem.total = (existingItem.quantity * price).toFixed(2);
+            } else {
+                // Step 4: If not exists, add new item without clearing LocalStorage
+                 localStorage.removeItem("cartItems");
+                 cartItems = [{
+                     name: productName,
+                     image: productImage,
+                     type: productType,
+                     color: productColor,
+                     description: productDescription,
+                     quantity: 1,
+                     price: price,
+                     total: price.toFixed(2),
+                     productid: productId,
+                     productsimageid: productsImageId,
+                     arrivingDays: arrivingDays
+                 }];
+            }
+
+            // Step 5: Save updated cart to localStorage
+            localStorage.setItem("cartItems", JSON.stringify(cartItems));
+
+            // Step 6: Log cartItems to check if it's being stored properly
+            console.log("Updated cartItems:", cartItems);
+
+            // Step 7: Update UI & Save cart to DB
+            saveCartToDatabase();
+            loadCartFromDatabase();
+            updateCartCount();
+
+            showMessageModal("success", "Item Added.")
+
+        } catch (error) {
+                console.error("Error checking cart item:", error);
+            }
+        }
+
+        async function loadCartFromDatabase() {
+          try {
+              let response = await fetch("/Home/Cart");
+
+              let text = await response.text();  // Get raw response text
+
+              let data;
+              try {
+                  data = JSON.parse(text); // Try parsing JSON
+              } catch (jsonError) {
+                  return; // Stop execution if JSON is invalid
+              }
+
+              if (data.success && data.cartItems.length > 0) {
+                  cartItems = data.cartItems;
+                   localStorage.removeItem("cartItems");
+                   localStorage.setItem("cartItems", JSON.stringify(cartItems)); //  Ensure LocalStorage updates
+                   updateCartCount();
+              } else {
+                  console.log("No items in the cart.");
+              }
+          } catch (error) {
+              console.error("Error loading cart from database:", error);
+          }
+        }
+
+    function showMessageModal(type, message) {
+                let modalTitle = document.getElementById("messageModalLabel");
+                let modalBody = document.getElementById("messageText");
+                let modalHeader = document.querySelector("#messageModal .modal-header");
+
+                // Update the modal based on type (success or error)
+                if (type === "success") {
+                    modalTitle.innerText = "Success";
+                    modalBody.innerHTML = `✅ ${message}`;
+                    modalHeader.classList.add("bg-success", "text-white");
+                    modalHeader.classList.remove("bg-danger");
+                } else if (type === "error") {
+                    modalTitle.innerText = "Error";
+                    modalBody.innerHTML = `❌ ${message}`;
+                    modalHeader.classList.add("bg-danger", "text-white");
+                    modalHeader.classList.remove("bg-success");
+                }
+
+                // Show the modal
+                let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
+                messageModal.show();
+            }
+
+
+
     });
 </script>

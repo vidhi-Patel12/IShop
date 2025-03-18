@@ -28,6 +28,8 @@ namespace ECommerce.Models
         public int Discount { get; set; }
         public double Price { get; set; }
         public int ArrivingDays { get; set; }
+        public string? TypeSlug { get; set; }
+        public string? ColorSlug { get; set; }
         public bool IsActive { get; set; }
 
         public virtual Products Product { get; set; }

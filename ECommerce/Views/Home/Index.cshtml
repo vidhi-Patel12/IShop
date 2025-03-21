@@ -330,64 +330,53 @@
             console.log(`Cart updated: ${totalItems} items`);
         }
 
-        // function addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays) {
+         async function saveCartToDatabase(cartItems) {
+        let userId = getCookie("IShopId");
+
+        if (!userId) {
+            console.log("User is not logged in. Cart stored in localStorage & cookies.");
+            return;
+        }
+
+        let response = await fetch("/Home/SaveCart", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(cartItems),
+        });
+
+        if (response.ok) {
+            console.log("Cart saved to database.");
+            loadCartFromDatabase();
+        } else {
+            console.log("Failed to save cart.");
+        }
+    }
+
+       
+        // async function saveCartToDatabase() {
         //     let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-        //     console.log(cartItems,305);
 
-        //     let existingItem = cartItems.find(item =>
-        //         item.name === productName &&
-        //         item.productid === productId &&
-        //         item.productsimageid === productsImageId
-        //     );
-
-        //     if (existingItem) {
-        //         existingItem.quantity += 1;
-        //         existingItem.total = (existingItem.quantity * price).toFixed(2);
-        //     } else {
-        //         cartItems.push({
-        //             name: productName,
-        //             image: productImage,
-        //             type: productType,
-        //             color: productColor,
-        //             description: productDescription,
-        //             quantity: 1,
-        //             price: price,
-        //             total: price.toFixed(2),
-        //             productid: productId,
-        //             productsimageid: productsImageId,
-        //             arrivingDays: arrivingDays
-        //         });
+        //     if (cartItems.length === 0) {
+        //         console.log("Cart is empty. Nothing to save.");
+        //         return;
         //     }
 
-        //     localStorage.setItem("cartItems", JSON.stringify(cartItems));
-        //     updateCartCount();
-        //     saveCartToDatabase();
+        //     console.log("Saving cart to database...", cartItems);
+
+        //     let response = await fetch("/Home/SaveCart", {
+        //         method: "POST",
+        //         headers: { "Content-Type": "application/json" },
+        //         body: JSON.stringify(cartItems),
+        //     });
+
+        //     if (response.ok) {
+        //         console.log("Cart saved successfully.");
+        //          //localStorage.setItem("cartItems", JSON.stringify(cartItems));
+        //          loadCartFromDatabase();
+        //     } else {
+        //         console.log("Failed to save cart.", response);
+        //     }
         // }
-
-        async function saveCartToDatabase() {
-            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-
-            if (cartItems.length === 0) {
-                console.log("Cart is empty. Nothing to save.");
-                return;
-            }
-
-            console.log("Saving cart to database...", cartItems);
-
-            let response = await fetch("/Home/SaveCart", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(cartItems),
-            });
-
-            if (response.ok) {
-                console.log("Cart saved successfully.");
-                 //localStorage.setItem("cartItems", JSON.stringify(cartItems));
-                 loadCartFromDatabase();
-            } else {
-                console.log("Failed to save cart.", response);
-            }
-        }
 
         document.querySelectorAll(".add-to-cart-btn").forEach(button => {
             button.addEventListener("click", function () {
@@ -408,116 +397,187 @@
             updateCartCount();
         });
 
+        // async function addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays) {
+        //     try {
+        //     // Step 1: Check if the product exists in the database
+        //     let response = await fetch(`/Home/CheckCartItem`, {
+        //         method: "POST",
+        //         headers: { "Content-Type": "application/json" },
+        //         body: JSON.stringify({ productId, productsImageId })
+        //     });
+
+        //     if (!response.ok) {
+        //         throw new Error(`HTTP error! Status: ${response.status}`);
+        //     }
+
+        //     let result = await response.json();
+
+        //     // Step 2: Ensure cartItems is not null
+        //     let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+        //      //  Step 2: Find existing item in the cart
+        //     let existingItemIndex = cartItems.findIndex(item => item.productId === productId && item.productsImageId === productsImageId);
+
+        //     if (existingItemIndex !== -1) {
+        //         //  Step 3: Update existing item (increase quantity & update total price)
+        //         cartItems[existingItemIndex].quantity += 1;
+        //         cartItems[existingItemIndex].total = (cartItems[existingItemIndex].quantity * price).toFixed(2);
+        //     } else {
+        //         // Step 4: If not exists, add new item without clearing LocalStorage
+        //          //localStorage.removeItem("cartItems");
+        //         cartItems.push({
+        //             name: productName,
+        //             image: productImage,
+        //             type: productType,
+        //             color: productColor,
+        //             description: productDescription,
+        //             quantity: 1,
+        //             price: price,
+        //             total: price.toFixed(2),
+        //             productid: productId,
+        //             productsimageid: productsImageId,
+        //             arrivingDays: arrivingDays
+        //         });
+        //     }
+
+        //     // Step 5: Save updated cart to localStorage
+        //     localStorage.setItem("cartItems", JSON.stringify(cartItems));
+
+        //     // Step 6: Log cartItems to check if it's being stored properly
+        //     console.log("Updated cartItems:", cartItems);
+
+        //     // Step 7: Update UI & Save cart to DB
+        //     saveCartToDatabase();
+        //     loadCartFromDatabase();
+        //     updateCartCount();
+
+        //     showMessageModal("success", "Item Added.")
+
+        // } catch (error) {
+        //         console.error("Error checking cart item:", error);
+        //     }
+        // }
+
         async function addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays) {
             try {
-            // Step 1: Check if the product exists in the database
-            let response = await fetch(`/Home/CheckCartItem`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ productId, productsImageId })
-            });
+                let userId = getCookie("IShopId"); // Get IShopId from cookies
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
+                // Step 1: Get existing cart items
+                let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
 
-            let result = await response.json();
+                // Step 2: Find existing item in the cart
+                let existingItemIndex = cartItems.findIndex(item => item.productId === productId && item.productsImageId === productsImageId);
 
-            // Step 2: Ensure cartItems is not null
-            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-
-            let existingItem = cartItems.find(item => item.productid === productId && item.productsimageid === productsImageId);
-
-            if (result.exists && existingItem) {
-                // Step 3: If exists in DB and LocalStorage, update quantity
-                existingItem.quantity += 1;
-                existingItem.total = (existingItem.quantity * price).toFixed(2);
-            } else {
-                // Step 4: If not exists, add new item without clearing LocalStorage
-                 localStorage.removeItem("cartItems");
-                 cartItems = [{
-                     name: productName,
-                     image: productImage,
-                     type: productType,
-                     color: productColor,
-                     description: productDescription,
-                     quantity: 1,
-                     price: price,
-                     total: price.toFixed(2),
-                     productid: productId,
-                     productsimageid: productsImageId,
-                     arrivingDays: arrivingDays
-                 }];
-            }
-
-            // Step 5: Save updated cart to localStorage
-            localStorage.setItem("cartItems", JSON.stringify(cartItems));
-
-            // Step 6: Log cartItems to check if it's being stored properly
-            console.log("Updated cartItems:", cartItems);
-
-            // Step 7: Update UI & Save cart to DB
-            saveCartToDatabase();
-            loadCartFromDatabase();
-            updateCartCount();
-
-            showMessageModal("success", "Item Added.")
-
-        } catch (error) {
-                console.error("Error checking cart item:", error);
-            }
-        }
-
-        async function loadCartFromDatabase() {
-          try {
-              let response = await fetch("/Home/Cart");
-
-              let text = await response.text();  // Get raw response text
-
-              let data;
-              try {
-                  data = JSON.parse(text); // Try parsing JSON
-              } catch (jsonError) {
-                  return; // Stop execution if JSON is invalid
-              }
-
-              if (data.success && data.cartItems.length > 0) {
-                  cartItems = data.cartItems;
-                   localStorage.removeItem("cartItems");
-                   localStorage.setItem("cartItems", JSON.stringify(cartItems)); //  Ensure LocalStorage updates
-                   updateCartCount();
-              } else {
-                  console.log("No items in the cart.");
-              }
-          } catch (error) {
-              console.error("Error loading cart from database:", error);
-          }
-        }
-
-    function showMessageModal(type, message) {
-                let modalTitle = document.getElementById("messageModalLabel");
-                let modalBody = document.getElementById("messageText");
-                let modalHeader = document.querySelector("#messageModal .modal-header");
-
-                // Update the modal based on type (success or error)
-                if (type === "success") {
-                    modalTitle.innerText = "Success";
-                    modalBody.innerHTML = `✅ ${message}`;
-                    modalHeader.classList.add("bg-success", "text-white");
-                    modalHeader.classList.remove("bg-danger");
-                } else if (type === "error") {
-                    modalTitle.innerText = "Error";
-                    modalBody.innerHTML = `❌ ${message}`;
-                    modalHeader.classList.add("bg-danger", "text-white");
-                    modalHeader.classList.remove("bg-success");
+                if (existingItemIndex !== -1) {
+                    // Update existing item
+                    cartItems[existingItemIndex].quantity += 1;
+                    cartItems[existingItemIndex].total = (cartItems[existingItemIndex].quantity * price).toFixed(2);
+                } else {
+                    // Add new item
+                    cartItems.push({
+                        name: productName,
+                        image: productImage,
+                        type: productType,
+                        color: productColor,
+                        description: productDescription,
+                        quantity: 1,
+                        price: price,
+                        total: price.toFixed(2),
+                        productId: productId,
+                        productsImageId: productsImageId,
+                        arrivingDays: arrivingDays
+                    });
                 }
 
-                // Show the modal
-                let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
-                messageModal.show();
+                // Step 3: Save updated cart to localStorage
+                localStorage.setItem("cartItems", JSON.stringify(cartItems));
+
+                if (userId) {
+                    // Step 4: If logged in, save to database
+                    await saveCartToDatabase(cartItems);
+                } else {
+                    // Step 5: If guest user, store cart in cookies
+                      document.cookie = `cartItems=${JSON.stringify(cartItems)}; path=/; expires=${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()}`;
+                }
+
+                // Step 6: Update UI
+                updateCartCount();
+                showMessageModal("success", "Item Added.");
+
+            } catch (error) {
+                console.error("Error adding to cart:", error);
             }
+        }
 
+    // Function to get a cookie value
+    function getCookie(name) {
+        let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return match ? match[2] : null;
+    }
 
+        // async function loadCartFromDatabase() {
+        //     try {
+        //         let response = await fetch("/Home/GetCart");
+        //         let data = await response.json(); //  Correct: Parse JSON once
 
-    });
+        //         console.log(" API Response:", data); // Debugging
+
+        //         if (data.success && data.cartItems.length > 0) {
+        //             let cartItems = data.cartItems;
+        //             localStorage.setItem("cartItems", JSON.stringify(cartItems)); //  Save updated cart items
+        //             console.log(" Cart loaded and saved to localStorage:", cartItems);
+        //         } else {
+        //             console.warn(" No items in the cart.");
+        //         }
+        //     } catch (error) {
+        //         console.error(" Error loading cart from database:", error);
+        //     }
+        //  }
+
+    async function loadCartFromDatabase() {
+        let userId = getCookie("IShopId");
+
+        if (userId) {
+            // Fetch from database
+            let response = await fetch("/Home/GetCart");
+            let data = await response.json();
+
+            if (data.success && data.cartItems.length > 0) {
+                localStorage.setItem("cartItems", JSON.stringify(data.cartItems));
+            }
+        } else {
+            // Fetch from cookies for guests
+              let cartItems = getCookie("cartItems");
+              if (cartItems) {
+                  localStorage.setItem("cartItems", cartItems);
+            }
+        }
+
+        updateCartCount();
+    }
+
+    function showMessageModal(type, message) {
+             let modalTitle = document.getElementById("messageModalLabel");
+             let modalBody = document.getElementById("messageText");
+             let modalHeader = document.querySelector("#messageModal .modal-header");
+
+             // Update the modal based on type (success or error)
+             if (type === "success") {
+                 modalTitle.innerText = "Success";
+                 modalBody.innerHTML = `✅ ${message}`;
+                 modalHeader.classList.add("bg-success", "text-white");
+                 modalHeader.classList.remove("bg-danger");
+             } else if (type === "error") {
+                 modalTitle.innerText = "Error";
+                 modalBody.innerHTML = `❌ ${message}`;
+                 modalHeader.classList.add("bg-danger", "text-white");
+                 modalHeader.classList.remove("bg-success");
+             }
+
+             // Show the modal
+             let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
+             messageModal.show();
+        }
+    
+  });
 </script>

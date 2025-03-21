@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Reflection.Metadata.Ecma335;
@@ -394,7 +395,7 @@ namespace ECommerce.Controllers
 
 
                     // Update product image details in database
-                    using (SqlCommand cmd = new SqlCommand("UPDATE ProductsImage SET Type = @Type, Color = @Color, LargeImage = @LargeImage, MediumImage = @MediumImage, SmallImage = @SmallImage, Description = @Description, Quantity = @Quantity, MRP = @MRP, Discount = @Discount, Price = @Price, ArrivingDays = @ArrivingDays, IsActive = @IsActive WHERE ProductId = @ProductId AND ProductsImageId = ProductsImageId", conn))
+                    using (SqlCommand cmd = new SqlCommand("UPDATE ProductsImage SET Type = @Type, Color = @Color, LargeImage = @LargeImage, MediumImage = @MediumImage, SmallImage = @SmallImage,Description = @Description, Quantity = @Quantity, MRP = @MRP,Discount = @Discount, Price = @Price, ArrivingDays = @ArrivingDays, IsActive = @IsActive WHERE ProductId = @ProductId AND ProductsImageId = @ProductsImageId;", conn))
                     {
                         cmd.Parameters.AddWithValue("@ProductId", model.ProductId);
                         cmd.Parameters.AddWithValue("@ProductsImageId", model.ProductsImageId);

@@ -16,11 +16,14 @@ namespace ECommerce.Controllers
     {
         private readonly string _connectionString;
         private readonly ILogger<HomeController> _logger;
+        private readonly IConfiguration _configuration;
+
 
         public HomeController(IConfiguration configuration, ILogger<HomeController> logger)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection");
             _logger = logger;
+            _configuration = configuration;
         }
         public async Task<IActionResult> Index()
         {
@@ -411,143 +414,249 @@ namespace ECommerce.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Cart()
+        public async Task<IActionResult> GetCart()
         {
-            string? userId = Request.Cookies["IShopId"];
-
-            if (string.IsNullOrEmpty(userId))
-            {
-                Console.WriteLine(" No user ID found in cookies.");
-                return Json(new { success = false, message = "User not logged in." });
-            }
-
             List<ShoppingCart> cartItems = new List<ShoppingCart>();
 
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
+
                 using (SqlCommand cmd = new SqlCommand("SELECT * FROM ShoppingCart WHERE IShopId = @IShopId", conn))
                 {
+                    string? userId = Request.Cookies["IShopId"];
+                    
                     cmd.Parameters.AddWithValue("@IShopId", userId);
                     using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                     {
-                        while (reader.Read())
+                        while (await reader.ReadAsync())  
                         {
                             cartItems.Add(new ShoppingCart
                             {
                                 IShopId = reader.GetInt32(reader.GetOrdinal("IShopId")),
-                                ArrivingDays = reader.GetInt32(reader.GetOrdinal("ArrivingDays")),
-                                Color = reader["Color"].ToString(),
-                                Description = reader["Description"].ToString(),
-                                Image = reader["Image"].ToString(),
-                                Name = reader["Name"].ToString(),
-                                Price = reader.GetDouble(reader.GetOrdinal("Price")),
+                                ArrivingDays = reader.IsDBNull(reader.GetOrdinal("ArrivingDays")) ? 0 : reader.GetInt32(reader.GetOrdinal("ArrivingDays")), // ? Handle null values
+                                Color = reader["Color"]?.ToString() ?? "", 
+                                Description = reader["Description"]?.ToString() ?? "",
+                                Image = reader["Image"]?.ToString() ?? "",
+                                Name = reader["Name"]?.ToString() ?? "",
+                                Price = reader.IsDBNull(reader.GetOrdinal("Price")) ? 0.0 : reader.GetDouble(reader.GetOrdinal("Price")),
                                 ProductId = reader.GetInt32(reader.GetOrdinal("ProductId")),
                                 ProductsImageId = reader.GetInt32(reader.GetOrdinal("ProductsImageId")),
-                                Quantity = reader.GetDouble(reader.GetOrdinal("Quantity")),
-                                Total = reader.GetDouble(reader.GetOrdinal("Total")),
-                                Type = reader["Type"].ToString()
+                                Quantity = reader.IsDBNull(reader.GetOrdinal("Quantity")) ? 0 : reader.GetDouble(reader.GetOrdinal("Quantity")),
+                                Total = reader.IsDBNull(reader.GetOrdinal("Total")) ? 0.0 : reader.GetDouble(reader.GetOrdinal("Total")),
+                                Type = reader["Type"]?.ToString() ?? ""
                             });
                         }
                     }
                 }
             }
 
-            return View(cartItems);  //  Render View with Data
+            return Json(new { success = true, cartItems });
         }
+
+        [HttpGet]
+        public async Task<IActionResult> Cart()
+        {
+            List<ShoppingCart> cartItems = new List<ShoppingCart>();
+
+            //  Try to get IShopId from cookies (for logged-in users)
+            string? userId = Request.Cookies["IShopId"];
+
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+
+                //  If user is logged in, fetch cart from the database
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    using (SqlCommand cmd = new SqlCommand("SELECT * FROM ShoppingCart WHERE IShopId = @IShopId", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@IShopId", userId);
+                        using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                cartItems.Add(new ShoppingCart
+                                {
+                                    IShopId = reader.GetInt32(reader.GetOrdinal("IShopId")),
+                                    ArrivingDays = reader.GetInt32(reader.GetOrdinal("ArrivingDays")),
+                                    Color = reader["Color"].ToString(),
+                                    Description = reader["Description"].ToString(),
+                                    Image = reader["Image"].ToString(),
+                                    Name = reader["Name"].ToString(),
+                                    Price = reader.GetDouble(reader.GetOrdinal("Price")),
+                                    ProductId = reader.GetInt32(reader.GetOrdinal("ProductId")),
+                                    ProductsImageId = reader.GetInt32(reader.GetOrdinal("ProductsImageId")),
+                                    Quantity = reader.GetDouble(reader.GetOrdinal("Quantity")),
+                                    Total = reader.GetDouble(reader.GetOrdinal("Total")),
+                                    Type = reader["Type"].ToString()
+                                });
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    //  Load cart from localStorage for guest users
+                    var guestCart = HttpContext.Session.GetString("GuestCart");
+                    if (!string.IsNullOrEmpty(guestCart))
+                    {
+                        cartItems = JsonConvert.DeserializeObject<List<ShoppingCart>>(guestCart);
+                    }
+                }
+            }
+
+            return View(cartItems);  //  Render Cart View with Data
+        }
+
+        //[HttpPost]
+        //public IActionResult SaveCart([FromBody] List<ShoppingCart> cartItems)
+        //{
+        //    try
+        //    {
+        //        string? userId = Request.Cookies["IShopId"];
+
+        //        if (string.IsNullOrEmpty(userId))
+        //        {
+        //            Console.WriteLine(" No user ID found in cookies.");
+        //            return Json(new { success = false, message = "User not logged in." });
+        //        }
+
+        //        if (cartItems == null || cartItems.Count == 0)
+        //        {
+        //            Console.WriteLine(" Cart is empty.");
+        //            return Json(new { success = false, message = "Cart is empty." });
+        //        }
+
+        //        Console.WriteLine($" Saving {cartItems.Count} items for user {userId}");
+
+        //        using (SqlConnection conn = new SqlConnection(_connectionString))
+        //        {
+        //            conn.Open();
+
+        //            foreach (var item in cartItems)
+        //            {
+        //                using (SqlCommand checkCmd = new SqlCommand(@"
+        //                    SELECT COUNT(*) FROM ShoppingCart 
+        //                    WHERE IShopId = @IShopId AND ProductsImageId = @ProductsImageId", conn))
+        //                   {
+        //                    checkCmd.Parameters.AddWithValue("@IShopId", userId);
+        //                    checkCmd.Parameters.AddWithValue("@ProductsImageId", item.ProductsImageId);
+
+        //                    int count = (int)checkCmd.ExecuteScalar();
+
+        //                    if (count > 0)
+        //                    {
+        //                        //  Use a different variable name (updateCmd)
+        //                        using (SqlCommand updateCmd = new SqlCommand("SaveOrUpdateCart", conn))
+        //                        {
+        //                            updateCmd.CommandType = CommandType.StoredProcedure;
+        //                            updateCmd.Parameters.AddWithValue("@IShopId", userId);
+        //                            updateCmd.Parameters.AddWithValue("@ArrivingDays", item.ArrivingDays);
+        //                            updateCmd.Parameters.AddWithValue("@Color", item.Color ?? (object)DBNull.Value);
+        //                            updateCmd.Parameters.AddWithValue("@Description", item.Description ?? (object)DBNull.Value);
+        //                            updateCmd.Parameters.AddWithValue("@Image", item.Image ?? (object)DBNull.Value);
+        //                            updateCmd.Parameters.AddWithValue("@Name", item.Name ?? (object)DBNull.Value);
+        //                            updateCmd.Parameters.AddWithValue("@Price", item.Price);
+        //                            updateCmd.Parameters.AddWithValue("@ProductId", item.ProductId);
+        //                            updateCmd.Parameters.AddWithValue("@ProductsImageId", item.ProductsImageId);
+        //                            updateCmd.Parameters.AddWithValue("@Quantity", item.Quantity);
+        //                            updateCmd.Parameters.AddWithValue("@Total", item.Total);
+        //                            updateCmd.Parameters.AddWithValue("@Type", item.Type ?? (object)DBNull.Value);
+
+
+        //                            updateCmd.ExecuteNonQuery();
+        //                        }
+        //                    }
+        //                    else
+        //                    {
+        //                        // Use a different variable name (insertCmd)
+        //                        using (SqlCommand insertCmd = new SqlCommand("SaveOrUpdateCart", conn))
+        //                        {
+        //                            insertCmd.CommandType = CommandType.StoredProcedure;
+        //                            insertCmd.Parameters.AddWithValue("@IShopId", userId);
+        //                            insertCmd.Parameters.AddWithValue("@ArrivingDays", item.ArrivingDays);
+        //                            insertCmd.Parameters.AddWithValue("@Color", item.Color);
+        //                            insertCmd.Parameters.AddWithValue("@Description", item.Description);
+        //                            insertCmd.Parameters.AddWithValue("@Image", item.Image);
+        //                            insertCmd.Parameters.AddWithValue("@Name", item.Name);
+        //                            insertCmd.Parameters.AddWithValue("@Price", item.Price);
+        //                            insertCmd.Parameters.AddWithValue("@ProductId", item.ProductId);
+        //                            insertCmd.Parameters.AddWithValue("@ProductsImageId", item.ProductsImageId);
+        //                            insertCmd.Parameters.AddWithValue("@Quantity", item.Quantity);
+        //                            insertCmd.Parameters.AddWithValue("@Total", item.Total);
+        //                            insertCmd.Parameters.AddWithValue("@Type", item.Type);
+        //                            insertCmd.ExecuteNonQuery();
+        //                        }
+        //                    }
+        //                }
+        //            }
+        //        }
+
+        //        return Json(new { success = true, message = " Cart saved successfully!" });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($" Error saving cart: {ex.Message}");
+        //        return Json(new { success = false, message = "An error occurred while saving the cart.", error = ex.Message });
+        //    }
+        //}
 
         [HttpPost]
         public IActionResult SaveCart([FromBody] List<ShoppingCart> cartItems)
         {
             try
             {
-                string? userId = Request.Cookies["IShopId"];
-
-                if (string.IsNullOrEmpty(userId))
-                {
-                    Console.WriteLine(" No user ID found in cookies.");
-                    return Json(new { success = false, message = "User not logged in." });
-                }
+                string? userId = Request.Cookies["IShopId"]; // Get user ID from cookies
 
                 if (cartItems == null || cartItems.Count == 0)
                 {
-                    Console.WriteLine(" Cart is empty.");
                     return Json(new { success = false, message = "Cart is empty." });
                 }
 
-                Console.WriteLine($" Saving {cartItems.Count} items for user {userId}");
-
-                using (SqlConnection conn = new SqlConnection(_connectionString))
+                if (!string.IsNullOrEmpty(userId)) // User is logged in, save to DB
                 {
-                    conn.Open();
-
-                    foreach (var item in cartItems)
+                    using (SqlConnection conn = new SqlConnection(_connectionString))
                     {
-                        using (SqlCommand checkCmd = new SqlCommand(@"
-                            SELECT COUNT(*) FROM ShoppingCart 
-                            WHERE IShopId = @IShopId AND ProductsImageId = @ProductsImageId", conn))
-                           {
-                            checkCmd.Parameters.AddWithValue("@IShopId", userId);
-                            checkCmd.Parameters.AddWithValue("@ProductsImageId", item.ProductsImageId);
-
-                            int count = (int)checkCmd.ExecuteScalar();
-
-                            if (count > 0)
+                        conn.Open();
+                        foreach (var item in cartItems)
+                        {
+                            using (SqlCommand cmd = new SqlCommand("SaveOrUpdateCart", conn))
                             {
-                                //  Use a different variable name (updateCmd)
-                                using (SqlCommand updateCmd = new SqlCommand("SaveOrUpdateCart", conn))
-                                {
-                                    updateCmd.CommandType = CommandType.StoredProcedure;
-                                    updateCmd.Parameters.AddWithValue("@IShopId", userId);
-                                    updateCmd.Parameters.AddWithValue("@ArrivingDays", item.ArrivingDays);
-                                    updateCmd.Parameters.AddWithValue("@Color", item.Color ?? (object)DBNull.Value);
-                                    updateCmd.Parameters.AddWithValue("@Description", item.Description ?? (object)DBNull.Value);
-                                    updateCmd.Parameters.AddWithValue("@Image", item.Image ?? (object)DBNull.Value);
-                                    updateCmd.Parameters.AddWithValue("@Name", item.Name ?? (object)DBNull.Value);
-                                    updateCmd.Parameters.AddWithValue("@Price", item.Price);
-                                    updateCmd.Parameters.AddWithValue("@ProductId", item.ProductId);
-                                    updateCmd.Parameters.AddWithValue("@ProductsImageId", item.ProductsImageId);
-                                    updateCmd.Parameters.AddWithValue("@Quantity", item.Quantity);
-                                    updateCmd.Parameters.AddWithValue("@Total", item.Total);
-                                    updateCmd.Parameters.AddWithValue("@Type", item.Type ?? (object)DBNull.Value);
+                                cmd.CommandType = CommandType.StoredProcedure;
+                                cmd.Parameters.AddWithValue("@IShopId", userId);
+                                cmd.Parameters.AddWithValue("@ArrivingDays", item.ArrivingDays);
+                                cmd.Parameters.AddWithValue("@Color", item.Color ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@Description", item.Description ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@Image", item.Image ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@Name", item.Name ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@Price", item.Price);
+                                cmd.Parameters.AddWithValue("@ProductId", item.ProductId);
+                                cmd.Parameters.AddWithValue("@ProductsImageId", item.ProductsImageId);
+                                cmd.Parameters.AddWithValue("@Quantity", item.Quantity);
+                                cmd.Parameters.AddWithValue("@Total", item.Total);
+                                cmd.Parameters.AddWithValue("@Type", item.Type ?? (object)DBNull.Value);
 
-
-                                    updateCmd.ExecuteNonQuery();
-                                }
-                            }
-                            else
-                            {
-                                // Use a different variable name (insertCmd)
-                                using (SqlCommand insertCmd = new SqlCommand("SaveOrUpdateCart", conn))
-                                {
-                                    insertCmd.CommandType = CommandType.StoredProcedure;
-                                    insertCmd.Parameters.AddWithValue("@IShopId", userId);
-                                    insertCmd.Parameters.AddWithValue("@ArrivingDays", item.ArrivingDays);
-                                    insertCmd.Parameters.AddWithValue("@Color", item.Color);
-                                    insertCmd.Parameters.AddWithValue("@Description", item.Description);
-                                    insertCmd.Parameters.AddWithValue("@Image", item.Image);
-                                    insertCmd.Parameters.AddWithValue("@Name", item.Name);
-                                    insertCmd.Parameters.AddWithValue("@Price", item.Price);
-                                    insertCmd.Parameters.AddWithValue("@ProductId", item.ProductId);
-                                    insertCmd.Parameters.AddWithValue("@ProductsImageId", item.ProductsImageId);
-                                    insertCmd.Parameters.AddWithValue("@Quantity", item.Quantity);
-                                    insertCmd.Parameters.AddWithValue("@Total", item.Total);
-                                    insertCmd.Parameters.AddWithValue("@Type", item.Type);
-                                    insertCmd.ExecuteNonQuery();
-                                }
+                                cmd.ExecuteNonQuery();
                             }
                         }
                     }
+                    return Json(new { success = true, message = "Cart saved to database." });
                 }
+                else // Guest user: store in localStorage & cookies
+                {
+                    Response.Cookies.Append("GuestCart", System.Text.Json.JsonSerializer.Serialize(cartItems),
+                        new CookieOptions { Expires = DateTime.UtcNow.AddDays(7) });
 
-                return Json(new { success = true, message = " Cart saved successfully!" });
+                    return Json(new { success = true, message = "Cart saved in localStorage & cookies for guests." });
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($" Error saving cart: {ex.Message}");
-                return Json(new { success = false, message = "An error occurred while saving the cart.", error = ex.Message });
+                return Json(new { success = false, message = "An error occurred.", error = ex.Message });
             }
         }
+
 
         [HttpPost]
         public async Task<IActionResult> CheckCartItem([FromBody] ShoppingCart item)
@@ -596,7 +705,7 @@ namespace ECommerce.Controllers
             {
                 conn.Open();
 
-                if (request == null || request.ProductId == 0) // Delete all items if ProductId is not provided
+                if (request == null || request.ProductId == 0 || request.ProductsImageId == 0) // Delete all items if ProductId is not provided
                 {
                     using (SqlCommand cmdDeleteAll = new SqlCommand("DELETE FROM ShoppingCart WHERE IShopId = @IShopId", conn))
                     {
@@ -616,7 +725,7 @@ namespace ECommerce.Controllers
                     cmdDelete.CommandType = CommandType.StoredProcedure;
                     cmdDelete.Parameters.AddWithValue("@IShopId", userId);
                     cmdDelete.Parameters.AddWithValue("@ProductId", request.ProductId);
-                   // cmdDelete.Parameters.AddWithValue("@ProductsImageId", request.ProductsImageId);
+                    cmdDelete.Parameters.AddWithValue("@ProductsImageId", request.ProductsImageId);
 
                     int rowsAffected = cmdDelete.ExecuteNonQuery();
 
@@ -634,7 +743,7 @@ namespace ECommerce.Controllers
             public int? UserId { get; set; }
             public int? ProductId { get; set; }
             public int ProductsImageId { get; set; }
-        }
+        }       
 
         [HttpGet]
         public IActionResult Checkout()
@@ -643,7 +752,8 @@ namespace ECommerce.Controllers
 
             if (string.IsNullOrEmpty(IShopId))
             {
-                return RedirectToAction("Login", "Account"); // Redirect to Login if null
+                Helper.IsCheckout = true;
+                return RedirectToAction("Login", "Account");
             }
             return View();
         }

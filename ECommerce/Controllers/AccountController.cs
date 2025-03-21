@@ -204,39 +204,42 @@ namespace ECommerce.Controllers
             if (user == null)
             {
                 ViewBag.Error = "Mobile number not registered.";
+                TempData.Keep("IsCheckout"); // ✅ Keep checkout intent in case of failure
                 return View("Login");
             }
 
-            // Verify password (assuming passwords are stored as plain text - NOT recommended)
             if (user.Password != Password)
             {
                 ViewBag.Error = "Invalid password.";
+                TempData.Keep("IsCheckout"); // ✅ Keep checkout intent in case of failure
                 return View("Login");
             }
 
             CookieOptions options = new CookieOptions
-            {      
-                HttpOnly = true,               
-                SameSite = SameSiteMode.Strict,
-                Secure = true,
+            {
+                Path = "/",
+                HttpOnly = false,
+                SameSite = SameSiteMode.Lax,
+                Secure = false,
             };
 
             Response.Cookies.Append("IShopId", user.IShopId.ToString(), options);
-
-            // Store session and redirect
             HttpContext.Session.SetInt32("IShopId", user.IShopId);
 
+            // ✅ Redirect based on role
             if (user.Role == 0)  // Admin
             {
                 return RedirectToAction("Index", "Admin");
             }
-            else if (user.Role == 1)  // Regular User
+            else if (user.Role == 1 && Helper.IsCheckout)  // Regular User & trying to checkout
+            {
+                Helper.IsCheckout = false;
+                return RedirectToAction("Checkout", "Home");
+            }
+            else
             {
                 return RedirectToAction("Index", "Home");
             }
-
-
-            return RedirectToAction("Index", "Home");
         }
 
 

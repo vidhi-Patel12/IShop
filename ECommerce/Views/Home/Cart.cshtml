@@ -18,7 +18,7 @@
     <div id="cartSummary" class="container">
         <div class="row">
             <div class="col-xl-12">
-               @*  <div class="tf-cart-sold">
+                @*  <div class="tf-cart-sold">
                     <div class="notification-sold bg-surface">
                         <img class="icon" src="~/content/images/logo/icon-fire.png" alt="img">
                         <div class="count-text">Your cart will expire in <div class="js-countdown time-count" data-timer="600" data-labels=":,:,:,"></div> minutes! Please checkout now before your items sell out!</div>
@@ -53,11 +53,13 @@
                                         </a>
                                         <div class="cart-info">
                                             <a href="product-detail.html" class="cart-title link">@item.Name</a>
-                                            <div id="pColor">@item.Color</div>
+                                            <div id="pColor">
+                                                @item.Color
+                                            </div>
                                         </div>
                                     </td>
                                     <td data-cart-title="Price" class="tf-cart-item_price text-center">
-                                        <div class="cart-price"><span id="productPrice" class="text-button new-price price-on-sale">₹@item.Price</span></div>
+                                        <div class="cart-price"><span id="productPrice" class="text-button new-price price-on-sale">₹@item.Price.ToString("0.00")</span></div>
                                     </td>
                                     <td data-cart-title="Quantity" class="tf-cart-item_quantity">
                                         <div class="wg-quantity mx-md-auto">
@@ -67,10 +69,16 @@
                                         </div>
                                     </td>
                                     <td data-cart-title="Total" class="tf-cart-item_total text-center">
-                                        <div class="cart-total text-button total-price">₹<span class="total-price">@item.Total</span></div>
+                                        <div class="cart-total text-button total-price">₹<span class="total-price">@item.Total.ToString("0.00")</span></div>
                                     </td>
 
                                     <td data-cart-title="Remove" class="remove-cart"><span class="remove icon icon-close" data-index="@Model.IndexOf(item)"></span></td>
+
+                                    <!-- Hidden Inputs -->
+                                    <input type="hidden" class="arrivingDays" name="arrivingDays" value="@item.ArrivingDays ?? " 0"" />
+                                    <input type="hidden" class="description" name="description" value="@item.Description ?? " "" "   />
+                                    <input type="hidden" class="typeproduct" name="typeproduct" value="@item.Type ?? " "" "   />
+
                                 </tr>
                             }
                         </tbody>
@@ -112,7 +120,7 @@
                         </div>
                     </div>
                 </div>
-            </div>           
+            </div>
         </div>
     </div>
     <!-- Empty Cart Message (Initially Hidden) -->
@@ -125,80 +133,502 @@
 <!-- /Section cart -->
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        let cartDisplay = document.getElementById("cartDisplay");
-        let cartTotal = document.getElementById("cartTotal");
+      document.addEventListener("DOMContentLoaded", function () {
+            console.log(" JavaScript Loaded!");
+
+            function getCookie(name) {
+                let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+                return match ? match[2] : null;
+            }
+
+            let IShopId = getCookie('IShopId');
+
+        if (IShopId) {
+            console.log("✅ Logged in, fetching cart from DB");
+            loadCartFromDatabase();
+        } else {
+            console.log("❌ Not logged in, loading cart from localStorage");
+            loadGuestCart();
+        }
+
+
+            updateCartTotal();
+            updateCartCount();
+
+
+          async function loadCartFromDatabase() {
+                  try {
+                      let response = await fetch("/Home/GetCart");
+                      let data = await response.json(); //  Correct: Parse JSON once
+
+                      console.log(" API Response:", data); // Debugging
+
+                      if (data.success && data.cartItems.length > 0) {
+                          let cartItems = data.cartItems;
+                          localStorage.setItem("cartItems", JSON.stringify(cartItems)); //  Save updated cart items
+                          console.log(" Cart loaded and saved to localStorage:", cartItems);
+                          saveCartToDatabase();
+                      } else {
+                          console.warn(" No items in the cart.");
+                      }
+                  } catch (error) {
+                      console.error(" Error loading cart from database:", error);
+                  }
+               }
+
+            function loadGuestCart() {
+        let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+        let cartTableBody = document.querySelector("#cartDisplay tbody");
         let cartSummarySection = document.getElementById("cartSummarySection");
         let emptyCartMessage = document.getElementById("emptyCartMessage");
-        let cartItemCount = document.getElementById("cartItemCount");
-        let checkoutLink = document.getElementById("checkoutLink");
+        let cartTotalElement = document.getElementById("cartTotal");
 
-        let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-                          
-        loadCartFromDatabase();
-        updateCartCount();
-        updateCartTotal();
+        // Clear only the existing dynamic content inside tbody
+        document.querySelectorAll("#cartDisplay tbody .file-delete").forEach(row => row.remove());
 
-         checkoutLink.addEventListener("click", function () {
-             let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-              localStorage.setItem("checkoutItems", JSON.stringify(cartItems));
-              saveCartToDatabase();
+        if (cartItems.length === 0) {
+            cartSummarySection.style.display = "none";
+            emptyCartMessage.style.display = "block"; // Show empty cart message
+            return;
+        }
+
+        cartSummarySection.style.display = "block";
+        emptyCartMessage.style.display = "none"; // Hide empty cart message
+
+        let totalCartPrice = 0;
+
+        cartItems.forEach((item, index) => {
+            let totalItemPrice = (item.quantity * item.price).toFixed(2);
+            totalCartPrice += parseFloat(totalItemPrice);
+
+            let existingRow = document.querySelector(`#cartDisplay tbody tr[data-productid="${item.productId}"][data-product-image-id="${item.productsImageId}"]`);
+
+            if (existingRow) {
+                // ✅ If the item already exists in the Razor-rendered HTML, update its values
+                existingRow.querySelector(".quantity-product").value = item.quantity;
+                existingRow.querySelector(".total-price span").innerText = totalItemPrice;
+            } else {
+                // ✅ If item is not in the Razor-rendered table, create a new row dynamically
+                let row = document.createElement("tr");
+                row.classList.add("tf-cart-item", "file-delete");
+                row.setAttribute("data-productid", item.productId);
+                row.setAttribute("data-product-image-id", item.productsImageId);
+
+                row.innerHTML = `
+                    <td class="tf-cart-item_product">
+                        <a href="product-detail.html" class="img-box">
+                            <img src="${item.image}" alt="product">
+                        </a>
+                        <div class="cart-info">
+                            <a href="product-detail.html" class="cart-title link">${item.name}</a>
+                            <div id="pColor">${item.color || "N/A"}</div>
+                        </div>
+                    </td>
+                    <td data-cart-title="Price" class="tf-cart-item_price text-center">
+                        <div class="cart-price"><span class="text-button new-price price-on-sale">₹${item.price.toFixed(2)}</span></div>
+                    </td>
+                    <td data-cart-title="Quantity" class="tf-cart-item_quantity">
+                        <div class="wg-quantity mx-md-auto">
+                            <span class="btn-quantity btn-decrease" data-productid="${item.productId}" data-productsimageid="${item.productsImageId}">-</span>
+                            <input type="text" class="quantity-product" value="${item.quantity}" readonly>
+                            <span class="btn-quantity btn-increase" data-productid="${item.productId}" data-productsimageid="${item.productsImageId}">+</span>
+                        </div>
+                    </td>
+                    <td data-cart-title="Total" class="tf-cart-item_total text-center">
+                        <div class="cart-total text-button total-price">₹<span>${totalItemPrice}</span></div>
+                    </td>
+                    <td data-cart-title="Remove" class="remove-cart">
+                        <span class="remove icon icon-close" data-productid="${item.productId}" data-productsimageid="${item.productsImageId}"></span>
+                    </td>
+                `;
+
+                cartTableBody.appendChild(row);
+            }
         });
-    });  
-    
-    async function loadCartFromDatabase() {
-          try {
-              let response = await fetch("/Home/Cart");
 
-              // Check if response is actually JSON
-              let text = await response.text();  // Get raw response text
-              //console.log("Raw API Response:", text); // Debugging
+        cartTotalElement.innerText = totalCartPrice.toFixed(2);
+    }
 
-              let data;
-              try {
-                  data = JSON.parse(text); // Try parsing JSON
-              } catch (jsonError) {
-                  //console.error("Invalid JSON response from API:", text);
-                  return; // Stop execution if JSON is invalid
-              }
+    // ✅ Ensure Click Event is Attached to Buttons for Quantity Change and Removal
+    document.addEventListener("click", function (event) {
+        let target = event.target;
 
-              if (data.success && data.cartItems.length > 0) {
-                  cartItems = data.cartItems;
-                   localStorage.setItem("cartItems", JSON.stringify(cartItems)); //  Ensure LocalStorage updates
-              } else {
-                  console.log("No items in the cart.");
-              }
-          } catch (error) {
-              console.error("Error loading cart from database:", error);
-          }
-      }
+        if (target.classList.contains("btn-increase") || target.classList.contains("btn-decrease")) {
+            let cartItem = target.closest(".tf-cart-item");
+            let productId = parseInt(target.getAttribute("data-productid"));
+            let productsImageId = parseInt(target.getAttribute("data-productsimageid"));
+            let quantityInput = cartItem.querySelector(".quantity-product");
+            let totalElement = cartItem.querySelector(".total-price span");
+            let priceElement = cartItem.querySelector(".new-price");
+            let cartTotalElement = document.getElementById("cartTotal");
 
-    async function saveCartToDatabase() {
+            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+            let item = cartItems.find(i => i.productId === productId && i.productsImageId === productsImageId);
+
+            if (!item) return;
+
+            let newQuantity = item.quantity;
+            if (target.classList.contains("btn-increase")) {
+                newQuantity++;
+            } else if (target.classList.contains("btn-decrease") && newQuantity > 1) {
+                newQuantity--;
+            }
+
+            item.quantity = newQuantity;
+            let newTotal = (newQuantity * item.price).toFixed(2);
+
+            // Update UI
+            quantityInput.value = newQuantity;
+            totalElement.innerText = newTotal;
+
+            // Update Local Storage
+            localStorage.setItem("cartItems", JSON.stringify(cartItems));
+
+            // Update Cart Total
+            let updatedTotal = cartItems.reduce((sum, i) => sum + (i.quantity * i.price), 0);
+            cartTotalElement.innerText = updatedTotal.toFixed(2);
+        }
+
+        // ✅ Handle Remove Item
+        if (target.classList.contains("remove")) {
+            let productId = parseInt(target.getAttribute("data-productid"));
+            let productsImageId = parseInt(target.getAttribute("data-productsimageid"));
+            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+            // Remove item from cart
+            cartItems = cartItems.filter(i => !(i.productId === productId && i.productsImageId === productsImageId));
+            localStorage.setItem("cartItems", JSON.stringify(cartItems));
+
+            // Reload the cart
+            loadGuestCart();
+        }
+    });
+
+
+        async function syncGuestCartToDatabase() {
+        let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+        if (cartItems.length === 0) {
+            console.warn("No items in local cart to sync.");
+            return;
+        }
+
+        try {
+            console.log("Syncing guest cart to database...", cartItems);
+
+            let response = await fetch("/Home/SaveCart", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(cartItems),
+            });
+
+            if (!response.ok) {
+                console.error("Failed to sync cart. Server Response:", await response.text());
+                return;
+            }
+
+            console.log("Guest cart successfully synced to database.");
+            localStorage.removeItem("cartItems"); // Clear local storage after syncing
+            loadCartFromDatabase(); // Refresh cart from DB
+        } catch (error) {
+            console.error("Error syncing guest cart:", error);
+        }
+    }
+
+
+              let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+              console.log("🛒 Local Storage Cart Items:", cartItems); //  Debug localStorage content
+
+
+              document.querySelectorAll("#cartDisplay .tf-cart-item").forEach(cartItem => {
+                  let productsImageId = parseInt(cartItem.getAttribute("data-product-image-id"), 10);
+                  let productId = parseInt(cartItem.getAttribute("data-productid"), 10);
+
+                  console.log(" Scanning Cart Item:", { productsImageId, productId });
+
+                  //  Check data types
+                  console.log(` Type Check: productsImageId=${typeof productsImageId}, productId=${typeof productId}`);
+
+                  let matchingItems = cartItems.filter(ci =>
+                      parseInt(ci.productsImageId) === productsImageId &&
+                      parseInt(ci.productId) === productId
+                  );
+
+                  console.log(" Matching Items Found:", matchingItems);
+
+                  if (matchingItems.length > 0) {
+                      matchingItems.forEach((item, index) => {
+                          console.log(`🛒 Item ${index + 1}:`, item);
+
+                          let arrivingDaysInput = cartItem.querySelector(".arrivingDays");
+                          let descriptionInput = cartItem.querySelector(".description");
+                          let typeInput = cartItem.querySelector(".typeproduct");
+
+                          console.log(" Hidden Inputs Found:", { arrivingDaysInput, descriptionInput, typeInput });
+
+                          if (arrivingDaysInput) {
+                              let arrivingDaysValue = item.arrivingDays ?? "0";
+                              arrivingDaysInput.setAttribute("value", arrivingDaysValue);
+                              console.log(`✔ Set Arriving Days for item ${index + 1}:`, arrivingDaysValue);
+                          }
+
+                          if (descriptionInput) {
+                              let descriptionValue = item.description ?? "";
+                              descriptionInput.setAttribute("value", descriptionValue);
+                              console.log(`✔ Set Description for item ${index + 1}:`, descriptionValue);
+                          }
+
+                          if (typeInput) {
+                              let typeValue = item.type ?? "";
+                              typeInput.setAttribute("value", typeValue);
+                              console.log(`✔ Set Type for item ${index + 1}:`, typeValue);
+                          }
+                      });
+                  } else {
+                      console.warn(" No matching item found for:", { productsImageId, productId });
+                  }
+              });
+
+    @* checkoutLink.addEventListener("click", function () {
+             let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+             saveCartToDatabase();
+             loadCartFromDatabase();
+             localStorage.setItem("checkoutItems", JSON.stringify(cartItems));
+        });*@
+
+         document.getElementById("checkoutLink").addEventListener("click", async function () {
+            let IShopId = getCookie('IShopId'); // Check login status
+
+            if (!IShopId) {
+                console.warn("❌ User not logged in. Redirecting to login.");
+                return;
+            }
+    @*  alert("Please log in to proceed with checkout.");
+            window.location.href = "/Account/Login"; *@ // Redirect to login page
+
+
+            console.log("✅ User logged in. Syncing guest cart to database...");
+            await syncGuestCartToDatabase(); // Save guest cart to DB
+
+            console.log("✅ Loading updated cart from database...");
+            await loadCartFromDatabase(); // Load updated cart
+
+            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+            localStorage.setItem("checkoutItems", JSON.stringify(cartItems)); // Set checkout data after update
+
+            console.log("✅ Redirecting to checkout...");
+            window.location.href = "/Home/Checkout";
+        });
+
+
+            //  Ensure Click Event is Attached
+            document.addEventListener("click", async function (event) {
+                console.log(" Click detected on:", event.target);
+
+                if (event.target.matches(".btn-increase, .btn-decrease")) {
+                    console.log(" Button Clicked!", event.target);
+
+                    let cartItem = event.target.closest(".tf-cart-item");
+                    if (!cartItem) {
+                        console.log(" cartItem is missing!");
+                        return;
+                    }
+
+                    let quantityInput = cartItem.querySelector(".quantity-product");
+                    let priceElement = cartItem.querySelector(".new-price");
+                    let totalElement = cartItem.querySelector(".total-price");
+
+                    let productsImageId = parseInt(cartItem.getAttribute("data-product-image-id"), 10);
+                    let productId = parseInt(cartItem.getAttribute("data-productid"), 10);
+
+                    if (!quantityInput || !priceElement || !totalElement || isNaN(productsImageId) || isNaN(productId)) {
+                        console.log(" Missing elements inside cartItem!");
+                        return;
+                    }
+
+                    let quantity = parseInt(quantityInput.value);
+                    let price = parseFloat(priceElement.textContent.replace("₹", "").trim());
+
+                    if (isNaN(price)) {
+                        console.log(" unitPrice is NaN!");
+                        return;
+                    }
+
+                    //  Prevent multiple clicks
+                    event.target.disabled = true;
+                    setTimeout(() => { event.target.disabled = false; }, 500);
+
+                    //  Update quantity based on button clicked
+                    if (event.target.classList.contains("btn-increase")) {
+                       let isAvailable = await checkStockAvailability(productsImageId, quantity + 1);
+                       if (!isAvailable) {
+                          alert(" Stock limit reached! Cannot increase quantity.");
+                           return;
+                       }
+                        quantity + 1;
+                    } else if (event.target.classList.contains("btn-decrease") && quantity > 1) {
+                        quantity - 1;
+                    }
+
+                    quantityInput.value = quantity;
+                    let newTotal = parseFloat((quantity * price).toFixed(2));
+                    totalElement.textContent = `₹${newTotal.toFixed(2)}`;
+
+                    //  Update LocalStorage with New Quantity & Total Price
+                    let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+                    let updatedCartItems = cartItems.map(item => {
+                        if (parseInt(item.productsImageId) === productsImageId && parseInt(item.productId) === productId) {
+                            return { ...item, quantity: quantity, total: newTotal };
+                        }
+                        return item;
+                    });
+
+                    localStorage.setItem("cartItems", JSON.stringify(updatedCartItems));
+                    console.log(" Updated Cart Data:", updatedCartItems);
+
+                    //  Save Updated Cart to Database
+                    await saveCartToDatabase(updatedCartItems);
+
+                    //  Update Cart Summary & Total
+                    updateCartTotal();
+                    updateCartCount();
+                }
+
+                 //  Handle Remove Item
+                if (event.target.classList.contains("remove")) {
+                    let cartItem = event.target.closest(".tf-cart-item");
+                    if (!cartItem) {
+                        console.log(" Cart item not found!");
+                        return;
+                    }
+
+                    let productsImageId = parseInt(cartItem.getAttribute("data-product-image-id"), 10);
+                    let productId = parseInt(cartItem.getAttribute("data-productid"), 10);
+
+                    if (isNaN(productsImageId) || isNaN(productId)) {
+                        console.log(" Invalid product IDs!");
+                        return;
+                    }
+
+                    try {
+                        let deleteSuccess = await deleteCartItem(productsImageId, productId);
+
+                        if (deleteSuccess) {
+                            console.log(` Item ${productsImageId} deleted from database successfully.`);
+
+                            //  Remove item from DOM
+                            cartItem.remove();
+
+                            //  Update LocalStorage
+                            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+                            localStorage.setItem("cartItems", JSON.stringify(updatedCartItems));
+
+                            //  Update Cart Summary & Count
+                            updateCartTotal();
+                            updateCartCount();
+                        }
+                          updateCartTotal();
+                          updateCartCount();
+                    }
+                    catch (error) {
+                        console.error(" Error deleting item from database:", error);
+                    }
+                }
+            });
+
+            //  Handle Dynamically Loaded Cart Items
+            const observer = new MutationObserver(() => {
+                document.querySelectorAll(".btn-increase, .btn-decrease").forEach(button => {
+                    button.addEventListener("click", function (event) {
+                        console.log(" Button Clicked!", event.target);
+                    });
+                });
+            });
+
+            observer.observe(document.body, { childList: true, subtree: true });
+
+               //Function to Check Stock Availability
+              async function checkStockAvailability(productImageId, requestedQty) {
+                   try {
+                       let response = await fetch(`/Home/CheckStockAvailability?productImageId=${productImageId}&requestedQty=${requestedQty}`);
+                       let data = await response.json();
+                       return response.ok && data.success; //  Return true if stock is available
+                   } catch (error) {
+                       console.error(" Error checking stock:", error);
+                       return false; //  If error occurs, assume stock is not available
+                   }
+               }
+
+                //  Function to Delete Item from Database
+        async function deleteCartItem(productsImageId, productId) {
+            if (!productsImageId || !productId) {
+                console.error(" Invalid product or image ID:", { productsImageId, productId });
+                return false;
+            }
+
             try {
+                let response = await fetch("/Home/DeleteCartItem", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ productsImageId, productId }),
+                });
+
+                let result = await response.json();
+               console.log(" Server Response:", result);
+
+                if (result.success) {
+                    console.log(" Item deleted successfully from the database.");
+                    return true;
+                } else {
+                    //console.log(" Failed to delete item from the database.");
+                    return false;
+                }
+            } catch (error) {
+               // console.error(" Error deleting item from cart:", error);
+                return false;
+            }
+        }
+
+        function getCookie(name) {
+             let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+             return match ? match[2] : null;
+        }
+
+        async function saveCartToDatabase() {
+            try {
+                let IShopId = getCookie('IShopId');
                 let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
 
+                if (!IShopId) {
+                    console.warn(" User not logged in. Cannot save cart.");
+                    return;
+                }
+
                 if (cartItems.length === 0) {
+                    console.warn(" No items in cart. Clearing from database...");
                     await deleteCartItem();
                     return;
                 }
 
+                //  Ensure all fields have proper default values
                 cartItems = cartItems.map(item => ({
-                    shoppingCartId: item.shoppingCartId || 0,
-                    iShopId: item.iShopId || 0,
-                    arrivingDays: item.arrivingDays || 0,
-                    color: item.color || "",
-                    description: item.description || "",
-                    image: item.image || "",
-                    name: item.name || "",
-                    price: parseFloat(item.price) || 0,
-                    productId: parseInt(item.productId) || 0,
-                    productsImageId: parseInt(item.productsImageId) || parseInt(item.productImageId), //  Ensure it's a number
-                    quantity: parseInt(item.quantity) || 1, //  Ensure it's an integer
-                    total: parseFloat(item.total) || 0,
-                    type: item.type || ""
+                    shoppingCartId: isNaN(parseInt(item.shoppingCartId)) ? 0 : parseInt(item.shoppingCartId),
+                    iShopId: isNaN(parseInt(item.iShopId)) ? 0 : parseInt(item.iShopId),
+                    arrivingDays: isNaN(parseInt(item.arrivingDays)) ? 0 : parseInt(item.arrivingDays),
+                    color: item.color ?? "",
+                    description: item.description ?? "",
+                    image: item.image ?? "",
+                    name: item.name ?? "",
+                    price: isNaN(parseFloat(item.price)) ? 0 : parseFloat(item.price),
+                    productId: isNaN(parseInt(item.productId)) ? 0 : parseInt(item.productId),
+                    productsImageId: isNaN(parseInt(item.productsImageId)) ? (isNaN(parseInt(item.productImageId)) ? 0 : parseInt(item.productImageId)) : parseInt(item.productsImageId),
+                    quantity: isNaN(parseInt(item.quantity)) ? 1 : parseInt(item.quantity),
+                    total: isNaN(parseFloat(item.total)) ? 0 : parseFloat(item.total),
+                    type: item.type ?? ""
                 }));
 
-                console.log(" Sending Cart Data to Backend:", cartItems);
+                console.log("📤 Sending Cart Data to Backend:", cartItems);
 
                 let response = await fetch("/Home/SaveCart", {
                     method: "POST",
@@ -206,356 +636,150 @@
                     body: JSON.stringify(cartItems),
                 });
 
-                if (response.ok) {
-                    console.log(" Cart saved successfully.");
-                    localStorage.setItem("cartItems", JSON.stringify(cartItems)); //  Ensure LocalStorage updates
-                    updateCartCount();                     
-                } else {
-                    console.error(" Failed to save cart.");
+                if (!response.ok) {
+                    let errorText;
+                    try {
+                        errorText = await response.json(); // Try to parse JSON
+                    } catch (err) {
+                        errorText = await response.text(); // Fallback to text
+                    }
+                    console.error(" Failed to save cart. Server Response:", errorText);
+                    alert(" Error saving cart. Please try again.");
+                    return;
                 }
+
+                console.log(" Cart saved successfully.");
+                localStorage.setItem("cartItems", JSON.stringify(cartItems)); // Ensure LocalStorage updates
+                updateCartTotal();
+                updateCartCount();
+
             } catch (error) {
                 console.error(" Error saving cart:", error);
             }
         }
 
-     //Function to Check Stock Availability
-    async function checkStockAvailability(productImageId, requestedQty) {
-         try {
-             let response = await fetch(`/Home/CheckStockAvailability?productImageId=${productImageId}&requestedQty=${requestedQty}`);
-             let data = await response.json();
-             return response.ok && data.success; //  Return true if stock is available
-         } catch (error) {
-             console.error(" Error checking stock:", error);
-             return false; //  If error occurs, assume stock is not available
-         }
-     }
+        function updateCartTotal() {
+            let cartTotal = 0;
+            let totalItems = 0; //  Define totalItems
 
-    function updateCartTotal() {
-          let cartTotal = 0;
+            document.querySelectorAll(".tf-cart-item").forEach(cartItem => {
+                let totalElement = cartItem.querySelector(".total-price");
+                let quantityElement = cartItem.querySelector(".quantity-product");
 
-          document.querySelectorAll(".total-price").forEach(totalElement => {
-              let totalValue = parseFloat(totalElement.textContent.replace("₹", "").trim());
-              if (!isNaN(totalValue)) {
-                  cartTotal += totalValue; //  Add each item's total to cart total
-              }
-          });
+                if (totalElement && quantityElement) {
+                    let totalValue = parseFloat(totalElement.textContent.replace(/[₹,]/g, "").trim());
+                    let quantity = parseInt(quantityElement.value, 10);
 
-          let cartTotalElement = document.getElementById("cartTotal");
-          if (cartTotalElement) {
-              cartTotalElement.textContent = cartTotal.toFixed(2); //  Update subtotal
-          }
-
-          //  Show or hide cart summary section
-          let cartSummarySection = document.getElementById("cartSummarySection");
-          if (cartSummarySection) {
-              cartSummarySection.style.display = cartTotal > 0 ? "block" : "none";
-          }
-     }
-
-    // document.addEventListener("click", async function (event) {
-    //         if (event.target.classList.contains("btn-increase") || event.target.classList.contains("btn-decrease")) {
-    //         let cartItem = event.target.closest(".tf-cart-item");
-    //         if (!cartItem) {
-    //             console.log(" cartItem is missing!");
-    //             return;
-    //         }
-
-    //         let quantityInput = cartItem.querySelector(".quantity-product");
-    //         let priceElement = cartItem.querySelector(".new-price");
-    //         let totalElement = cartItem.querySelector(".total-price");
-
-    //         let productsImageId = parseInt(cartItem.getAttribute("data-product-image-id"), 10);
-    //         let productId = parseInt(cartItem.getAttribute("data-productid"), 10);
-
-    //         if (!quantityInput || !priceElement || !totalElement || isNaN(productsImageId) || isNaN(productId)) {
-    //             console.log(" Missing elements inside cartItem!");
-    //             return;
-    //         }
-
-    //         let quantity = parseInt(quantityInput.value);
-    //         let unitPrice = parseFloat(priceElement.textContent.replace("₹", "").trim());
-
-    //         if (isNaN(unitPrice)) {
-    //             console.log(" unitPrice is NaN! Check if the price element has a valid number.");
-    //             return;
-    //         }
-
-    //         event.target.disabled = true;
-    //         setTimeout(() => { event.target.disabled = false; }, 500);
-
-    //         if (event.target.classList.contains("btn-increase")) {
-    //             let isAvailable = await checkStockAvailability(productsImageId, quantity + 1);
-    //             if (!isAvailable) {
-    //                 alert(" Stock limit reached! Cannot increase quantity.");
-    //                 return;
-    //             }
-    //             quantity + 1; //  Fix Increment
-    //         } else if (event.target.classList.contains("btn-decrease") && quantity > 1) {
-    //             quantity - 1; //  Fix Decrement
-    //         }
-
-    //         quantityInput.value = quantity;
-    //         let newTotal = parseFloat((quantity * unitPrice).toFixed(2)); //  Fix `total` calculation
-    //         totalElement.textContent = `₹${newTotal.toFixed(2)}`;
-
-    //         let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-
-    //         console.log(" Before Update:", cartItems);
-
-    //         //  Update only the correct item while keeping all fields
-    //         let updatedCartItems = cartItems.map(item => {
-    //             if (parseInt(item.productsImageId) === productsImageId && parseInt(item.productId) === productId) {
-    //                 return {
-    //                     ...item,
-    //                     productsImageId: productsImageId, //  Ensure correct productsImageId is used
-    //                     quantity: quantity,
-    //                     //total: newTotal, //  Ensure total is updated correctly
-    //                 };
-    //             }
-    //             return item;
-    //         });
-
-    //         console.log("🔍 After Update:", updatedCartItems);
-    //         localStorage.setItem("cartItems", JSON.stringify(updatedCartItems));
-
-    //         console.log("Updated cart items:", updatedCartItems);
-
-    //         await saveCartToDatabase();
-
-    //         updateCartTotal();            
-    //         updateCartCount();            
-    //         //localStorage.removeItem("cartItems");
-    //     }
-    // });
-
-    document.addEventListener("click", async function (event) {
-        if (event.target.classList.contains("btn-increase") || event.target.classList.contains("btn-decrease")) {
-            let cartItem = event.target.closest(".tf-cart-item");
-            if (!cartItem) {
-                console.log("cartItem is missing!");
-                return;
-            }
-
-            let quantityInput = cartItem.querySelector(".quantity-product");
-            let priceElement = cartItem.querySelector(".new-price");
-            let totalElement = cartItem.querySelector(".total-price");
-
-            let productsImageId = parseInt(cartItem.getAttribute("data-product-image-id"), 10);
-            let productId = parseInt(cartItem.getAttribute("data-productid"), 10);
-            let image = cartItem.querySelector("img")?.src || "";
-            let name = cartItem.querySelector(".cart-title")?.textContent.trim() || "";
-            let color = cartItem.querySelector("#pColor")?.textContent.trim() || "";
-            let description = cartItem.getAttribute("data-description") || "";
-            let arrivingDays = cartItem.getAttribute("data-arriving-days") || "";
-            let type = cartItem.getAttribute("data-type") || "";
-
-            if (!quantityInput || !priceElement || !totalElement || isNaN(productsImageId) || isNaN(productId)) {
-                console.log("Missing elements inside cartItem!");
-                return;
-            }
-
-            let quantity = parseInt(quantityInput.value);
-            let price = parseFloat(priceElement.textContent.replace("₹", "").trim());
-
-            if (isNaN(price)) {
-                console.log("unitPrice is NaN! Check if the price element has a valid number.");
-                return;
-            }
-
-            event.target.disabled = true;
-            setTimeout(() => { event.target.disabled = false; }, 500);
-
-            if (event.target.classList.contains("btn-increase")) {
-                let isAvailable = await checkStockAvailability(productsImageId, quantity + 1);
-                if (!isAvailable) {
-                    // alert("Stock limit reached! Cannot increase quantity.");
-                    showMessageModal("success", "Stock limit reached! Cannot increase quantity.");
-                    return;
+                    if (!isNaN(totalValue) && totalValue >= 0) {
+                        cartTotal += totalValue; //  Add each item's total price
+                    }
+                    if (!isNaN(quantity) && quantity > 0) {
+                        totalItems += quantity; //  Count total quantity of items
+                    }
                 }
-                quantity + 1;
-            } else if (event.target.classList.contains("btn-decrease") && quantity > 1) {
-                quantity - 1;
-            }
-
-            quantityInput.value = quantity;
-            let newTotal = parseFloat((quantity * price).toFixed(2));
-            totalElement.textContent = `₹${newTotal.toFixed(2)}`;
-
-            // Fetch all cart data
-            let cartData = [];
-            document.querySelectorAll("#cartDisplay .tf-cart-item").forEach(item => {
-                let itemData = {
-                    productId: parseInt(item.getAttribute("data-productid"), 10),
-                    productsImageId: parseInt(item.getAttribute("data-product-image-id"), 10),
-                    quantity: parseInt(item.querySelector(".quantity-product").value),
-                    price: parseFloat(item.querySelector(".new-price").textContent.replace("₹", "").trim()),
-                    total: parseFloat(item.querySelector(".total-price").textContent.replace("₹", "").trim()),
-                    image: item.querySelector("img")?.src || "",
-                    name: item.querySelector(".cart-title")?.textContent.trim() || "",
-                    color: item.querySelector("#pColor")?.textContent.trim() || "",
-                    description: item.getAttribute("data-description") || "",
-                    arrivingDays: item.getAttribute("data-arriving-days") || "",
-                    type: item.getAttribute("data-type") || ""
-                };
-
-                cartData.push(itemData);
             });
 
-            console.log(" Updated Cart Data:", cartData);
-
-            localStorage.setItem("cartItems", JSON.stringify(cartData));
-
-            await saveCartToDatabase();
-            updateCartTotal();
-            updateCartCount();
-        }
-    });
-
-
-    document.addEventListener("click", async function (event) {
-        if (event.target.classList.contains("remove")) {
-            let cartItem = event.target.closest(".tf-cart-item");
-            if (!cartItem) {
-                console.log("Cart item not found!");
-                return;
-            }
-            
-            let productsImageId = parseInt(cartItem.getAttribute("data-product-image-id"), 10);
-            // let productId = parseInt(cartItem.getAttribute("data-productid"), 10);
-            // alert("productid : ",productId);
-
-            if (isNaN(productsImageId)) {
-                console.log("Invalid product IDs!");
-                return;
+            //  Update Cart Total Display
+            let cartTotalElement = document.getElementById("cartTotal");
+            if (cartTotalElement) {
+                cartTotalElement.textContent = cartTotal.toFixed(2); //  Show subtotal with 2 decimals
             }
 
-            try {
-                await deleteCartItem(productsImageId);
-                console.log(`Item ${productsImageId} deleted from database successfully.`);
-                 // Remove item from DOM
-            cartItem.remove();
+            //  Update UI Visibility
+            let cartSummarySection = document.getElementById("cartSummarySection");
+            let emptyCartMessage = document.getElementById("emptyCartMessage");
 
-            // Update cart data in local storage
-            saveCartToDatabase();
-            loadCartFromDatabase();
-            } catch (error) {
-                console.error("Error deleting item from database:", error);
-            }
-        }
-    });
-
-    async function deleteCartItem(productsImageId) {
-        if (!productsImageId) {
-            console.error("Invalid product or image ID:", productsImageId);
-            return;
-        }
-
-        try {
-            let response = await fetch("/Home/DeleteCartItem", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ProductsImageId: productsImageId }),
-            });
-
-            let result = await response.json();
-
-            if (result.success) {
-                console.log("Item deleted successfully from the cart.");
+            if (totalItems === 0) {
+                if (cartSummarySection) cartSummarySection.style.display = "none";
+                if (emptyCartMessage) emptyCartMessage.style.display = "block";
             } else {
-                console.log("Failed to delete item from the cart.");
+                if (cartSummarySection) cartSummarySection.style.display = "block";
+                if (emptyCartMessage) emptyCartMessage.style.display = "none";
+            }
+        }
+
+        function updateCartCount() {
+            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+            //  Ensure elements exist before modifying UI
+            let cartSummarySection = document.getElementById("cartSummarySection");
+            let emptyCartMessage = document.getElementById("emptyCartMessage");
+            let cartItemCount = document.getElementById("cartItemCount");
+
+            //  Use a Map to store cart items uniquely
+            let updatedCart = new Map();
+
+            document.querySelectorAll(".tf-cart-item").forEach(cartItem => {
+                let productsImageId = cartItem.getAttribute("data-product-image-id");
+                let productId = cartItem.getAttribute("data-productid");
+                let quantityInput = cartItem.querySelector(".quantity-product");
+
+                if (productsImageId && productId && quantityInput) {
+                    let newQuantity = parseInt(quantityInput.value, 10) || 1;
+                    let price = parseFloat(cartItem.querySelector(".new-price").textContent.replace(/[₹,]/g, "").trim()) || 0;
+                    let total = parseFloat((newQuantity * price).toFixed(2));
+
+                    let image = cartItem.querySelector("img")?.src || "";
+                    let name = cartItem.querySelector(".cart-title")?.textContent.trim() || "";
+                    let color = cartItem.querySelector("#pColor")?.textContent.trim() || "";
+
+                    //  Fetch values from hidden input fields instead of `data-*` attributes
+                    let description = cartItem.querySelector(".description")?.value || "";
+                    let arrivingDays = cartItem.querySelector(".arrivingDays")?.value || "0";
+                    let type = cartItem.querySelector(".typeproduct")?.value || "";
+
+                    //  Ensure unique key for multiple products with the same `productsImageId`
+                    let uniqueKey = `${productsImageId}-${productId}`;
+                    updatedCart.set(uniqueKey, {
+                        productsImageId,
+                        productId,
+                        quantity: newQuantity,
+                        price,
+                        total,
+                        image,
+                        name,
+                        color,
+                        description,
+                        arrivingDays,
+                        type
+                    });
+                }
+            });
+
+            //  Convert map to an array
+            let updatedCartArray = Array.from(updatedCart.values());
+
+            //  Update `localStorage` only if there are changes
+            let oldCartString = JSON.stringify(cartItems);
+            let newCartString = JSON.stringify(updatedCartArray);
+            if (oldCartString !== newCartString) {
+                localStorage.setItem("cartItems", newCartString);
             }
 
-            updateCartTotal();
-            updateCartCount();
-        } catch (error) {
-            console.error("Error deleting item from cart:", error);
-        }
-    }
+            //  Calculate total quantity
+            let totalItems = updatedCartArray.reduce((total, item) => total + item.quantity, 0);
 
-    function updateCartCount() {
-        let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-
-        // Create a new map to store cart items with all details
-        let updatedCart = new Map();
-
-        document.querySelectorAll(".tf-cart-item").forEach(cartItem => {
-            let productsImageId = cartItem.getAttribute("data-product-image-id");
-            let productId = cartItem.getAttribute("data-productid");
-            let quantityInput = cartItem.querySelector(".quantity-product");
-
-            if (productsImageId && quantityInput) {
-                let newQuantity = parseInt(quantityInput.value, 10);
-                let price = parseFloat(cartItem.querySelector(".new-price").textContent.replace("₹", "").trim());
-                let total = parseFloat((newQuantity * price).toFixed(2));
-                let image = cartItem.querySelector("img")?.src || "";
-                let name = cartItem.querySelector(".cart-title")?.textContent.trim() || "";
-                let color = cartItem.querySelector("#pColor")?.textContent.trim() || "";
-                let description = cartItem.getAttribute("data-description") || "";
-                let arrivingDays = cartItem.getAttribute("data-arriving-days") || "";
-                let type = cartItem.getAttribute("data-type") || "";
-
-                // Store complete item details in the map
-                updatedCart.set(productsImageId, {
-                    productsImageId,
-                    productId,
-                    quantity: newQuantity,
-                    price,
-                    total,
-                    image,
-                    name,
-                    color,
-                    description,
-                    arrivingDays,
-                    type
-                });
+            //  Update UI safely
+            if (cartItemCount) {
+                cartItemCount.innerText = totalItems;
             }
-        });
 
-        // Convert map to an array
-        let updatedCartArray = Array.from(updatedCart.values());
+            if (cartSummarySection && emptyCartMessage) {
+                if (totalItems === 0) {
+                    cartSummarySection.style.display = "none";
+                    emptyCartMessage.style.display = "block";
+                } else {
+                    cartSummarySection.style.display = "block";
+                    emptyCartMessage.style.display = "none";
+                }
+            }
 
-        let oldCartString = JSON.stringify(cartItems);
-        let newCartString = JSON.stringify(updatedCartArray);
-
-        // Only update `localStorage` if there are changes
-        if (oldCartString !== newCartString) {
-            localStorage.setItem("cartItems", newCartString);
+            console.log(" Cart updated:", updatedCartArray);
         }
 
-        // Calculate total quantity
-        let totalItems = updatedCartArray.reduce((total, item) => total + item.quantity, 0);
 
-        // Update UI
-        let cartItemCount = document.getElementById("cartItemCount");
-        if (cartItemCount) {
-            cartItemCount.innerText = totalItems;
-        }
-    }
 
-    function showMessageModal(type, message) {
-         let modalTitle = document.getElementById("messageModalLabel");
-         let modalBody = document.getElementById("messageText");
-         let modalHeader = document.querySelector("#messageModal .modal-header");
-
-         // Update the modal based on type (success or error)
-         if (type === "success") {
-             modalTitle.innerText = "Success";
-             modalBody.innerHTML = `✅ ${message}`;
-             modalHeader.classList.add("bg-success", "text-white");
-             modalHeader.classList.remove("bg-danger");
-         } else if (type === "error") {
-             modalTitle.innerText = "Error";
-             modalBody.innerHTML = `❌ ${message}`;
-             modalHeader.classList.add("bg-danger", "text-white");
-             modalHeader.classList.remove("bg-success");
-         }
-
-         // Show the modal
-         let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
-         messageModal.show();
-    }
+      });
 
 </script>
-
-
 

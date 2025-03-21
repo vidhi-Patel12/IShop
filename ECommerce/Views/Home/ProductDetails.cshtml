@@ -590,8 +590,8 @@
         mainImage.addEventListener("mousemove", throttledZoom);
         zoomLens.addEventListener("mousemove", throttledZoom);
 
-
-       
+         loadCartFromDatabase();
+         updateCartCount();
 
         function updateCartCount() {
             let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
@@ -609,6 +609,7 @@
 
         async function addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays) {
             try {
+
                 let response = await fetch(`/Home/CheckCartItem`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -620,101 +621,113 @@
                 }
 
                 let result = await response.json();
-                let quantity = parseInt(cartQuantity.value);
-                let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];            
-                let existingItem = cartItems.find(item => item.productid === productId && item.productsimageid === productsImageId);
 
-                if (result.exists && existingItem) {
-                    existingItem.quantity += 1;
-                    existingItem.total = (existingItem.quantity * price).toFixed(2);
-                } else {
-                       localStorage.removeItem("cartItems");
-                       cartItems = [{
-                             name: productName,
-                             image: productImage,
-                             type: productType,
-                             color: productColor,
-                             description: productDescription,
-                             quantity: quantity,
-                             price: price,
-                             total: price.toFixed(2),
-                             productid: productId,
-                             productsimageid: productsImageId,
-                             arrivingDays: arrivingDays
-                         }];
-                }
+                let userId = getCookie("IShopId");
+
+                let quantity = parseInt(cartQuantity.value);
+                let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+                 let existingItemIndex = cartItems.findIndex(item => item.productId === productId && item.productsImageId === productsImageId);
+
+                     if (existingItemIndex !== -1) {
+                         // Update existing item
+                         cartItems[existingItemIndex].quantity += 1;
+                         cartItems[existingItemIndex].total = (cartItems[existingItemIndex].quantity * price).toFixed(2);
+                     }else {
+                     cartItems.push({
+                         name: productName,
+                         image: productImage,
+                         type: productType,
+                         color: productColor,
+                         description: productDescription,
+                         quantity: quantity,
+                         price: price,
+                         total: price.toFixed(2),
+                         productId: productId,
+                         productsImageId: productsImageId,
+                         arrivingDays: arrivingDays
+                     });
+                 }
 
                 localStorage.setItem("cartItems", JSON.stringify(cartItems));
 
-                console.log("Updated cartItems:", cartItems);            
-                saveCartToDatabase();
-                loadCartFromDatabase();
-                updateCartCount();
+                console.log("Updated cartItems:", cartItems);
+                 if (userId) {
+                         // Step 4: If logged in, save to database
+                         await saveCartToDatabase(cartItems);
+                  } else {
+                         // Step 5: If guest user, store cart in cookies
+                           document.cookie = `cartItems=${JSON.stringify(cartItems)}; path=/; expires=${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()}`;
+                  }
 
-                showMessageModal("success", "Item Added.");
+                 updateCartCount();
+                 loadCartFromDatabase();
+
+                 showMessageModal("success", "Item Added.")
 
             } catch (error) {
                 console.error("Error checking cart item:", error);
             }
         }
 
-    async function saveCartToDatabase() {
-        let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+         // Function to get a cookie value
+     function getCookie(name) {
+         let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+         return match ? match[2] : null;
+     }
 
-        if (cartItems.length === 0) {
-            console.log("Cart is empty. Nothing to save.");
-            return;
-        }
+     async function saveCartToDatabase(cartItems) {
+         let userId = getCookie("IShopId");
 
-        let response = await fetch("/Home/SaveCart", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(cartItems),
-        });
+         if (!userId) {
+             console.log("User is not logged in. Cart stored in localStorage & cookies.");
+             return;
+         }
 
-        if (response.ok) {
-            console.log("Cart saved successfully.");
-            updateCartCount();
-            loadCartFromDatabase();
-        } else {
-            console.log("Failed to save cart.", response);
-        }
-    }
+         let response = await fetch("/Home/SaveCart", {
+             method: "POST",
+             headers: { "Content-Type": "application/json" },
+             body: JSON.stringify(cartItems),
+         });
 
-    async function loadCartFromDatabase() {
-        try {
-            let response = await fetch("/Home/Cart");
-            let text = await response.text();
+         if (response.ok) {
+             console.log("Cart saved to database.");
+             loadCartFromDatabase();
+         } else {
+             console.log("Failed to save cart.");
+         }
+     }
 
-            let data;
-            try {
-                data = JSON.parse(text);
-            } catch (jsonError) {
-                return;
-            }
+     async function loadCartFromDatabase() {
+         let userId = getCookie("IShopId");
 
-            if (data.success && data.cartItems.length > 0) {
-                localStorage.setItem("cartItems", JSON.stringify(data.cartItems));
-                updateCartCount();
-            } else {
-                console.log("No items in the cart.");
-            }
-        } catch (error) {
-            console.error("Error loading cart from database:", error);
-        }
-    }
+         if (userId) {
+             // Fetch from database
+             let response = await fetch("/Home/GetCart");
+             let data = await response.json();
 
-    if (addToCartBtn) {
+             if (data.success && data.cartItems.length > 0) {
+                 localStorage.setItem("cartItems", JSON.stringify(data.cartItems));
+             }
+         } else {
+             // Fetch from cookies for guests
+               let cartItems = getCookie("cartItems");
+               if (cartItems) {
+                   localStorage.setItem("cartItems", cartItems);
+             }
+         }
+
+         updateCartCount();
+     }
+
+        if (addToCartBtn) {
             addToCartBtn.addEventListener("click", function () {
             addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays);
              //alert("Item added to cart!");
             });
-    }
+        }
 
-    loadCartFromDatabase();
-    updateCartCount();
-
-    function showMessageModal(type, message) {
+        function showMessageModal(type, message) {
          let modalTitle = document.getElementById("messageModalLabel");
          let modalBody = document.getElementById("messageText");
          let modalHeader = document.querySelector("#messageModal .modal-header");

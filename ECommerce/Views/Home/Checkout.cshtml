@@ -362,7 +362,6 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", async function () {  //  Add async here
-            let shopId = getShopIdFromCookie(); // Fetch shopId from cookie
             let addressListContainer = document.getElementById("addressListContainer");
 
             try {
@@ -378,6 +377,9 @@
                     addressListContainer.innerHTML = `<p>No saved addresses found.</p>`;
                     return;
                 }
+
+                let storedAddress = JSON.parse(localStorage.getItem("selectedAddress")) || null;
+
 
                 let addressHTML = "";
                 addresses.forEach((address, index) => {
@@ -417,10 +419,41 @@
                     radio.addEventListener("change", function () {
                         let selectedId = this.getAttribute("data-id");
                         let selectedAddr = addresses.find(addr => addr.addressId == selectedId);
+                         if (selectedAddr) {
+                            localStorage.setItem("selectedAddress", JSON.stringify(selectedAddr));
+                            console.log("✅ Address saved:", selectedAddr);
+                        }
                         displaySelectedAddress(selectedAddr);
                         localStorage.setItem("selectedAddress", JSON.stringify(selectedAddr));
                     });
                 });
+
+                 if (storedAddress) {
+            let selectedRadio = document.querySelector(`.select-address[data-id="${storedAddress.addressId}"]`);
+            if (selectedRadio) {
+                selectedRadio.checked = true;
+                displaySelectedAddress(storedAddress);
+            } else {
+                console.warn("⚠ Stored address not found in list, selecting first available.");
+                selectFirstAvailableAddress(addresses);
+            }
+        } else {
+            console.warn("⚠ No stored address found. Selecting first available.");
+            selectFirstAvailableAddress(addresses);
+        }
+
+            function selectFirstAvailableAddress(addresses) {
+        if (addresses.length > 0) {
+            let firstAddress = addresses[0]; // First address from API
+            let firstRadio = document.querySelector(`.select-address[data-id="${firstAddress.addressId}"]`);
+
+            if (firstRadio) {
+                firstRadio.checked = true;
+                localStorage.setItem("selectedAddress", JSON.stringify(firstAddress));
+                displaySelectedAddress(firstAddress);
+            }
+        }
+    }
 
                 // Handle Show More / Show Less toggle
                 let toggleButton = document.getElementById("toggleAddresses");
@@ -512,13 +545,7 @@
         }
     });
 
-    //  Function to fetch `IShopId` from cookies
-    function getShopIdFromCookie() {
-        let cookies = document.cookie.split("; ");
-        let shopIdCookie = cookies.find(row => row.startsWith("IShopId="));
-        return shopIdCookie ? shopIdCookie.split("=")[1] : 0; // Return 0 if not found
-    }
-
+   
     //  Function to display selected address in UI
     function displaySelectedAddress(address) {
         if (!address) return;
@@ -663,80 +690,94 @@
         renderCheckout(); // Re-render checkout after updating quantity
     }
 
-    let isCouponApplied = localStorage.getItem("appliedCoupon") ? true : false;
+        let isCouponApplied = localStorage.getItem("appliedCoupon") ? true : false;
 
+    //  Apply Coupon Function
     async function applyCoupon(couponCode = null, discountPercentage = null) {
         let promotionAppliedElement = document.getElementById("promotionApplied");
         let orderTotalAmountElement = document.getElementById("orderTotalAmount");
         let couponInputField = document.getElementById("CoupanCode");
         let applyButton = document.querySelector(".ip-discount-code button");
 
-        // Prevent multiple applications
         if (isCouponApplied) {
-            //alert("Coupon already applied! You cannot apply another coupon.");
-            showMessageModal("success", "Coupan already appliead! You cannot apply another coupan.");
+            showMessageModal("error", "Coupon already applied! Remove it before applying another.");
             return;
         }
 
-        // If no coupon code is passed (manual entry), get it from the input field
         if (!couponCode) {
             couponCode = couponInputField.value.trim();
             if (!couponCode) {
-                //alert("Please enter a coupon code.");
-                showMessageModal("success", "Please enter a coupan code.");
+                showMessageModal("error", "Please enter a coupon code.");
                 return;
             }
 
-            // Fetch coupon details via API
             try {
                 let response = await fetch(`/Admin/ValidateCoupan?coupanCode=${couponCode}`);
                 let data = await response.json();
 
                 if (!data.success) {
                     showMessageModal("error", `Error: ${data.message}`);
-                        //showMessageModal("success", "Item Added.");
                     return;
                 }
 
-                discountPercentage = data.discount; // Set discount from API response
+                discountPercentage = data.discount;
             } catch (error) {
                 console.error("Error validating coupon:", error);
-                //alert("Something went wrong. Please try again.");
                 showMessageModal("error", "Something went wrong. Please try again.");
                 return;
             }
         }
 
-        let totalAmount = parseFloat(orderTotalAmountElement.innerText.replace("₹", "")); // Get total amount
-        let discountAmount = (totalAmount * discountPercentage) / 100; // Calculate discount
+        let totalAmount = parseFloat(orderTotalAmountElement.innerText.replace("₹", ""));
+        let discountAmount = (totalAmount * discountPercentage) / 100;
 
-        // Apply Discount
         promotionAppliedElement.innerText = `₹${discountAmount.toFixed(2)}`;
         orderTotalAmountElement.innerText = `₹${(totalAmount - discountAmount).toFixed(2)}`;
 
-        showMessageModal("success", `Coupon ${couponCode} applied! You saved ₹${(discountAmount || 0).toFixed(2)}`);
-        //showMessageModal("success", "Item Added.");
+        showMessageModal("success", `Coupon ${couponCode} applied! You saved ₹${discountAmount.toFixed(2)}`);
 
-        // Mark coupon as applied
         isCouponApplied = true;
         localStorage.setItem("appliedCoupon", couponCode);
+        localStorage.setItem("discountAmount", discountAmount);
 
-        // Disable input and button after application
         couponInputField.value = couponCode;
         couponInputField.disabled = true;
-        applyButton.innerText = "Applied";
-        applyButton.disabled = true;
 
-        // If function was triggered by a button click inside the coupon list, disable the clicked button
-        if (event && event.target.classList.contains("apply-coupon")) {
-            event.target.innerHTML = `<span class="text">Applied</span>`;
-            event.target.disabled = true;
-        }
+        applyButton.innerHTML = `<span class="text">Remove</span>`;
+        applyButton.classList.add("remove-coupon");
+        applyButton.setAttribute("onclick", "removeCoupon()");
 
-        // Update all coupon buttons
         updateCouponButtons(couponCode);
     }
 
+    //  Remove Coupon Function
+    function removeCoupon() {
+        let promotionAppliedElement = document.getElementById("promotionApplied");
+        let orderTotalAmountElement = document.getElementById("orderTotalAmount");
+        let couponInputField = document.getElementById("CoupanCode");
+        let applyButton = document.querySelector(".ip-discount-code button");
+
+        let discountAmount = parseFloat(localStorage.getItem("discountAmount")) || 0;
+        let totalAmount = parseFloat(orderTotalAmountElement.innerText.replace("₹", "")) + discountAmount;
+
+        promotionAppliedElement.innerText = "₹0.00";
+        orderTotalAmountElement.innerText = `₹${totalAmount.toFixed(2)}`;
+
+        isCouponApplied = false;
+        localStorage.removeItem("appliedCoupon");
+        localStorage.removeItem("discountAmount");
+
+        couponInputField.value = "";
+        couponInputField.disabled = false;
+
+        applyButton.innerHTML = `<span class="text">Apply Code</span>`;
+        applyButton.classList.remove("remove-coupon");
+        applyButton.setAttribute("onclick", "applyCoupon()");
+
+        updateCouponButtons(null);
+    }
+
+    //  Update Coupon Buttons
     function updateCouponButtons(appliedCoupon) {
         document.querySelectorAll(".apply-coupon").forEach(button => {
             let couponCode = button.getAttribute("data-code");
@@ -750,6 +791,78 @@
             }
         });
     }
+
+     //  Function to fetch `IShopId` from cookies
+        function getCookie(name) {
+        let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return match ? decodeURIComponent(match[2]) : null;
+    }
+
+    async function processCheckout() {
+            let IShopId = getCookie('IShopId');
+        if (!IShopId) {
+            console.warn("❌ User not logged in. Redirecting to login.");
+            return;
+        }
+
+        console.log("✅ User logged in. Syncing guest cart to database...");
+        await syncGuestCartToDatabase();
+
+        console.log("✅ Loading updated cart from database...");
+        await loadCartFromDatabase();
+
+        console.log("✅ Rendering checkout page...");
+        renderCheckout(); // Display updated checkout UI
+    }
+
+    async function syncGuestCartToDatabase() {
+        let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+        if (cartItems.length === 0) {
+            console.warn("⚠ No items in local cart to sync.");
+            return;
+        }
+
+        try {
+            console.log("📤 Syncing guest cart to database...", cartItems);
+
+            let response = await fetch("/Home/SaveCart", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(cartItems),
+            });
+
+            if (!response.ok) {
+                console.error("❌ Failed to sync cart. Server Response:", await response.text());
+                return;
+            }
+
+            console.log("✅ Guest cart successfully synced to database.");
+        } catch (error) {
+            console.error("❌ Error syncing guest cart:", error);
+        }
+    }
+
+    async function loadCartFromDatabase() {
+        try {
+            let response = await fetch("/Home/GetCart");
+            let data = await response.json();
+
+            console.log("📥 API Response:", data);
+
+            if (data.success && data.cartItems.length > 0) {
+                let cartItems = data.cartItems;
+                localStorage.setItem("cartItems", JSON.stringify(cartItems)); // Update localStorage
+                localStorage.setItem("checkoutItems", JSON.stringify(cartItems)); // Set checkout data after update
+                console.log("✅ Cart loaded and saved to localStorage:", cartItems);
+            } else {
+                console.warn("⚠ No items in the cart.");
+            }
+        } catch (error) {
+            console.error("❌ Error loading cart from database:", error);
+        }
+    }
+
 
     function renderCheckout() {
         let checkoutItems = JSON.parse(localStorage.getItem("checkoutItems")) || [];
@@ -939,7 +1052,34 @@
         }
 
     document.addEventListener("DOMContentLoaded", async function () {
-        renderCheckout();
+        
+        await processCheckout();
+        // renderCheckout();
+
+         let storedCoupon = localStorage.getItem("appliedCoupon");
+         let discountAmount = localStorage.getItem("discountAmount");
+
+        if (storedCoupon) {
+            let couponInputField = document.getElementById("CoupanCode");
+            let applyButton = document.querySelector(".ip-discount-code button");
+            let orderTotalAmountElement = document.getElementById("orderTotalAmount");
+            let promotionAppliedElement = document.getElementById("promotionApplied");
+
+            couponInputField.value = storedCoupon;
+            couponInputField.disabled = true;
+
+            let totalAmount = parseFloat(orderTotalAmountElement.innerText.replace("₹", ""));
+            orderTotalAmountElement.innerText = `₹${(totalAmount - discountAmount).toFixed(2)}`;
+            promotionAppliedElement.innerText = `₹${discountAmount}`;
+
+            applyButton.innerHTML = `<span class="text">Remove</span>`;
+            applyButton.classList.add("remove-coupon");
+            applyButton.setAttribute("onclick", "removeCoupon()");
+
+            updateCouponButtons(storedCoupon);
+        }
+
+           
     });
 
     document.getElementById("placeOrderBtn").addEventListener("click", async function () {
@@ -1015,6 +1155,7 @@
                 localStorage.removeItem("checkoutItems");
                 localStorage.removeItem("cartItems");
                 localStorage.removeItem("appliedCoupon");
+                localStorage.removeItem("discountAmount");
                 localStorage.removeItem("selectedAddress");
                 deleteCookie("cartItems");
                 await deleteCartItem();

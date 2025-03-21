@@ -2,6 +2,10 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject ApplicationDbContext _context
 
+@{
+    int? IShopId = HttpContextAccessor.HttpContext?.Session.GetInt32("IShopId");
+}
+
 <!DOCTYPE html>
 
 <!--[if IE 8 ]><html class="ie" xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US" lang="en-US"> <![endif]-->
@@ -64,14 +68,14 @@
                             <i class="icon icon-categories"></i>
                         </a>
                     </div>
-                    <div class="col-xl-3 col-md-4 col-6">
+                    <div class="col-xl-2 col-md-4 col-6">
                         <a href="@Url.Action("Index", "Home")" class="logo-header">
                             <img src="~/content/images/logo/ishop_logo.svg" alt="logo" class="logo">
                         </a>
                     </div>
                     <div class="col-xl-6 d-none d-xl-block">
-                        <nav class="box-navigation text-center">
-                            <ul class="box-nav-ul d-flex align-items-center justify-content-center">
+                        <nav class="box-navigation text-start">
+                            <ul class="box-nav-ul d-flex align-items-start justify-content-start">
                                 <li class="menu-item active">
                                     <a href="@Url.Action("Index", "Home")" class="item-link">Home</a>
                                 </li>
@@ -96,19 +100,7 @@
                         </nav>
                     </div>
                     <div class="col-xl-3 col-md-4 col-3">
-                        @* @{
-                            int? IShopId = HttpContextAccessor.HttpContext?.Session.GetInt32("IShopId");
-                            string FirstName = null;
-
-                            if (IShopId.HasValue)
-                            {
-                                var user = _context.Register.FirstOrDefault(u => u.IShopId == IShopId);
-                                if (user != null)
-                                {
-                                    FirstName = user.FirstName;
-                                }
-                            }
-                        } *@
+                       
                         <ul class="nav-icon d-flex justify-content-end align-items-center">
                             <li class="nav-search">
                                 <a href="#search" data-bs-toggle="modal" class="nav-icon-item">
@@ -147,13 +139,22 @@
                                     <span id="cartItemCount" class="count-box">0</span>
                                 </a>
                             </li>
+
+                            @if (IShopId.HasValue)
+                            {
+                                <!-- ✅ Logout Button with SVG Icon -->
+                                <li>
+                                    <a href="/Account/Logout" class="logout-icon">
+                                        <svg width="24" height="24" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M13.5 7.5L10.5 10.75M13.5 7.5L10.5 4.5M13.5 7.5L4 7.5M8 13.5H1.5L1.5 1.5L8 1.5" stroke="#000000" />
+                                        </svg>
+                                        
+                                    </a>
+                                </li>
+                            }
+
                         </ul>
-                        @* @if (IShopId.HasValue && !string.IsNullOrEmpty(FirstName))
-                        {
-                            <a asp-action="Logout" asp-controller="Account" class="text-black d-flex justify-content-end align-items-center" style="text-decoration:none;">
-                                Welcome, @FirstName
-                            </a>
-                        } *@
+                        
                     </div>
                 </div>
             </div>

@@ -234,6 +234,8 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        loadCartFromDatabase();
+         updateCartCount();
 
         function updateCartCount() {
             let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
@@ -250,92 +252,86 @@
         }
 
         async function addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays) {
-            try {
-            // Step 1: Check if the product exists in the database
-            let response = await fetch(`/Home/CheckCartItem`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ productId, productsImageId })
-            });
+                try {
+                // Step 1: Check if the product exists in the database
+                   let userId = getCookie("IShopId"); // Get IShopId from cookies
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
+                    // Step 1: Get existing cart items
+                    let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
 
-            let result = await response.json();
+                    // Step 2: Find existing item in the cart
+                    let existingItemIndex = cartItems.findIndex(item => item.productId === productId && item.productsImageId === productsImageId);
 
-            // Step 2: Ensure cartItems is not null
-            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+                    if (existingItemIndex !== -1) {
+                        // Update existing item
+                        cartItems[existingItemIndex].quantity += 1;
+                        cartItems[existingItemIndex].total = (cartItems[existingItemIndex].quantity * price).toFixed(2);
+                    } else {
+                        // Step 4: If not exists, add new item without clearing LocalStorage
+                         //localStorage.removeItem("cartItems");
+                        cartItems.push({
+                        name: productName,
+                        image: productImage,
+                        type: productType,
+                        color: productColor,
+                        description: productDescription,
+                        quantity: 1,
+                        price: price,
+                        total: price.toFixed(2),
+                        productId: productId,
+                        productsImageId: productsImageId,
+                        arrivingDays: arrivingDays
+                    });
+                }
 
-            let existingItem = cartItems.find(item => item.productid === productId && item.productsimageid === productsImageId);
 
-            if (result.exists && existingItem) {
-                // Step 3: If exists in DB and LocalStorage, update quantity
-                existingItem.quantity += 1;
-                existingItem.total = (existingItem.quantity * price).toFixed(2);
-            } else {
-                // Step 4: If not exists, add new item without clearing LocalStorage
-                 localStorage.removeItem("cartItems");
+                // Step 5: Save updated cart to localStorage
+                localStorage.setItem("cartItems", JSON.stringify(cartItems));
 
-                 cartItems = [{
-                     name: productName,
-                     image: productImage,
-                     type: productType,
-                     color: productColor,
-                     description: productDescription,
-                     quantity: 1,
-                     price: price,
-                     total: price.toFixed(2),
-                     productid: productId,
-                     productsimageid: productsImageId,
-                     arrivingDays: arrivingDays
-                 }];
-            }
+                // Step 6: Log cartItems to check if it's being stored properly
+                console.log("Updated cartItems:", cartItems);
 
-            // Step 5: Save updated cart to localStorage
-            localStorage.setItem("cartItems", JSON.stringify(cartItems));
+                // Step 7: Update UI & Save cart to DB
+                 if (userId) {
+                        // Step 4: If logged in, save to database
+                        await saveCartToDatabase(cartItems);
+                 } else {
+                        // Step 5: If guest user, store cart in cookies
+                          document.cookie = `cartItems=${JSON.stringify(cartItems)}; path=/; expires=${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()}`;
+                 }
 
-            // Step 6: Log cartItems to check if it's being stored properly
-            console.log("Updated cartItems:", cartItems);
+                updateCartCount();
+                loadCartFromDatabase();
 
-            // Step 7: Update UI & Save cart to DB
-            updateCartCount();
-            saveCartToDatabase();
-            loadCartFromDatabase();
+                showMessageModal("success", "Item Added.")
 
-            showMessageModal("success", "Item Added.")
-
-        } catch (error) {
-                console.error("Error checking cart item:", error);
+            } catch (error) {
+                    console.error("Error checking cart item:", error);
             }
         }
         
-        async function saveCartToDatabase() {
-            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+       async function saveCartToDatabase(cartItems) {
+        let userId = getCookie("IShopId");
 
-            if (cartItems.length === 0) {
-                console.log("Cart is empty. Nothing to save.");
-                return;
-            }
-
-            console.log("Saving cart to database...", cartItems);
-
-            let response = await fetch("/Home/SaveCart", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(cartItems),
-            });
-
-            if (response.ok) {
-                console.log("Cart saved successfully.");
-                 localStorage.setItem("cartItems", JSON.stringify(cartItems));
-                 loadCartFromDatabase();
-                 updateCartCount();
-
-            } else {
-                console.log("Failed to save cart.", response);
-            }
+        if (!userId) {
+            console.log("User is not logged in. Cart stored in localStorage & cookies.");
+            return;
         }
+
+        let response = await fetch("/Home/SaveCart", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(cartItems),
+        });
+
+        if (response.ok) {
+            console.log("Cart saved to database.");
+            loadCartFromDatabase();
+        } else {
+            console.log("Failed to save cart.");
+        }
+    }
+
 
         document.querySelectorAll(".add-to-cart-btn").forEach(button => {
             button.addEventListener("click", function () {
@@ -354,33 +350,27 @@
              updateCartCount();
         });
 
-        async function loadCartFromDatabase() {
-          try {
-              let response = await fetch("/Home/Cart");
+       async function loadCartFromDatabase() {
+        let userId = getCookie("IShopId");
 
-              let text = await response.text();  // Get raw response text
+        if (userId) {
+            // Fetch from database
+            let response = await fetch("/Home/GetCart");
+            let data = await response.json();
 
-              let data;
-              try {
-                  data = JSON.parse(text); // Try parsing JSON
-              } catch (jsonError) {
-                  return; // Stop execution if JSON is invalid
-              }
-
-              if (data.success && data.cartItems.length > 0) {
-                  cartItems = data.cartItems;
-                   localStorage.setItem("cartItems", JSON.stringify(cartItems)); //  Ensure LocalStorage updates
-                   updateCartCount();
-              } else {
-                  console.log("No items in the cart.");
-              }
-          } catch (error) {
-              console.error("Error loading cart from database:", error);
-          }
+            if (data.success && data.cartItems.length > 0) {
+                localStorage.setItem("cartItems", JSON.stringify(data.cartItems));
+            }
+        } else {
+            // Fetch from cookies for guests
+              let cartItems = getCookie("cartItems");
+              if (cartItems) {
+                  localStorage.setItem("cartItems", cartItems);
+            }
         }
 
-        loadCartFromDatabase();
         updateCartCount();
+    }
 
          function showMessageModal(type, message) {
                 let modalTitle = document.getElementById("messageModalLabel");
@@ -404,6 +394,12 @@
                 let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
                 messageModal.show();
             }
+
+            // Function to get a cookie value
+        function getCookie(name) {
+            let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? match[2] : null;
+        }
 
     });
 </script>

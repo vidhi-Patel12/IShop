@@ -2,16 +2,33 @@
 using ECommerce.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using RestSharp;
+using System.Reflection;
+using System.Text;
+using Twilio;
+using Twilio.Rest.Api.V2010.Account;
+using Twilio.Types;
 
 namespace ECommerce.Controllers
 {
     public class AccountController : Controller
     {
         private readonly ApplicationDbContext _context;
-        public AccountController(ApplicationDbContext context)
+        private readonly IConfiguration _configuration;
+        private readonly SmsService _smsService;
+
+
+        private const string AccountSid = "AC442e82f708bba2fce45fe704cd7c9de0";
+        private const string AuthToken = "3cbb782153e193374c0da554e69bb1c6";
+        private const string FromWhatsAppNumber = "+19152924665"; // Twilio sandbox number
+        //+19152924665
+
+
+        public AccountController(ApplicationDbContext context,SmsService smsService)
         {
             _context = context;
+            _smsService = smsService;
         }
 
         [HttpGet]
@@ -76,74 +93,25 @@ namespace ECommerce.Controllers
             _context.Login.Add(loginEntry);
             _context.SaveChanges();
 
-            //bool smsSent = SendOTPViaSMS(Mobile, otp);
-            //if (!smsSent)
-            //{
-            //    ViewBag.Error = "Failed to send OTP. Please try again.";
-            //    return View("Login");
-            //}
+            // Send OTP via SMS
+            bool otpSent =  _smsService.SendSmsOTP(Mobile, otp);
 
-
-            // Redirect to OTP verification page
-            return RedirectToAction("VerifyOTP", new { Mobile });
-        }
-
-        //private bool SendOTPViaSMS(string mobile, int otp)
-        //{
-        //    var client = new RestClient("https://www.fast2sms.com/dev/bulkV2");
-        //    var request = new RestRequest(Method.POST);
-        //    request.AddHeader("authorization", "YOUR_FAST2SMS_API_KEY");
-        //    request.AddHeader("Content-Type", "application/x-www-form-urlencoded");
-
-        //    request.AddParameter("variables_values", otp);
-        //    request.AddParameter("route", "otp");
-        //    request.AddParameter("numbers", mobile);
-
-        //    IRestResponse response = client.Execute(request);
-
-        //    // Parse response
-        //    var jsonResponse = JObject.Parse(response.Content);
-        //    return jsonResponse["return"] != null && jsonResponse["return"].Value<bool>();
-        //}
-
-        [HttpPost]
-        public IActionResult GenerateOTP(long Mobile)
-        {
-            var user = _context.Register.FirstOrDefault(u => u.Mobile == Mobile);
-
-            if (user == null)
+            if (!otpSent)
             {
-                ViewBag.Error = "User does not exist.";
-                return View();
+                ViewBag.Error = "Failed to send OTP. Please try again.";
+                return View("Login");
             }
 
-            // Generate a random 6-digit OTP
-            Random random = new Random();
-            int otp = random.Next(100000, 999999);
-
-            // Save OTP in Login table
-            var loginEntry = new Login
-            {
-                IShopId = user.IShopId,                
-                OTP = otp,
-                IsValid = true,
-                GeneratedAt = DateTime.Now
-            };
-
-            _context.Login.Add(loginEntry);
-            _context.SaveChanges();
-
-            // Send OTP via SMS/Email (Integrate Twilio, SendGrid, etc.)
-            Console.WriteLine($"OTP for {Mobile}: {otp}");
-
-            return RedirectToAction("VerifyOTP", new { Mobile });
+            ViewBag.Mobile = Mobile;
+            // Redirect to OTP verification page
+            return View("Login");
         }
 
         [HttpGet]
         public IActionResult VerifyOTP(long Mobile)
         {
-            ViewBag.Mobile = Mobile; // Store mobile in ViewBag for the form
-            return View();
+             ViewBag.Mobile = Mobile;
+            return PartialView("_VerifyOTP"); //  Use a Partial View
         }
 
         [HttpPost]
@@ -167,8 +135,8 @@ namespace ECommerce.Controllers
                 return View("Login");
             }
 
-            // Check if OTP has expired (30 seconds limit)
-            if (DateTime.Now > loginEntry.GeneratedAt.AddSeconds(30))
+            // Check if OTP has expired (5-minute validity)
+            if (DateTime.Now > loginEntry.GeneratedAt.AddMinutes(5))
             {
                 loginEntry.IsValid = false;
                 _context.SaveChanges();
@@ -177,15 +145,41 @@ namespace ECommerce.Controllers
             }
 
             // OTP is valid → Log in the user
+            loginEntry.IsValid = false; // Mark OTP as used
+            _context.SaveChanges();
+
+            CookieOptions options = new CookieOptions
+            {
+                Path = "/",
+                HttpOnly = false,
+                SameSite = SameSiteMode.Lax,
+                Secure = false,
+            };
+
+            Response.Cookies.Append("IShopId", user.IShopId.ToString(), options);
             HttpContext.Session.SetInt32("IShopId", user.IShopId);
-            return RedirectToAction("Index", "Home");
+
+            //  Redirect based on role
+            if (user.Role == 0)  // Admin
+            {
+                return RedirectToAction("Index", "Admin");
+            }
+            else if (user.Role == 1 && Helper.IsCheckout)  // Regular User & trying to checkout
+            {
+                Helper.IsCheckout = false;
+                return RedirectToAction("Checkout", "Home");
+            }
+            else
+            {
+                return RedirectToAction("Index", "Home");
+            }
         }
 
 
         public void ExpireOTP()
         {
             var expiredOtps = _context.Login
-                .Where(l => l.IsValid && DateTime.Now > l.GeneratedAt.AddSeconds(30))
+                .Where(l => l.IsValid && DateTime.Now > l.GeneratedAt.AddMinutes(5))
                 .ToList();
 
             foreach (var entry in expiredOtps)
@@ -204,14 +198,14 @@ namespace ECommerce.Controllers
             if (user == null)
             {
                 ViewBag.Error = "Mobile number not registered.";
-                TempData.Keep("IsCheckout"); // ✅ Keep checkout intent in case of failure
+                TempData.Keep("IsCheckout"); //  Keep checkout intent in case of failure
                 return View("Login");
             }
 
             if (user.Password != Password)
             {
                 ViewBag.Error = "Invalid password.";
-                TempData.Keep("IsCheckout"); // ✅ Keep checkout intent in case of failure
+                TempData.Keep("IsCheckout"); //  Keep checkout intent in case of failure
                 return View("Login");
             }
 
@@ -226,7 +220,7 @@ namespace ECommerce.Controllers
             Response.Cookies.Append("IShopId", user.IShopId.ToString(), options);
             HttpContext.Session.SetInt32("IShopId", user.IShopId);
 
-            // ✅ Redirect based on role
+            //  Redirect based on role
             if (user.Role == 0)  // Admin
             {
                 return RedirectToAction("Index", "Admin");
@@ -243,54 +237,14 @@ namespace ECommerce.Controllers
         }
 
 
+       
+
         [HttpGet]
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
             Response.Cookies.Delete("IShopId");
             return RedirectToAction("Login");
-        }
-
-        //[HttpPost]
-        //public IActionResult Login(long Mobile, string Password)
-        //{
-        //    var user = _context.Register.FirstOrDefault(u => u.Mobile == Mobile);
-
-        //    if (user == null)
-        //    {
-        //        ViewBag.Error = "User does not exist.";
-        //        return View();
-        //    }
-
-        //    if (user.Password != Password) 
-        //    {
-        //        ViewBag.Error = "Invalid mobile number or password.";
-        //        return View();
-        //    }
-
-        //    // Check if the user is active
-        //    if (!user.IsActive)
-        //    {
-        //        ViewBag.Error = "Your account is inactive. Contact support.";
-        //        return View();
-        //    }
-
-        //    // Store user session
-        //    HttpContext.Session.SetInt32("IShopId", user.IShopId);
-        //    HttpContext.Session.SetString("UserRole", user.Role.ToString());
-
-        //    // Redirect based on role
-        //    if (user.Role == 0)  // Admin
-        //    {
-        //        return RedirectToAction("Index", "Home");
-        //    }
-        //    else if (user.Role == 1)  // Regular User
-        //    {
-        //        return RedirectToAction("Index", "Home");
-        //    }
-
-        //    return RedirectToAction("Index", "Home");
-        //}
-
+        }       
     }
 }

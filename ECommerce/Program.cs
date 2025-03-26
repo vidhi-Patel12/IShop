@@ -3,6 +3,9 @@ using ECommerce.Data;
 using Microsoft.AspNetCore.DataProtection;
 using ECommerce.Models;
 using Microsoft.AspNetCore.Rewrite;
+using Microsoft.AspNetCore.Builder.Extensions;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,11 +29,12 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
 
 builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddSingleton<SmsService>();
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
-
 
 builder.Services.Configure<RouteOptions>(options =>
 {

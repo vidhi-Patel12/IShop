@@ -142,7 +142,7 @@
 
                             @if (IShopId.HasValue)
                             {
-                                <!-- ✅ Logout Button with SVG Icon -->
+                                <!--  Logout Button with SVG Icon -->
                                 <li>
                                     <a href="/Account/Logout" class="logout-icon">
                                         <svg width="24" height="24" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -343,12 +343,12 @@
             // Update the modal based on type (success or error)
             if (type === "success") {
                 modalTitle.innerText = "Success";
-                modalBody.innerHTML = `✅ ${message}`;
+                modalBody.innerHTML = ` ${message}`;
                 modalHeader.classList.add("bg-success", "text-white");
                 modalHeader.classList.remove("bg-danger");
             } else if (type === "error") {
                 modalTitle.innerText = "Error";
-                modalBody.innerHTML = `❌ ${message}`;
+                modalBody.innerHTML = ` ${message}`;
                 modalHeader.classList.add("bg-danger", "text-white");
                 modalHeader.classList.remove("bg-success");
             }

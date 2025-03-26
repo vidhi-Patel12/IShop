@@ -1,4 +1,79 @@
 ﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "VerifyOTP";
+}
+
+<form asp-action="VerifyOTP" method="post">
+    <input type="hidden" name="Mobile" value="@ViewBag.Mobile" />
+
+    <div class="form-group">
+        <label>OTP</label>
+        <input type="number" class="form-control" name="OTP" required />
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100 mt-3">Verify OTP</button>
+</form>
+
+<div class="text-center mt-3">
+    <p>Didn't receive OTP? <a href="#" onclick="openOtpModal('@ViewBag.Mobile')">Resend</a></p>
+</div>
+
+<!-- Bootstrap Modal for OTP Verification -->
+<div class="modal fade" id="otpModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="otpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="otpModalLabel">Verify OTP</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!--  OTP form will be loaded here via AJAX -->
+                <div id="otpFormContainer">
+                    <p class="text-center">Loading...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- /login -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+<script>
+    $(document).ready(function () {
+        var mobile = '@(ViewBag.Mobile ?? "")'; //  Read Mobile from ViewBag
+
+        console.log("Mobile from ViewBag:", mobile); //  Debugging
+
+        if (mobile.trim() !== "") {
+            $("#otpModal").modal("show"); //  Open modal when the page loads
+        }
+    });
+
+    function openOtpModal(mobile) {
+        console.log("Opening OTP modal for:", mobile); //  Debugging
+
+        $.ajax({
+            url: "/Account/VerifyOTP?Mobile=" + encodeURIComponent(mobile),
+            type: "GET",
+            success: function (data) {
+                $("#otpFormContainer").html(data);
+                $("#otpModal").modal("show"); //  Open modal after AJAX loads form
+            },
+            error: function () {
+                console.error("Failed to load OTP form"); //  Debugging
+                $("#otpFormContainer").html("<p class='text-danger'>Failed to load OTP form.</p>");
+            }
+        });
+    }
+</script>
+
+
+
+
+@* @{
     ViewData["Title"] = "Verify OTP";
 }
 
@@ -26,3 +101,4 @@
         </div>
     </div>
 </div>
+ *@

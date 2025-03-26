@@ -351,7 +351,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
-                <h5>✅ Order placed successfully!</h5>
+                <h5> Order placed successfully!</h5>
             </div>
             <div class="modal-footer">
                 <button asp-action="Orders" asp-controller="Home" type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
@@ -421,7 +421,7 @@
                         let selectedAddr = addresses.find(addr => addr.addressId == selectedId);
                          if (selectedAddr) {
                             localStorage.setItem("selectedAddress", JSON.stringify(selectedAddr));
-                            console.log("✅ Address saved:", selectedAddr);
+                            console.log(" Address saved:", selectedAddr);
                         }
                         displaySelectedAddress(selectedAddr);
                         localStorage.setItem("selectedAddress", JSON.stringify(selectedAddr));
@@ -434,11 +434,11 @@
                 selectedRadio.checked = true;
                 displaySelectedAddress(storedAddress);
             } else {
-                console.warn("⚠ Stored address not found in list, selecting first available.");
+                console.warn(" Stored address not found in list, selecting first available.");
                 selectFirstAvailableAddress(addresses);
             }
         } else {
-            console.warn("⚠ No stored address found. Selecting first available.");
+            console.warn(" No stored address found. Selecting first available.");
             selectFirstAvailableAddress(addresses);
         }
 
@@ -801,17 +801,17 @@
     async function processCheckout() {
             let IShopId = getCookie('IShopId');
         if (!IShopId) {
-            console.warn("❌ User not logged in. Redirecting to login.");
+            console.warn(" User not logged in. Redirecting to login.");
             return;
         }
 
-        console.log("✅ User logged in. Syncing guest cart to database...");
+        console.log(" User logged in. Syncing guest cart to database...");
         await syncGuestCartToDatabase();
 
-        console.log("✅ Loading updated cart from database...");
+        console.log(" Loading updated cart from database...");
         await loadCartFromDatabase();
 
-        console.log("✅ Rendering checkout page...");
+        console.log(" Rendering checkout page...");
         renderCheckout(); // Display updated checkout UI
     }
 
@@ -819,12 +819,12 @@
         let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
 
         if (cartItems.length === 0) {
-            console.warn("⚠ No items in local cart to sync.");
+            console.warn(" No items in local cart to sync.");
             return;
         }
 
         try {
-            console.log("📤 Syncing guest cart to database...", cartItems);
+            console.log(" Syncing guest cart to database...", cartItems);
 
             let response = await fetch("/Home/SaveCart", {
                 method: "POST",
@@ -833,13 +833,13 @@
             });
 
             if (!response.ok) {
-                console.error("❌ Failed to sync cart. Server Response:", await response.text());
+                console.error(" Failed to sync cart. Server Response:", await response.text());
                 return;
             }
 
-            console.log("✅ Guest cart successfully synced to database.");
+            console.log(" Guest cart successfully synced to database.");
         } catch (error) {
-            console.error("❌ Error syncing guest cart:", error);
+            console.error(" Error syncing guest cart:", error);
         }
     }
 
@@ -854,12 +854,12 @@
                 let cartItems = data.cartItems;
                 localStorage.setItem("cartItems", JSON.stringify(cartItems)); // Update localStorage
                 localStorage.setItem("checkoutItems", JSON.stringify(cartItems)); // Set checkout data after update
-                console.log("✅ Cart loaded and saved to localStorage:", cartItems);
+                console.log(" Cart loaded and saved to localStorage:", cartItems);
             } else {
-                console.warn("⚠ No items in the cart.");
+                console.warn(" No items in the cart.");
             }
         } catch (error) {
-            console.error("❌ Error loading cart from database:", error);
+            console.error(" Error loading cart from database:", error);
         }
     }
 
@@ -1211,12 +1211,12 @@
          // Update the modal based on type (success or error)
          if (type === "success") {
              modalTitle.innerText = "Success";
-             modalBody.innerHTML = `✅ ${message}`;
+             modalBody.innerHTML = ` ${message}`;
              modalHeader.classList.add("bg-success", "text-white");
              modalHeader.classList.remove("bg-danger");
          } else if (type === "error") {
              modalTitle.innerText = "Error";
-             modalBody.innerHTML = `❌ ${message}`;
+             modalBody.innerHTML = ` ${message}`;
              modalHeader.classList.add("bg-danger", "text-white");
              modalHeader.classList.remove("bg-success");
          }

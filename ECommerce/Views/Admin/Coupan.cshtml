@@ -301,12 +301,12 @@
          // Update the modal based on type (success or error)
          if (type === "success") {
              modalTitle.innerText = "Success";
-             modalBody.innerHTML = `✅ ${message}`;
+             modalBody.innerHTML = ` ${message}`;
              modalHeader.classList.add("bg-success", "text-white");
              modalHeader.classList.remove("bg-danger");
          } else if (type === "error") {
              modalTitle.innerText = "Error";
-             modalBody.innerHTML = `❌ ${message}`;
+             modalBody.innerHTML = ` ${message}`;
              modalHeader.classList.add("bg-danger", "text-white");
              modalHeader.classList.remove("bg-success");
          }

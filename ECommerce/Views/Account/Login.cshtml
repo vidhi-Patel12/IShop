@@ -2,6 +2,7 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Login";
 }
+
 <!-- page-title -->
 <div class="page-title" style="background-image: url('@Url.Content("~/content/images/section/page-title.jpg")');">
     <div class="container-full">
@@ -21,7 +22,14 @@
                 <div class="heading">
                     <h4>Login</h4>
                 </div>
+
                 <form asp-action="LoginWithPassword" method="post" id="passwordLoginForm" class="form-login form-has-password">
+
+                    <div class="d-flex justify-content-center mb-3">
+                        <button id="passwordBtn" class="btn btn-dark me-2" onclick="showLoginWithPassword()">Login with Password</button>
+                        <button id="otpBtn" class="btn btn-outline-dark" onclick="showLoginWithOTP()">Login with OTP</button>
+                    </div>
+
                     <div class="wrap">
                         <fieldset class="">
                             <input class="" type="number" placeholder="Mobile number*" name="Mobile" tabindex="2" value="" aria-required="true" required="">
@@ -40,6 +48,31 @@
                         </div>
                     </div>
                 </form>
+
+                <!-- Login with OTP Form -->
+                <form asp-action="LoginWithOTP" method="post" id="otpLoginForm" style="display: none;" class="form-login form-has-password">
+
+                    <div class="d-flex justify-content-center mb-3">
+                        <button id="passwordBtn" class="btn btn-outline-dark me-2" onclick="showLoginWithPassword()">Login with Password</button>
+                        <button id="otpBtn" class="btn btn-dark" onclick="showLoginWithOTP()">Login with OTP</button>
+                    </div>
+
+                    @*   <div class="form-group">
+                        <label>Mobile</label>
+                        <input type="number" class="form-control" name="Mobile" required />
+                    </div> *@
+                    <div class="wrap">
+                        <fieldset class="">
+                            <input class="" type="number" placeholder="Mobile number*" name="Mobile" tabindex="2" value="" aria-required="true" required="">
+                        </fieldset>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <button class="tf-btn btn-fill" type="submit">
+                                <span class="text text-button">Send OTP</span>
+                            </button>
+                            @* <a href="forget-password.html" class="font-2 text-button forget-password link">Forgot Your Password?</a> *@
+                        </div>
+                    </div>
+                </form>
             </div>
             <div class="right">
                 <h4 class="mb_8">New Customer</h4>
@@ -49,4 +82,100 @@
         </div>
     </div>
 </section>
+
+<!-- Bootstrap Modal for OTP Verification -->
+<div class="modal fade" id="otpModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="otpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="otpModalLabel">Verify OTP</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!--  OTP form will be loaded here via AJAX -->
+                <div id="otpFormContainer">
+                    <form asp-action="VerifyOTP" method="post">
+                        <input type="hidden" name="Mobile" value="@ViewBag.Mobile" />
+
+                        <div class="form-group">
+                            <label>OTP</label>
+                            <input type="number" class="form-control" name="OTP" required />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 mt-3">Verify OTP</button>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <p>Didn't receive OTP? <a href="#" onclick="resendOTP('@ViewBag.Mobile')">Resend</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- /login -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+<script>
+     $(document).ready(function () {
+        var mobile = '@(ViewBag.Mobile ?? "")'; //  Read Mobile from ViewBag
+
+        console.log("Mobile from ViewBag:", mobile); //  Debugging
+
+        if (mobile.trim() !== "") {
+            $("#otpModal").modal("show"); //  Open modal when the page loads
+        }
+    });
+
+    function openOtpModal(mobile) {
+        console.log("Opening OTP modal for:", mobile); //  Debugging
+
+        $.ajax({
+            url: "/Account/VerifyOTP?Mobile=" + encodeURIComponent(mobile),
+            type: "GET",
+            success: function (data) {
+                $("#otpFormContainer").html(data);
+                $("#otpModal").modal("show"); //  Open modal after AJAX loads form
+            },
+            error: function () {
+                console.error("Failed to load OTP form"); //  Debugging
+                $("#otpFormContainer").html("<p class='text-danger'>Failed to load OTP form.</p>");
+            }
+        });
+    }
+
+    function resendOTP(mobile) {
+        console.log("Resending OTP for:", mobile); //  Debugging
+
+        $.ajax({
+            url: "/Account/LoginWithOTP",
+            type: "POST",
+            data: { Mobile: mobile }, //  Send Mobile number
+            success: function (response) {
+                alert("A new OTP has been sent!"); //  Notify user
+            },
+            error: function () {
+                alert("Failed to resend OTP. Please try again.");
+            }
+        });
+    }
+
+    function togglePassword() {
+        var passwordInput = document.getElementById("password");
+        passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+    }
+
+    function showLoginWithPassword() {
+        document.getElementById("passwordLoginForm").style.display = "block";
+        document.getElementById("otpLoginForm").style.display = "none";
+    }
+
+    function showLoginWithOTP() {
+        document.getElementById("passwordLoginForm").style.display = "none";
+        document.getElementById("otpLoginForm").style.display = "block";
+    }
+
+</script>

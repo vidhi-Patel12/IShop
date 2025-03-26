@@ -144,10 +144,10 @@
             let IShopId = getCookie('IShopId');
 
         if (IShopId) {
-            console.log("✅ Logged in, fetching cart from DB");
+            console.log(" Logged in, fetching cart from DB");
             loadCartFromDatabase();
         } else {
-            console.log("❌ Not logged in, loading cart from localStorage");
+            console.log(" Not logged in, loading cart from localStorage");
             loadGuestCart();
         }
 
@@ -204,11 +204,11 @@
             let existingRow = document.querySelector(`#cartDisplay tbody tr[data-productid="${item.productId}"][data-product-image-id="${item.productsImageId}"]`);
 
             if (existingRow) {
-                // ✅ If the item already exists in the Razor-rendered HTML, update its values
+                //  If the item already exists in the Razor-rendered HTML, update its values
                 existingRow.querySelector(".quantity-product").value = item.quantity;
                 existingRow.querySelector(".total-price span").innerText = totalItemPrice;
             } else {
-                // ✅ If item is not in the Razor-rendered table, create a new row dynamically
+                //  If item is not in the Razor-rendered table, create a new row dynamically
                 let row = document.createElement("tr");
                 row.classList.add("tf-cart-item", "file-delete");
                 row.setAttribute("data-productid", item.productId);
@@ -249,7 +249,7 @@
         cartTotalElement.innerText = totalCartPrice.toFixed(2);
     }
 
-    // ✅ Ensure Click Event is Attached to Buttons for Quantity Change and Removal
+    //  Ensure Click Event is Attached to Buttons for Quantity Change and Removal
     document.addEventListener("click", function (event) {
         let target = event.target;
 
@@ -289,7 +289,7 @@
             cartTotalElement.innerText = updatedTotal.toFixed(2);
         }
 
-        // ✅ Handle Remove Item
+        //  Handle Remove Item
         if (target.classList.contains("remove")) {
             let productId = parseInt(target.getAttribute("data-productid"));
             let productsImageId = parseInt(target.getAttribute("data-productsimageid"));
@@ -400,23 +400,23 @@
             let IShopId = getCookie('IShopId'); // Check login status
 
             if (!IShopId) {
-                console.warn("❌ User not logged in. Redirecting to login.");
+                console.warn(" User not logged in. Redirecting to login.");
                 return;
             }
     @*  alert("Please log in to proceed with checkout.");
             window.location.href = "/Account/Login"; *@ // Redirect to login page
 
 
-            console.log("✅ User logged in. Syncing guest cart to database...");
+            console.log(" User logged in. Syncing guest cart to database...");
             await syncGuestCartToDatabase(); // Save guest cart to DB
 
-            console.log("✅ Loading updated cart from database...");
+            console.log(" Loading updated cart from database...");
             await loadCartFromDatabase(); // Load updated cart
 
             let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
             localStorage.setItem("checkoutItems", JSON.stringify(cartItems)); // Set checkout data after update
 
-            console.log("✅ Redirecting to checkout...");
+            console.log(" Redirecting to checkout...");
             window.location.href = "/Home/Checkout";
         });
 
@@ -628,7 +628,7 @@
                     type: item.type ?? ""
                 }));
 
-                console.log("📤 Sending Cart Data to Backend:", cartItems);
+                console.log(" Sending Cart Data to Backend:", cartItems);
 
                 let response = await fetch("/Home/SaveCart", {
                     method: "POST",

@@ -1,0 +1,143 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Braintree Payment";
+    var orderId = ViewData["OrderId"]?.ToString();
+    var orderAmount = ViewData["OrderAmount"]?.ToString();
+    var paymentMode = ViewData["PaymentMode"]?.ToString();
+}
+
+<h2>Payment</h2>
+@* <p><strong>Order ID:</strong> <span id="order-id">@orderId</span></p> *@
+<p><strong>Amount to Pay:</strong> ₹<span id="order-amount">@orderAmount</span></p>
+<input type="hidden" id="order-id" value="@orderId" />
+<input type="hidden" id="paymentmode" value="@paymentMode" />
+
+<!--  Payment Form -->
+<form id="payment-form">
+    <div id="dropin-container"></div> <!-- Braintree Drop-in UI will be injected here -->
+    <button type="submit" id="submit-button" disabled>Pay Now</button>
+</form>
+
+<!--  Display Transaction Result -->
+<div id="payment-message"></div>
+
+<div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="messageModalLabel">Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <h5 id="messageText">Your message here.</h5>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="redirectToOrders()">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+</br>
+<!--  Load Braintree JavaScript SDK -->
+<script src="https://js.braintreegateway.com/web/dropin/1.33.5/js/dropin.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+          // Fetch Checkout Data to get PaymentMode
+      fetch("/braintree/get-checkout-data")
+        .then(response => response.json())
+        .then(checkoutData => {
+            if (checkoutData.paymentMode) {
+                document.getElementById("paymentmode").value = checkoutData.paymentMode;
+            }
+        })
+        .catch(error => console.error("Error fetching checkout data:", error));
+
+        fetch("/braintree/client-token") //  Fetch client token from the controller
+            .then(response => response.json())
+            .then(data => {
+                var clientToken = data.token;
+
+                //  Initialize Braintree Drop-in UI
+                braintree.dropin.create({
+                    authorization: clientToken,
+                    container: "#dropin-container"
+                }, function (error, dropinInstance) {
+                    if (error) {
+                        console.error("Braintree Error:", error);
+                        return;
+                    }
+
+                    document.getElementById("submit-button").disabled = false;
+
+                    //  Handle Form Submission
+                    document.getElementById("payment-form").addEventListener("submit", function (event) {
+                        event.preventDefault();
+                        dropinInstance.requestPaymentMethod(function (err, payload) {
+                            if (err) {
+                                console.error("Payment Method Error:", err);
+                                return;
+                            }
+
+                            const orderId = document.getElementById("order-id").value;
+                            const orderAmount = parseFloat(document.getElementById("order-amount").innerText);
+                            const paymentMode = document.getElementById("paymentmode").value;
+
+
+                           fetch("/braintree/checkout", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ orderId: orderId, nonce: payload.nonce, paymentMode: paymentMode })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    document.getElementById("payment-message").innerHTML = `<p style="color: green;">Payment Successful! Transaction ID: ${data.transactionId}</p>`;
+                                    window.location.href = data.redirectUrl;
+                                } else {
+                                    document.getElementById("payment-message").innerHTML = `<p style="color: red;">Payment Failed: ${data.error}</p>`;
+                                }
+                            })
+                            .catch(err => console.error("Payment Error:", err));
+                        });
+                    });
+                });
+            })
+            .catch(err => console.error("Client Token Error:", err));
+
+       
+            let paymentMessage = "@ViewData["PaymentMessage"]"; //  Fetch message from ViewData
+
+            if (paymentMessage && paymentMessage.trim() !== "") {
+                showMessageModal("success", paymentMessage); //  Show modal if there's a message
+            }
+
+        function showMessageModal(type, message) {
+             let modalTitle = document.getElementById("messageModalLabel");
+             let modalBody = document.getElementById("messageText");
+             let modalHeader = document.querySelector("#messageModal .modal-header");
+
+             // Update the modal based on type (success or error)
+             if (type === "success") {
+                 modalTitle.innerText = "Success";
+                 modalBody.innerHTML = ` ${message}`;
+                 modalHeader.classList.add("bg-success", "text-white");
+                 modalHeader.classList.remove("bg-danger");
+             } else if (type === "error") {
+                 modalTitle.innerText = "Error";
+                 modalBody.innerHTML = ` ${message}`;
+                 modalHeader.classList.add("bg-danger", "text-white");
+                 modalHeader.classList.remove("bg-success");
+             }
+
+             // Show the modal
+             let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
+             messageModal.show();
+        }       
+
+    });
+
+    function redirectToOrders() {
+            window.location.href = "/Home/Orders"; // Redirect manually
+    }
+
+</script>

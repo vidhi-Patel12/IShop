@@ -1,0 +1,33 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2 class="text-center">Track Your Order</h2>
+<div class="container">
+    <form method="post" asp-controller="Tracking" asp-action="Track">
+        <div class="mb-3">
+            <label for="trackingNumber" class="form-label">Enter Tracking Number</label>
+            <input type="text" class="form-control" id="trackingNumber" name="trackingNumber" required />
+        </div>
+        <button type="submit" class="btn btn-primary">Track</button>
+    </form>
+
+    @if (ViewBag.TrackingResult != null)
+    {
+        <h3 class="mt-4">Tracking Details</h3>
+        <pre class="border p-3">@ViewBag.TrackingResult</pre>
+    }
+</div>
+</br>
+
+<style>
+    .container {
+        max-width: 600px;
+        margin-top: 20px;
+    }
+
+    pre {
+        white-space: pre-wrap;
+        background-color: #f8f9fa;
+    }
+</style>

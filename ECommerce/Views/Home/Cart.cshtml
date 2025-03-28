@@ -300,7 +300,9 @@
             localStorage.setItem("cartItems", JSON.stringify(cartItems));
 
             // Reload the cart
-            loadGuestCart();
+            //loadGuestCart();
+            updateCartTotal();
+            updateCartCount();
         }
     });
 

@@ -16,17 +16,20 @@
                 <table id="userordersTable" class="table">
                     <thead>
                         <tr>
+                            <th>Id</th>
                             <th>Order Id</th>
                             <th>Order Date</th>
                             <th>Payment Mode</th>
                             <th>Order Amount</th>
                             <th>Action</th>
+                            <th>Pay Now</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var order in Model)
                         {
                             <tr>
+                                <td>@order.Id</td>
                                 <td>@order.OrderId</td>
                                 <td>@order.OrderDate.ToString("yyyy-MM-dd")</td>
                                 <td>@order.PaymentMode</td>
@@ -40,6 +43,12 @@
                                     {
                                         <a asp-action="ViewOrder" asp-route-id="@order.OrderId" class="btn btn-success btn-sm">View Order</a>
                                     }
+                                </td>
+                                <td>
+                                    @if (order.Shipping == false && order.PaymentMode == "Card")
+                                    {
+                                        <a asp-action="Payment" asp-controller="Payment" asp-route-orderId="@order.OrderId" class="btn btn-success btn-sm">Pay Now</a>
+                                    }                                    
                                 </td>
                             </tr>
                         }
@@ -66,6 +75,10 @@
             "searching": true,   // Enable search box
             "ordering": true,    // Enable column sorting
             "lengthMenu": [5, 10, 25, 50], // Show entries per page options
+            "order": [[0, "desc"]],
+            "columnDefs": [
+            { "targets": [0], "visible": false, "searchable": false } // Hide OrderId column
+        ],
             "language": {
                 "search": "Search Order:"
             }

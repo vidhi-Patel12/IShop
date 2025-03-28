@@ -913,6 +913,8 @@ namespace ECommerce.Controllers
                         cmd.Parameters.AddWithValue("@OrderQty", order.OrderQty);
                         cmd.Parameters.AddWithValue("@TotalAmount", order.TotalAmount);
                         cmd.Parameters.AddWithValue("@IsActive", true);
+                        cmd.Parameters.AddWithValue("@Shipping", false);
+
                         await cmd.ExecuteNonQueryAsync();
                     }
                 }
@@ -985,7 +987,11 @@ namespace ECommerce.Controllers
 
                         // Commit transaction if everything is successful
                         transaction.Commit();
-                        return Ok(new { message = "Checkout saved successfully!" });
+                        HttpContext.Session.SetString("PaymentMode", checkout.PaymentMode);
+                        //HttpContext.Session.SetInt32("IShopId", IShopId);
+                        Response.Cookies.Append("IShopId", IShopId.ToString());
+                        HttpContext.Session.SetInt32("IShopId",IShopId);
+                        return Ok(new { message = "Checkout saved successfully!" , paymentMode = checkout.PaymentMode });
                     }
                     catch (Exception ex)
                     {
@@ -1106,11 +1112,13 @@ namespace ECommerce.Controllers
                         {
                             orders.Add(new OrderDetails
                             {
+                                Id = Convert.ToInt32(reader["Id"]),
                                 OrderId = reader["OrderId"].ToString(),
                                 OrderDate = Convert.ToDateTime(reader["OrderDate"]),
                                 PaymentMode = reader["PaymentMode"].ToString(),
                                 OrderAmount = Convert.ToDouble(reader["OrderAmount"]),
-                                IsActive = Convert.ToBoolean(reader["IsActive"])
+                                IsActive = Convert.ToBoolean(reader["IsActive"]),
+                                Shipping = Convert.ToBoolean(reader["Shipping"])
                             });
                         }
                     }
@@ -1149,6 +1157,7 @@ namespace ECommerce.Controllers
                             orders.Add(new OrderDetails
                             {
                                 OrderId = reader["OrderId"].ToString(),
+                                Shipping = Convert.ToBoolean(reader["Shipping"]),
                                 IShopId = Convert.ToInt32(reader["IShopId"]),
                                 OrderDate = Convert.ToDateTime(reader["OrderDate"]),
                                 PaymentMode = reader["PaymentMode"].ToString(),

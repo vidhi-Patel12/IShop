@@ -9,6 +9,7 @@
         public int ProductsImageId { get; set; }
         public double OrderQty { get; set; }
         public double TotalAmount { get; set; }
-       
+        public bool IsActive { get; set; }
+        public bool Shipping { get; set; }       
     }
 }

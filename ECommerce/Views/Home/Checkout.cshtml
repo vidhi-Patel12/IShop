@@ -43,10 +43,20 @@
             <!-- Payment Method -->
             <div class="card p-4 mb-4">
                 <div class="row">
-                    <div class="col-md-7">
-                        <h5><strong>Pay on delivery (Cash)</strong></h5>
+                    <div class="col-md-12">
+                        <div class="row">
+                            <div class="col-md-6 d-flex align-items-center">
+                                <input type="radio" name="payment-mode" value="COD" id="cash-payment" checked>&nbsp;
+                                <h5><strong>Pay on Delivery - Cash</strong></h5>
+                            </div>
+
+                            <div class="col-md-6 d-flex align-items-center">
+                                <input type="radio" name="payment-mode" value="Card" id="card-payment">&nbsp;
+                                <h5><strong>Pay with Card</strong></h5>
+                            </div>
+                        </div>
                     </div>
-                   @*  <div class="col-md-5 float-end">
+                    @*  <div class="col-md-5 float-end">
                         <input type="text" id="CoupanCode" name="CoupanCode" placeholder="Enter Code"></input>
                         <button type="button" onclick="applyCoupon()">Apply</button>
                     </div> *@
@@ -108,7 +118,7 @@
                                         <!-- Coupons will be dynamically inserted here -->
                                     </div>
                                 </div>
-                               @*  <div dir="ltr" class="swiper tf-sw-categories" data-preview="2.25" data-tablet="3" data-mobile-sm="2.5" data-mobile="1.2" data-space-lg="20" data-space-md="20" data-space="15" data-pagination="1" data-pagination-md="1" data-pagination-lg="1">
+                                @*  <div dir="ltr" class="swiper tf-sw-categories" data-preview="2.25" data-tablet="3" data-mobile-sm="2.5" data-mobile="1.2" data-space-lg="20" data-space-md="20" data-space="15" data-pagination="1" data-pagination-md="1" data-pagination-lg="1">
                                     <div class="swiper-wrapper">
                                         <div class="swiper-slide">
                                             <div class="box-discount">
@@ -172,7 +182,7 @@
                                 </div>
 
 
-                               @*  <p>Discount code is only used for orders with a total value of products over $500.00</p> *@
+                                @*  <p>Discount code is only used for orders with a total value of products over $500.00</p> *@
                             </div>
                             @* <div class="sec-total-price">
                                 <div class="top">
@@ -262,7 +272,7 @@
                                 </label>
                             </fieldset>
                     </div>*@
-                                        
+
                     <h5 class="total-order d-flex justify-content-between align-items-center">
                         <span>Order Total</span>
                         <span class="total" id="orderTotalAmount">₹0.00</span>
@@ -274,7 +284,7 @@
                                 I agree with the <a href="term-of-use.html">terms and conditions</a>
                             </label> *@
                         </fieldset>
-                        <button  id="placeOrderBtn" class="tf-btn btn-reset">Place Your Order</button>                        
+                        <button id="placeOrderBtn" class="tf-btn btn-reset">Place Your Order</button>
                     </div>
                 </div>
             </div>
@@ -545,14 +555,14 @@
         }
     });
 
-   
+
     //  Function to display selected address in UI
     function displaySelectedAddress(address) {
         if (!address) return;
         document.getElementById("fullName").innerText = address.fullName;
         document.getElementById("address").innerText = `${address.address}, ${address.city}, ${address.state}, ${address.zipCode}, ${address.country}`;
     }
-   
+
     //  Function to display selected address
     function displaySelectedAddress(address) {
         if (!address) return;
@@ -848,7 +858,7 @@
             let response = await fetch("/Home/GetCart");
             let data = await response.json();
 
-            console.log("📥 API Response:", data);
+            console.log(" API Response:", data);
 
             if (data.success && data.cartItems.length > 0) {
                 let cartItems = data.cartItems;
@@ -908,11 +918,11 @@
                             </div>
                         </div>
                         <div class="total-price text-button">
-                            @*<button class="btn btn-sm btn-outline-secondary decrease-qty" data-index="${index}">-</button>*@
+    @*<button class="btn btn-sm btn-outline-secondary decrease-qty" data-index="${index}">-</button>*@
                             <span class="count item-qty" id="qty-${index}">${item.quantity}</span>
-                             @*<button class="btn btn-sm btn-outline-secondary increase-qty" data-index="${index}">+</button>*@
-                            X <span class="price">₹${item.price}</span> |
-                            <strong>Total: <span class="item-total">₹${item.total}</span></strong>
+    @*<button class="btn btn-sm btn-outline-secondary increase-qty" data-index="${index}">+</button>*@
+                            X <span class="price">₹${item.price.toFixed(2)}</span> |
+                            <strong>Total: <span class="item-total">₹${item.total.toFixed(2)}</span></strong>
                         </div>
                     </div>
                 </div>
@@ -954,7 +964,7 @@
                 updateQuantity(index, "decrease");
             });
         });
-            
+
     }
 
     function updateQuantity(index, action) {
@@ -1052,7 +1062,7 @@
         }
 
     document.addEventListener("DOMContentLoaded", async function () {
-        
+
         await processCheckout();
         // renderCheckout();
 
@@ -1079,7 +1089,17 @@
             updateCouponButtons(storedCoupon);
         }
 
-           
+
+    });
+
+    let selectedPaymentMode = document.querySelector('input[name="payment-mode"]:checked').value; // Set default selected value
+
+    // Update selectedPaymentMode on radio button change
+    document.querySelectorAll('input[name="payment-mode"]').forEach((radio) => {
+        radio.addEventListener("change", function () {
+            selectedPaymentMode = this.value;
+            console.log("Selected Payment Mode:", selectedPaymentMode); // Debugging
+        });
     });
 
     document.getElementById("placeOrderBtn").addEventListener("click", async function () {
@@ -1095,8 +1115,8 @@
         let AddressId = selectedAddress.addressId || 0; //  Extract only the ID
 
         let OrderId = crypto.randomUUID(); // Generate a random Order ID
-        let PaymentMode = "COD"; // Assume default payment method
-
+        //let PaymentMode = "COD"; // Assume default payment method
+       
         // Fetch checkout values from DOM
         let TotalAmount = parseFloat(document.getElementById("totalCheckoutAmount")?.innerText.replace("₹", "")) || 0;
         let DeliveryCharge = parseFloat(document.getElementById("deliveryCharge")?.innerText.replace("₹", "")) || 0;
@@ -1116,7 +1136,7 @@
         let checkout = {
             OrderId: OrderId,
             AddressId: AddressId,
-            PaymentMode: PaymentMode,
+            PaymentMode: selectedPaymentMode,
             TotalAmount: TotalAmount,
             Tax: Tax,
             DelivaryCharge: DeliveryCharge,
@@ -1159,7 +1179,7 @@
                 localStorage.removeItem("selectedAddress");
                 deleteCookie("cartItems");
                 await deleteCartItem();
-                window.location.href = "/Home/Orders"; // Redirect to success page
+                window.location.href = "/Payment/Payment"; // Redirect to success page
             } else {
                 //alert(checkoutResult.message || "Failed to save checkout details.");
                 showMessageModal("error", `Error: ${checkoutResult.message} || "Failed to save checkout details."`);

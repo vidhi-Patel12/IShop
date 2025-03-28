@@ -2,12 +2,15 @@
 {
     public class OrderDetails
     {
+        public int Id { get; set; }
         public string OrderId { get; set; }
         public int IShopId { get; set; }
         public DateTime OrderDate { get; set; }
         public string PaymentMode { get; set; }
         public double TotalAmount { get; set; }
         public bool IsActive { get; set; }
+        public bool Shipping { get; set; }
+
         public double Tax { get; set; }
         public double DelivaryCharge { get; set; }
         public double FinalAmount { get; set; }

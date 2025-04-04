@@ -914,6 +914,7 @@ namespace ECommerce.Controllers
                         cmd.Parameters.AddWithValue("@TotalAmount", order.TotalAmount);
                         cmd.Parameters.AddWithValue("@IsActive", true);
                         cmd.Parameters.AddWithValue("@Shipping", false);
+                        cmd.Parameters.AddWithValue("@CreatedDateTime", DateTime.Now);
 
                         await cmd.ExecuteNonQueryAsync();
                     }
@@ -1112,7 +1113,7 @@ namespace ECommerce.Controllers
                         {
                             orders.Add(new OrderDetails
                             {
-                                Id = Convert.ToInt32(reader["Id"]),
+                                //Id = Convert.ToInt32(reader["Id"]),
                                 OrderId = reader["OrderId"].ToString(),
                                 OrderDate = Convert.ToDateTime(reader["OrderDate"]),
                                 PaymentMode = reader["PaymentMode"].ToString(),

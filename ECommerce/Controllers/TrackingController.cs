@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Net.Http.Headers;
 using System.Text;
 
@@ -37,11 +38,13 @@ namespace ECommerce.Controllers
 
             var client = _httpClientFactory.CreateClient();
             client.DefaultRequestHeaders.Add("17token", ApiKey);
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             var requestData = new
             {
-                number = new[] { trackingNumber }
+                numbers = new[] { trackingNumber }
             };
+
             var jsonData = JsonConvert.SerializeObject(requestData);
             var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
 
@@ -50,11 +53,34 @@ namespace ECommerce.Controllers
 
             if (response.IsSuccessStatusCode)
             {
-                ViewBag.TrackingResult = result;
+                // Deserialize response as JObject first
+                JObject trackingData = JObject.Parse(result);
+
+                // Check if 'data' exists and is an array
+                if (trackingData["data"] is JArray dataArray && dataArray.Count > 0)
+                {
+                    var trackInfo = dataArray[0]?["track"];
+                    if (trackInfo != null)
+                    {
+                        ViewBag.TrackingStatus = trackInfo["latest_status"]?.ToString() ?? "Unknown";
+                        ViewBag.Checkpoints = trackInfo["z1"]?.ToObject<List<JObject>>() ?? new List<JObject>();
+                    }
+                    else
+                    {
+                        ViewBag.TrackingStatus = "No tracking data available.";
+                        ViewBag.Checkpoints = new List<JObject>();
+                    }
+                }
+                else
+                {
+                    ViewBag.TrackingStatus = "Invalid response format.";
+                    ViewBag.Checkpoints = new List<JObject>();
+                }
             }
             else
             {
-                ViewBag.TrackingResult = $"Error: {response.StatusCode} - {result}";
+                ViewBag.TrackingStatus = "Tracking failed.";
+                ViewBag.Checkpoints = new List<JObject>();
             }
 
             return View("TrackOrder");

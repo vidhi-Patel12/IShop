@@ -76,7 +76,7 @@
                         <nav class="box-navigation text-start">
                             <ul class="box-nav-ul d-flex align-items-start justify-content-start">
                                 <li class="menu-item active">
-                                    <a href="@Url.Action("Index", "Home")" class="item-link">Home</a>
+                                    <a href="@Url.Action("Dashboard", "Admin")" class="item-link">Home</a>
                                 </li>
                                 <li class="menu-item">
                                     <a href="@Url.Action("Index", "Admin")" class="item-link">Products</a>
@@ -96,18 +96,7 @@
                                         </ul>
                                     </div>
                                 </li>
-                                @if (IShopId.HasValue)
-                                {
-                                    <!-- ✅ Logout Button with SVG Icon -->
-                                    <li>
-                                        <a href="/Account/Logout" class="logout-icon">
-                                            <svg width="24" height="24" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M13.5 7.5L10.5 10.75M13.5 7.5L10.5 4.5M13.5 7.5L4 7.5M8 13.5H1.5L1.5 1.5L8 1.5" stroke="#000000" />
-                                            </svg>
-
-                                        </a>
-                                    </li>
-                                }
+                          
                             </ul>
                         </nav>
                     </div>
@@ -148,6 +137,17 @@
                                     </div>
                                 </div>
                             </li>
+                            @if (IShopId.HasValue)
+                            {
+                                <!-- ✅ Logout Button with SVG Icon -->
+                                <li>
+                                    <a href="/Account/Logout" class="logout-icon">
+                                        <svg width="24" height="24" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M13.5 7.5L10.5 10.75M13.5 7.5L10.5 4.5M13.5 7.5L4 7.5M8 13.5H1.5L1.5 1.5L8 1.5" stroke="#000000" />
+                                        </svg>
+                                    </a>
+                                </li>
+                            }
                             @* <li class="nav-wishlist">
                                 <a href="wish-list.html" class="nav-icon-item">
                                     <svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

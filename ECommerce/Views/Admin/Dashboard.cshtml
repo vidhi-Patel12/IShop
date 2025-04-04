@@ -1,0 +1,248 @@
+﻿<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var authIdStr = Context.Request.Cookies["IShopId"];
+
+    var productData = ViewBag.ProductData as List<int> ?? new List<int>();
+    var orderData = ViewBag.OrderData as List<double> ?? new List<double>();
+    var revenueData = ViewBag.RevenueData as List<double> ?? new List<double>();
+    var duePaymentData = ViewBag.DuePaymentData as List<double> ?? new List<double>();
+    var labels = ViewBag.Labels as List<string> ?? new List<string>();
+}
+﻿
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+<!-- FontAwesome for Icons -->
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Custom JS -->
+<script src="scripts.js"></script>
+
+<!-- page-title -->
+<div class="page-title" style="background-image: url('@Url.Content("~/content/images/section/page-title.jpg")');">
+    <div class="container-full">
+        <div class="row">
+            <div class="col-12">
+                <h3 class="heading text-center">Dashboard</h3>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /page-title -->
+<br/>
+
+<div class="row mb-4">
+    <div class="col-md-12 text-end">
+        <div class="btn-group" role="group" id="timeRangeButtons">
+            <button class="btn btn-sm" data-range="day" onclick="loadDashboardData('day')" style="font-size: 130%;font-weight: 500;">
+                Day
+            </button>
+            <button class="btn btn-sm" data-range="week" onclick="loadDashboardData('week')" style="font-size: 130%;font-weight: 500;">Week</button>
+            <button class="btn btn-sm" data-range="month" onclick="loadDashboardData('month')" style="font-size: 130%;font-weight: 500;">Month</button>
+            <button class="btn btn-sm" data-range="year" onclick="loadDashboardData('year')" style="font-size: 130%;font-weight: 500;">Year</button>
+        </div>
+    </div>
+</div>
+
+
+<div id="dashboardContainer">
+    <!-- Dashboard summary cards will be rendered here -->
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <canvas id="productChart" height="150"></canvas>
+    </div>
+    <div class="col-md-6 mb-4">
+        <canvas id="orderChart" height="150"></canvas>
+    </div>
+    <div class="col-md-6 mb-4">
+        <canvas id="revenueChart" height="150"></canvas>
+    </div>
+    <div class="col-md-6 mb-4">
+        <canvas id="duePaymentChart" height="150"></canvas>
+    </div>
+</div>
+
+
+<script>
+        $(document).ready(function () {
+            loadDashboardData('day'); // Load day data by default
+        });
+
+         var productChartInstance = null;
+    var orderChartInstance = null;
+    var revenueChartInstance = null;
+    var duePaymentChartInstance = null;
+
+
+        function loadDashboardData(timeRange) {
+             $('#timeRangeButtons button').removeClass('active');
+            $(`#timeRangeButtons button[data-range="${timeRange}"]`).addClass('active');
+
+            $.ajax({
+                url: '/Admin/GetDashboardChartData?timeRange=' + timeRange,
+                method: 'GET',
+                success: function (data) {
+                    // Render cards using the returned data
+                    let html = `
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6 col-lg-3">
+                                <div class="card shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div class="icon-box bg-dark text-white rounded p-3">
+                                                <i class="fas fa-box fa-2x"></i>
+                                            </div>
+                                            <div class="ms-auto text-end">
+                                                <h5 class="card-title">Products</h5>
+                                                <h4>${data.productData.reduce((a, b) => a + b, 0)}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 col-lg-3">
+                                <div class="card shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div class="icon-box bg-primary text-white rounded p-3">
+                                                <i class="fas fa-receipt fa-2x"></i>
+                                            </div>
+                                            <div class="ms-auto text-end">
+                                                <h5 class="card-title">Orders</h5>
+                                                <h4>${data.orderData.reduce((a, b) => a + b, 0)}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 col-lg-3">
+                                <div class="card shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div class="icon-box bg-success text-white rounded p-3">
+                                                <i class="fas fa-store fa-2x"></i>
+                                            </div>
+                                            <div class="ms-auto text-end">
+                                                <h5 class="card-title">Revenue</h5>
+                                                <h4>${data.revenueData.reduce((a, b) => a + b, 0).toFixed(2)}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 col-lg-3">
+                                <div class="card shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div class="icon-box bg-danger text-white rounded p-3">
+                                                <i class="fas fa-adjust fa-2x"></i>
+                                            </div>
+                                            <div class="ms-auto text-end">
+                                                <h5 class="card-title">Due Payments</h5>
+                                                <h4>${data.duePaymentData.reduce((a, b) => a + b, 0).toFixed(2)}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    $('#dashboardContainer').html(html);
+
+                    if (productChartInstance) productChartInstance.destroy();
+                if (orderChartInstance) orderChartInstance.destroy();
+                if (revenueChartInstance) revenueChartInstance.destroy();
+                if (duePaymentChartInstance) duePaymentChartInstance.destroy();
+
+                //  Product Chart
+                const productCtx = document.getElementById('productChart').getContext('2d');
+                productChartInstance = new Chart(productCtx, {
+                    type: 'line',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Products',
+                            data: data.productData,
+                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 2,
+                             tension: 0.4
+                        }]
+                    },
+                    options: { responsive: true }
+                });
+
+                //  Order Chart
+                const orderCtx = document.getElementById('orderChart').getContext('2d');
+                orderChartInstance = new Chart(orderCtx, {
+                    type: 'line',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Orders',
+                            data: data.orderData,
+                            backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                            borderColor: 'rgba(255, 206, 86, 1)',
+                            borderWidth: 2,
+                            tension: 0.4
+                        }]
+                    },
+                    options: { responsive: true }
+                });
+
+                //  Revenue Chart
+                const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+                revenueChartInstance = new Chart(revenueCtx, {
+                    type: 'line',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Revenue',
+                            data: data.revenueData,
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 2,
+                            tension: 0.4
+                        }]
+                    },
+                    options: { responsive: true }
+                });
+
+                //  Due Payment Chart
+                const dueCtx = document.getElementById('duePaymentChart').getContext('2d');
+                duePaymentChartInstance = new Chart(dueCtx, {
+                    type: 'line',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Due Payments',
+                            data: data.duePaymentData,
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 2,
+                            tension: 0.4
+                        }]
+                    },
+                    options: { responsive: true }
+                });
+            },
+                error: function (err) {
+                    alert("Error loading dashboard data.");
+                    console.error(err);
+                }
+            });
+        }
+</script>
+
+

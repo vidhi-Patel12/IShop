@@ -19,9 +19,9 @@ namespace ECommerce.Controllers
         private readonly SmsService _smsService;
 
 
-        private const string AccountSid = "AC442e82f708bba2fce45fe704cd7c9de0";
-        private const string AuthToken = "3cbb782153e193374c0da554e69bb1c6";
-        private const string FromWhatsAppNumber = "+19152924665"; // Twilio sandbox number
+        //private const string AccountSid = "AC442e82f708bba2fce45fe704cd7c9de0";
+        //private const string AuthToken = "79b0b10b77f3c28300b0ce07b0738daf";
+        //private const string FromWhatsAppNumber = "+19152924665"; // Twilio sandbox number
         //+19152924665
 
 
@@ -162,7 +162,7 @@ namespace ECommerce.Controllers
             //  Redirect based on role
             if (user.Role == 0)  // Admin
             {
-                return RedirectToAction("Index", "Admin");
+                return RedirectToAction("Dashboard", "Admin");
             }
             else if (user.Role == 1 && Helper.IsCheckout)  // Regular User & trying to checkout
             {
@@ -223,7 +223,7 @@ namespace ECommerce.Controllers
             //  Redirect based on role
             if (user.Role == 0)  // Admin
             {
-                return RedirectToAction("Index", "Admin");
+                return RedirectToAction("Dashboard", "Admin");
             }
             else if (user.Role == 1 && Helper.IsCheckout)  // Regular User & trying to checkout
             {

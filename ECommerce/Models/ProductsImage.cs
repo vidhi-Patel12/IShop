@@ -31,6 +31,10 @@ namespace ECommerce.Models
         public string? TypeSlug { get; set; }
         public string? ColorSlug { get; set; }
         public bool IsActive { get; set; }
+        public int CreatedBy { get; set; }
+        public DateTime CreatedDateTime { get; set; }
+        public int UpdatedBy { get; set; }
+        public DateTime UpdatedDateTime { get; set; }
 
         public virtual Products Product { get; set; }
     }

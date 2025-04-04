@@ -176,28 +176,28 @@
                   }
                }
 
-            function loadGuestCart() {
-        let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-        let cartTableBody = document.querySelector("#cartDisplay tbody");
-        let cartSummarySection = document.getElementById("cartSummarySection");
-        let emptyCartMessage = document.getElementById("emptyCartMessage");
-        let cartTotalElement = document.getElementById("cartTotal");
+        function loadGuestCart() {
+             let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+             let cartTableBody = document.querySelector("#cartDisplay tbody");
+             let cartSummarySection = document.getElementById("cartSummarySection");
+             let emptyCartMessage = document.getElementById("emptyCartMessage");
+             let cartTotalElement = document.getElementById("cartTotal");
 
-        // Clear only the existing dynamic content inside tbody
-        document.querySelectorAll("#cartDisplay tbody .file-delete").forEach(row => row.remove());
+             // Clear only the existing dynamic content inside tbody
+             document.querySelectorAll("#cartDisplay tbody .file-delete").forEach(row => row.remove());
 
-        if (cartItems.length === 0) {
-            cartSummarySection.style.display = "none";
-            emptyCartMessage.style.display = "block"; // Show empty cart message
-            return;
-        }
+             if (cartItems.length === 0) {
+                  cartSummarySection.style.display = "none";
+                  emptyCartMessage.style.display = "block";
+                 return;
+             }
 
-        cartSummarySection.style.display = "block";
-        emptyCartMessage.style.display = "none"; // Hide empty cart message
+             cartSummarySection.style.display = "block";
+             emptyCartMessage.style.display = "none"; // Hide empty cart message
 
-        let totalCartPrice = 0;
+             let totalCartPrice = 0;
 
-        cartItems.forEach((item, index) => {
+             cartItems.forEach((item, index) => {
             let totalItemPrice = (item.quantity * item.price).toFixed(2);
             totalCartPrice += parseFloat(totalItemPrice);
 
@@ -246,96 +246,96 @@
             }
         });
 
-        cartTotalElement.innerText = totalCartPrice.toFixed(2);
-    }
+             cartTotalElement.innerText = totalCartPrice.toFixed(2);
+        }
 
-    //  Ensure Click Event is Attached to Buttons for Quantity Change and Removal
-    document.addEventListener("click", function (event) {
-        let target = event.target;
+        //  Ensure Click Event is Attached to Buttons for Quantity Change and Removal
+        document.addEventListener("click", function (event) {
+            let target = event.target;
 
-        if (target.classList.contains("btn-increase") || target.classList.contains("btn-decrease")) {
-            let cartItem = target.closest(".tf-cart-item");
-            let productId = parseInt(target.getAttribute("data-productid"));
-            let productsImageId = parseInt(target.getAttribute("data-productsimageid"));
-            let quantityInput = cartItem.querySelector(".quantity-product");
-            let totalElement = cartItem.querySelector(".total-price span");
-            let priceElement = cartItem.querySelector(".new-price");
-            let cartTotalElement = document.getElementById("cartTotal");
+            if (target.classList.contains("btn-increase") || target.classList.contains("btn-decrease")) {
+                let cartItem = target.closest(".tf-cart-item");
+                let productId = parseInt(target.getAttribute("data-productid"));
+                let productsImageId = parseInt(target.getAttribute("data-productsimageid"));
+                let quantityInput = cartItem.querySelector(".quantity-product");
+                let totalElement = cartItem.querySelector(".total-price span");
+                let priceElement = cartItem.querySelector(".new-price");
+                let cartTotalElement = document.getElementById("cartTotal");
 
-            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-            let item = cartItems.find(i => i.productId === productId && i.productsImageId === productsImageId);
+                let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+                let item = cartItems.find(i => i.productId === productId && i.productsImageId === productsImageId);
 
-            if (!item) return;
+                if (!item) return;
 
-            let newQuantity = item.quantity;
-            if (target.classList.contains("btn-increase")) {
-                newQuantity++;
-            } else if (target.classList.contains("btn-decrease") && newQuantity > 1) {
-                newQuantity--;
+                let newQuantity = item.quantity;
+                if (target.classList.contains("btn-increase")) {
+                    newQuantity++;
+                } else if (target.classList.contains("btn-decrease") && newQuantity > 1) {
+                    newQuantity--;
+                }
+
+                item.quantity = newQuantity;
+                let newTotal = (newQuantity * item.price).toFixed(2);
+
+                // Update UI
+                quantityInput.value = newQuantity;
+                totalElement.innerText = newTotal;
+
+                // Update Local Storage
+                localStorage.setItem("cartItems", JSON.stringify(cartItems));
+
+                // Update Cart Total
+                let updatedTotal = cartItems.reduce((sum, i) => sum + (i.quantity * i.price), 0);
+                cartTotalElement.innerText = updatedTotal.toFixed(2);
             }
 
-            item.quantity = newQuantity;
-            let newTotal = (newQuantity * item.price).toFixed(2);
+            //  Handle Remove Item
+            if (target.classList.contains("remove")) {
+                let productId = parseInt(target.getAttribute("data-productid"));
+                let productsImageId = parseInt(target.getAttribute("data-productsimageid"));
+                let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
 
-            // Update UI
-            quantityInput.value = newQuantity;
-            totalElement.innerText = newTotal;
+                // Remove item from cart
+                cartItems = cartItems.filter(i => !(i.productId === productId && i.productsImageId === productsImageId));
+                localStorage.setItem("cartItems", JSON.stringify(cartItems));
 
-            // Update Local Storage
-            localStorage.setItem("cartItems", JSON.stringify(cartItems));
-
-            // Update Cart Total
-            let updatedTotal = cartItems.reduce((sum, i) => sum + (i.quantity * i.price), 0);
-            cartTotalElement.innerText = updatedTotal.toFixed(2);
-        }
-
-        //  Handle Remove Item
-        if (target.classList.contains("remove")) {
-            let productId = parseInt(target.getAttribute("data-productid"));
-            let productsImageId = parseInt(target.getAttribute("data-productsimageid"));
-            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-
-            // Remove item from cart
-            cartItems = cartItems.filter(i => !(i.productId === productId && i.productsImageId === productsImageId));
-            localStorage.setItem("cartItems", JSON.stringify(cartItems));
-
-            // Reload the cart
-            //loadGuestCart();
-            updateCartTotal();
-            updateCartCount();
-        }
-    });
+                // Reload the cart
+                //loadGuestCart();
+                updateCartTotal();
+                updateCartCount();
+            }
+        });
 
 
         async function syncGuestCartToDatabase() {
-        let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
 
-        if (cartItems.length === 0) {
-            console.warn("No items in local cart to sync.");
-            return;
-        }
-
-        try {
-            console.log("Syncing guest cart to database...", cartItems);
-
-            let response = await fetch("/Home/SaveCart", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(cartItems),
-            });
-
-            if (!response.ok) {
-                console.error("Failed to sync cart. Server Response:", await response.text());
+            if (cartItems.length === 0) {
+                console.warn("No items in local cart to sync.");
                 return;
             }
 
-            console.log("Guest cart successfully synced to database.");
-            localStorage.removeItem("cartItems"); // Clear local storage after syncing
-            loadCartFromDatabase(); // Refresh cart from DB
-        } catch (error) {
-            console.error("Error syncing guest cart:", error);
+            try {
+                console.log("Syncing guest cart to database...", cartItems);
+
+                let response = await fetch("/Home/SaveCart", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(cartItems),
+                });
+
+                if (!response.ok) {
+                    console.error("Failed to sync cart. Server Response:", await response.text());
+                    return;
+                }
+
+                console.log("Guest cart successfully synced to database.");
+                localStorage.removeItem("cartItems"); // Clear local storage after syncing
+                loadCartFromDatabase(); // Refresh cart from DB
+            } catch (error) {
+                console.error("Error syncing guest cart:", error);
+            }
         }
-    }
 
 
               let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
@@ -560,7 +560,7 @@
                        console.error(" Error checking stock:", error);
                        return false; //  If error occurs, assume stock is not available
                    }
-               }
+              }
 
                 //  Function to Delete Item from Database
         async function deleteCartItem(productsImageId, productId) {
@@ -768,9 +768,11 @@
 
             if (cartSummarySection && emptyCartMessage) {
                 if (totalItems === 0) {
+                    cartSummary.style.display = "none";
                     cartSummarySection.style.display = "none";
                     emptyCartMessage.style.display = "block";
                 } else {
+                    cartSummary.style.display = "block";
                     cartSummarySection.style.display = "block";
                     emptyCartMessage.style.display = "none";
                 }
@@ -778,8 +780,6 @@
 
             console.log(" Cart updated:", updatedCartArray);
         }
-
-
 
       });
 

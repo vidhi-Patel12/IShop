@@ -9,7 +9,7 @@ namespace ECommerce.Models
     public class SmsService
     {
         private const string AccountSid = "AC442e82f708bba2fce45fe704cd7c9de0"; 
-        private const string AuthToken = "3cbb782153e193374c0da554e69bb1c6"; 
+        private const string AuthToken = "79b0b10b77f3c28300b0ce07b0738daf"; 
         private const string FromPhoneNumber = "+19152924665"; // Twilio Sandbox Number
 
         public bool SendSmsOTP(long mobile, int otp)

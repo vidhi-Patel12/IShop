@@ -438,32 +438,34 @@
                     });
                 });
 
-                 if (storedAddress) {
-            let selectedRadio = document.querySelector(`.select-address[data-id="${storedAddress.addressId}"]`);
-            if (selectedRadio) {
-                selectedRadio.checked = true;
-                displaySelectedAddress(storedAddress);
-            } else {
-                console.warn(" Stored address not found in list, selecting first available.");
+                if (storedAddress) {
+                    let selectedRadio = document.querySelector(`.select-address[data-id="${storedAddress.addressId}"]`);
+                    if (selectedRadio) {
+                        selectedRadio.checked = true;
+                        displaySelectedAddress(storedAddress);
+                    } else {
+                        console.warn(" Stored address not found in list, selecting first available.");
+                        selectFirstAvailableAddress(addresses);
+                    }
+                } 
+                else 
+                {
+                console.warn(" No stored address found. Selecting first available.");
                 selectFirstAvailableAddress(addresses);
-            }
-        } else {
-            console.warn(" No stored address found. Selecting first available.");
-            selectFirstAvailableAddress(addresses);
-        }
+                }
 
-            function selectFirstAvailableAddress(addresses) {
-        if (addresses.length > 0) {
-            let firstAddress = addresses[0]; // First address from API
-            let firstRadio = document.querySelector(`.select-address[data-id="${firstAddress.addressId}"]`);
+                function selectFirstAvailableAddress(addresses) {
+                    if (addresses.length > 0) {
+                        let firstAddress = addresses[0]; // First address from API
+                        let firstRadio = document.querySelector(`.select-address[data-id="${firstAddress.addressId}"]`);
 
-            if (firstRadio) {
-                firstRadio.checked = true;
-                localStorage.setItem("selectedAddress", JSON.stringify(firstAddress));
-                displaySelectedAddress(firstAddress);
-            }
-        }
-    }
+                        if (firstRadio) {
+                            firstRadio.checked = true;
+                            localStorage.setItem("selectedAddress", JSON.stringify(firstAddress));
+                            displaySelectedAddress(firstAddress);
+                        }
+                    }
+                }
 
                 // Handle Show More / Show Less toggle
                 let toggleButton = document.getElementById("toggleAddresses");
@@ -487,58 +489,72 @@
             }
 
            try {
-        let response = await fetch("/Home/Coupan"); // Fetch coupons
-        let coupons = await response.json();
-        let couponContainer = document.getElementById("couponContainer");
+                 let response = await fetch("/Home/Coupan"); // Fetch coupons
+                 let coupons = await response.json();
+                 let couponContainer = document.getElementById("couponContainer");
 
-        // Get the applied coupon code from local storage
-        let appliedCoupon = localStorage.getItem("appliedCoupon");
+                 // Get the applied coupon code from local storage
+                 let appliedCoupon = localStorage.getItem("appliedCoupon");
 
-        couponContainer.innerHTML = coupons.map(coupon => `
-            <div class="swiper-slide">
-                <div class="box-discount">
-                    <div class="discount-top">
-                        <div class="discount-off">
-                            <div class="text-caption-1">Discount</div>
-                            <span class="sale-off text-btn-uppercase">${coupon.discount}% OFF</span>
+                 couponContainer.innerHTML = coupons.map(coupon => `
+                <div class="swiper-slide">
+                    <div class="box-discount">
+                        <div class="discount-top">
+                            <div class="discount-off">
+                                <div class="text-caption-1">Discount</div>
+                                <span class="sale-off text-btn-uppercase">${coupon.discount}% OFF</span>
+                            </div>
+                            <div class="discount-from">
+                                <p class="text-caption-1">${coupon.coupanType}</p>
+                            </div>
                         </div>
-                        <div class="discount-from">
-                            <p class="text-caption-1">${coupon.coupanType}</p>
+                        <div class="discount-bot">
+                            <span class="text-btn-uppercase">${coupon.coupanCode}</span>
+                            <button class="tf-btn apply-coupon"
+                                data-code="${coupon.coupanCode}"
+                                data-discount="${coupon.discount}"
+                                ${appliedCoupon === coupon.coupanCode ? 'disabled' : ''}>
+                                <span class="text">${appliedCoupon === coupon.coupanCode ? 'Applied' : 'Apply Code'}</span>
+                            </button>
                         </div>
-                    </div>
-                    <div class="discount-bot">
-                        <span class="text-btn-uppercase">${coupon.coupanCode}</span>
-                        <button class="tf-btn apply-coupon"
-                            data-code="${coupon.coupanCode}"
-                            data-discount="${coupon.discount}"
-                            ${appliedCoupon === coupon.coupanCode ? 'disabled' : ''}>
-                            <span class="text">${appliedCoupon === coupon.coupanCode ? 'Applied' : 'Apply Code'}</span>
-                        </button>
                     </div>
                 </div>
-            </div>
-        `).join("");
+            `).join("");
 
-        // Attach event listeners AFTER inserting HTML
-        document.querySelectorAll(".apply-coupon").forEach(button => {
-            button.addEventListener("click", function () {
-                let selectedCode = this.getAttribute("data-code");
-                let discount = parseInt(this.getAttribute("data-discount"));
+                 // Attach event listeners AFTER inserting HTML
+                 document.querySelectorAll(".apply-coupon").forEach(button => {
+                     button.addEventListener("click", function () {
+                         let selectedCode = this.getAttribute("data-code");
+                         let discount = parseInt(this.getAttribute("data-discount"));
 
-                applyCoupon(selectedCode, discount);
-            });
-        });
+                         applyCoupon(selectedCode, discount);
+                     });
+                 });
 
-        // Initialize Swiper after content is added
-        new Swiper("#couponSwiper", {
-            slidesPerView: 3,
-            spaceBetween: 20,
-            pagination: { el: ".swiper-pagination", clickable: true },
-        });
+                 // Initialize Swiper after content is added
+                         new Swiper("#couponSwiper", {
+        slidesPerView: 3, // Show 3 slides at a time
+        spaceBetween: 20, // Space between slides
+        pagination: { el: ".swiper-pagination", clickable: true },
+        grabCursor: true, // Enable grabbing cursor effect
+        slidesPerGroup: 1, // Move 1 slide at a time for smooth experience
+        loop: false, // Keep false to prevent looping issues
+        allowTouchMove: true, // Allow manual swiping
+        touchRatio: 1, // Controls swipe sensitivity
+        simulateTouch: true, // Enables mouse dragging support
+        navigation: { // Add navigation controls
+            nextEl: ".swiper-button-next",
+            prevEl: ".swiper-button-prev"
+        },
+        watchSlidesProgress: true, // Track slide progress
+        watchSlidesVisibility: true, // Ensure visibility updates
+    });
 
-    } catch (error) {
-        console.error("Error fetching coupons:", error);
-    }
+
+           } 
+           catch (error) {
+            console.error("Error fetching coupons:", error);
+           }
     });
 
     document.getElementById("couponContainer").addEventListener("click", function (event) {

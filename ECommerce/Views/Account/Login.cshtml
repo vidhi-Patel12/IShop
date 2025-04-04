@@ -178,4 +178,73 @@
         document.getElementById("otpLoginForm").style.display = "block";
     }
 
+    function showErrorMessage(input, message) {
+        let errorSpan = input.parentNode.querySelector(".error-message");
+
+        // If error span does not exist, create one
+        if (!errorSpan) {
+            errorSpan = document.createElement("span");
+            errorSpan.classList.add("error-message");
+            errorSpan.style.color = "red";
+            errorSpan.style.fontSize = "12px";
+            input.parentNode.appendChild(errorSpan);
+        }
+
+        // Set or clear error message
+        if (message) {
+            errorSpan.innerText = message;
+        } else {
+            errorSpan.innerText = ""; // Remove message when input is valid
+        }
+    }
+
+    function validateMobile(input) {
+        let mobileRegex = /^\d{10}$/; // Starts with 6-9, followed by 9 digits
+
+        if (input.value.trim() === "") {
+            showErrorMessage(input, "Mobile number is required");
+        } else if (!mobileRegex.test(input.value)) {
+            showErrorMessage(input, "Enter a valid 10-digit mobile number.");
+        } else {
+            showErrorMessage(input, ""); // Clear error if valid
+        }
+    }
+
+    function validatePassword(input) {
+        let strongPasswordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_])[A-Za-z\d\W_]{8,12}$/;
+
+        if (input.value.trim() === "") {
+            showErrorMessage(input, "Password is required");
+        } else if (!strongPasswordRegex.test(input.value)) {
+            showErrorMessage(input, "Password must be 8-12 characters, include one uppercase letter, one number, and one special character.");
+        } else {
+            showErrorMessage(input, ""); // Clear error if valid
+        }
+    }
+
+    // Select inputs
+    const mobileInput = document.querySelector("#passwordLoginForm input[name='Mobile']");
+    const passwordInput = document.querySelector("#passwordLoginForm input[name='password']");
+    const otpMobileInput = document.querySelector("#otpLoginForm input[name='Mobile']");
+
+    // Attach blur event listeners
+    if (mobileInput) {
+        mobileInput.addEventListener("blur", function () {
+            validateMobile(mobileInput);
+        });
+    }
+
+    if (passwordInput) {
+        passwordInput.addEventListener("blur", function () {
+            validatePassword(passwordInput);
+        });
+    }
+
+    if (otpMobileInput) {
+        otpMobileInput.addEventListener("blur", function () {
+            validateMobile(otpMobileInput);
+        });
+    }
+
+
 </script>

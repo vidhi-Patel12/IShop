@@ -11,5 +11,6 @@
         public double TotalAmount { get; set; }
         public bool IsActive { get; set; }
         public bool Shipping { get; set; }       
+        public DateTime CreatedDateTime { get; set; }
     }
 }

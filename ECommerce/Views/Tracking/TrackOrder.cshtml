@@ -2,7 +2,7 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2 class="text-center">Track Your Order</h2>
+@* <h2 class="text-center">Track Your Order</h2>
 <div class="container">
     <form method="post" asp-controller="Tracking" asp-action="Track">
         <div class="mb-3">
@@ -12,13 +12,37 @@
         <button type="submit" class="btn btn-primary">Track</button>
     </form>
 
-    @if (ViewBag.TrackingResult != null)
+    @if (ViewBag.TrackingStatus != null)
     {
         <h3 class="mt-4">Tracking Details</h3>
-        <pre class="border p-3">@ViewBag.TrackingResult</pre>
+        <p><strong>Status:</strong> @ViewBag.TrackingStatus</p>
+
+        @if (ViewBag.Checkpoints != null && ViewBag.Checkpoints.Count > 0)
+        {
+            <div class="progress">
+                @{
+                    int progressPercentage = (int)((ViewBag.Checkpoints.Count / 5.0) * 100);
+                }
+                <div class="progress-bar" role="progressbar" style="width: @progressPercentage%;" aria-valuenow="@progressPercentage" aria-valuemin="0" aria-valuemax="100">
+                    @progressPercentage%
+                </div>
+            </div>
+
+            <ul class="timeline">
+                @foreach (var checkpoint in ViewBag.Checkpoints)
+                {
+                    <li>
+                        <strong>@checkpoint.z4</strong> - @checkpoint.z2 (@checkpoint.z0)
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p>No tracking updates found.</p>
+        }
     }
 </div>
-</br>
 
 <style>
     .container {
@@ -26,8 +50,43 @@
         margin-top: 20px;
     }
 
-    pre {
-        white-space: pre-wrap;
-        background-color: #f8f9fa;
+    .progress {
+        height: 25px;
     }
-</style>
+
+    .timeline {
+        list-style-type: none;
+        padding: 0;
+    }
+
+        .timeline li {
+            padding: 10px;
+            border-left: 3px solid #007bff;
+            margin-bottom: 10px;
+        }
+</style> *@
+
+
+<h2 class="text-center">Track Your Order</h2>
+<div class="container" style="max-width:600px;">
+    <form onsubmit="trackOrder(event)">
+        <div class="mb-3">
+            <label>Enter Tracking Number:</label>
+            <input type="text" id="trackingNumber" required>
+            <button type="submit" class="mt-2">Track</button>
+        </div>
+    </form>
+</div>
+<iframe id="trackingFrame" width="100%" height="600px" style="border: none; display: none;"></iframe>
+
+<script>
+       function trackOrder(event) {
+        event.preventDefault();
+        let trackingNumber = document.getElementById("trackingNumber").value;
+        if (trackingNumber) {
+            let url = `https://t.17track.net/track#nums=${trackingNumber}`;
+            window.location.href = url; // Redirects the user instead of using an iframe
+        }
+    }
+
+</script>

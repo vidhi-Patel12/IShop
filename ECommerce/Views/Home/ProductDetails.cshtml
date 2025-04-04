@@ -161,7 +161,7 @@
                                 </div>
                                 <div class="tf-product-info-desc">
                                     <div class="tf-product-info-price">
-                                        <h5 class="price-on-sale font-2">₹@productDetails.Price</h5>
+                                        <h5 class="price-on-sale font-2">₹@productDetails.Price.ToString("0.00")</h5>
                                         @if (productDetails.Discount > 0)
                                         {
                                             <div class="compare-at-price font-2">₹@productDetails.MRP</div>

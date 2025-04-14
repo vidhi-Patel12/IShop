@@ -4,6 +4,18 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+<!-- page-title -->
+<div class="page-title" style="background-image: url('@Url.Content("~/content/images/section/page-title.jpg")');">
+    <div class="container-full">
+        <div class="row">
+            <div class="col-12">
+                <h3 class="heading text-center">My Orders</h3>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /page-title -->
+
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-2">
@@ -41,11 +53,11 @@
                                     }
                                     else
                                     {
-                                        <a asp-action="ViewOrder" asp-route-id="@order.OrderId" class="btn btn-success btn-sm">View Order</a>
+                                        <a asp-action="ViewOrder" asp-route-id="@order.OrderId" class="btn btn-danger btn-sm">View Order</a>
                                     }
                                 </td>
                                 <td>
-                                    @if (order.Shipping == false && order.PaymentMode == "Card")
+                                    @if (order.Shipping == false && order.PaymentMode == "Card" && order.IsActive == true)
                                     {
                                         <a asp-action="Payment" asp-controller="Payment" asp-route-orderId="@order.OrderId" class="btn btn-success btn-sm">Pay Now</a>
                                     }                                    

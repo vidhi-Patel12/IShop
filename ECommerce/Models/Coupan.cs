@@ -13,8 +13,7 @@ namespace ECommerce.Models
         public string CoupanCode { get; set; }
         [Required]
         public double Discount { get; set; }
-        [Required]
-        public DateOnly ExpiryDate { get; set; }
+        public DateTime ExpiryDate { get; set; }
         public bool IsActive { get; set; }
     }
 }

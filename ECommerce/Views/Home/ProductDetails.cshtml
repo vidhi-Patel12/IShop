@@ -2,7 +2,7 @@
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Product";
-   // var productDetails = Model.ProductImages.FirstOrDefault(x => x.ProductsImageId == @ViewBag.ProductImageId);
+    // var productDetails = Model.ProductImages.FirstOrDefault(x => x.ProductsImageId == @ViewBag.ProductImageId);
     var productDetails = Model?.ProductImages?.FirstOrDefault(x => x.ProductsImageId == ViewBag.ProductImageId);
 
 }
@@ -12,16 +12,16 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/easyzoom/2.5.2/easyzoom.min.js"></script>
 
 <style>
-   /*  .image-container {
-        position: relative;
-        width: 400px;  Adjust as needed 
-         height: 400px;
-         border: 1px solid #ddd; 
-    } */ 
+    /*  .image-container {
+            position: relative;
+            width: 400px;  Adjust as needed
+             height: 400px;
+             border: 1px solid #ddd;
+        } */
 
     .swiper-slide img {
-            width: 100%;
-            height: 100%;
+        width: 100%;
+        height: 100%;
     }
 
     #zoomLens {
@@ -55,9 +55,9 @@
     }
 
     #zoomLens, #zoomContainer {
-    transition: opacity 10.3s ease-in-out; /* Smooth appearance */
-    opacity: 0; /* Initially hidden */
-}
+        transition: opacity 10.3s ease-in-out; /* Smooth appearance */
+        opacity: 0; /* Initially hidden */
+    }
 
 </style>
 
@@ -113,12 +113,12 @@
                                             <div class="swiper-slide">
                                                 <!-- Container for Zoom Effect -->
                                                 @* <div class="image-container"> *@
-                                                    <img id="mainImage" class="tf-image-zoom lazyload"
-                                                         src="@productDetails.LargeImage"
-                                                         data-src="@productDetails.LargeImage"
-                                                         alt="Product Image">
-                                                    <div id="zoomLens"></div>
-                                               @*  </div> *@
+                                                <img id="mainImage" class="tf-image-zoom lazyload"
+                                                     src="@productDetails.LargeImage"
+                                                     data-src="@productDetails.LargeImage"
+                                                     alt="Product Image">
+                                                <div id="zoomLens"></div>
+                                                @*  </div> *@
                                             </div>
                                         </div>
                                     </div>
@@ -503,254 +503,254 @@
 </div>
 
 <script>
-   document.addEventListener("DOMContentLoaded", function () {
-        let mainImage = document.getElementById("mainImage");
-        let zoomLens = document.getElementById("zoomLens");
-        let zoomResult = document.getElementById("zoomResult");
-        let zoomContainer = document.getElementById("zoomContainer");
+    document.addEventListener("DOMContentLoaded", function () {
+         let mainImage = document.getElementById("mainImage");
+         let zoomLens = document.getElementById("zoomLens");
+         let zoomResult = document.getElementById("zoomResult");
+         let zoomContainer = document.getElementById("zoomContainer");
 
-        let hideTimeout; // Variable to store timeout
+         let hideTimeout; // Variable to store timeout
 
 
-        let addToCartBtn = document.getElementById("addToCartBtn");
-        let cartQuantity = document.getElementById("cartQuantity");
-        
-        let price = @productDetails?.Price ?? 0;
-        let productName = "@Html.Raw(Model.Name)";
-        let productImage = "@Html.Raw(productDetails?.LargeImage)";
-        let productType = "@Html.Raw(productDetails?.Type)";
-        let productColor = "@Html.Raw(productDetails?.Color)";
-        let productDescription = "@Html.Raw(productDetails?.Description)";
-        let productId = @Model.ProductId ?? 0;
-        let productsImageId = @productDetails?.ProductsImageId ?? 0;
-        let arrivingDays = @productDetails?.ArrivingDays ?? 0;
+         let addToCartBtn = document.getElementById("addToCartBtn");
+         let cartQuantity = document.getElementById("cartQuantity");
 
-        // Set zoom background image
-        zoomResult.style.backgroundImage = `url(${mainImage.src})`;
+         let price = @productDetails?.Price ?? 0;
+         let productName = "@Html.Raw(Model.Name)";
+         let productImage = "@Html.Raw(productDetails?.LargeImage)";
+         let productType = "@Html.Raw(productDetails?.Type)";
+         let productColor = "@Html.Raw(productDetails?.Color)";
+         let productDescription = "@Html.Raw(productDetails?.Description)";
+         let productId = @Model.ProductId ?? 0;
+         let productsImageId = @productDetails?.ProductsImageId ?? 0;
+         let arrivingDays = @productDetails?.ArrivingDays ?? 0;
 
-        // Smooth show effect
-        mainImage.addEventListener("mouseenter", () => {
-            clearTimeout(hideTimeout); // Stop hiding
-            zoomLens.style.opacity = 1;
-            zoomContainer.style.opacity = 1;
-            zoomContainer.style.display = "block";
-            zoomLens.style.display = "block";
-        });
+         // Set zoom background image
+         zoomResult.style.backgroundImage = `url(${mainImage.src})`;
 
-        // Smooth hide effect with delay
-        mainImage.addEventListener("mouseleave", () => {
-            hideTimeout = setTimeout(() => {
-                zoomLens.style.opacity = 0;
-                zoomContainer.style.opacity = 0;
-                setTimeout(() => {
-                    zoomLens.style.display = "none";
-                    zoomContainer.style.display = "none";
-                }, 700); // Delay hiding to match transition
-            }, 200); // 200ms delay before hiding
-        });
-
-        // Throttle function to slow down zoom movement
-        function throttle(fn, limit) {
-            let lastCall = 0;
-            return function (...args) {
-                let now = new Date().getTime();
-                if (now - lastCall < limit) return;
-                lastCall = now;
-                return fn(...args);
-            };
-        }
-
-        function zoom(e) {
-            let pos = getCursorPos(e);
-            let x = pos.x - (zoomLens.offsetWidth / 2);
-            let y = pos.y - (zoomLens.offsetHeight / 2);
-
-            if (x > mainImage.width - zoomLens.offsetWidth) x = mainImage.width - zoomLens.offsetWidth;
-            if (x < 0) x = 0;
-            if (y > mainImage.height - zoomLens.offsetHeight) y = mainImage.height - zoomLens.offsetHeight;
-            if (y < 0) y = 0;
-
-            zoomLens.style.left = x + "px";
-            zoomLens.style.top = y + "px";
-
-            zoomResult.style.backgroundPosition = `-${x * 2}px -${y * 2}px`;
-        }
-
-        function getCursorPos(e) {
-            let rect = mainImage.getBoundingClientRect();
-            return {
-                x: e.pageX - rect.left - window.scrollX,
-                y: e.pageY - rect.top - window.scrollY
-            };
-        }
-
-        // Add throttling to slow down zoom effect
-        let throttledZoom = throttle(zoom, 80); // Adjust delay to slow down
-
-        mainImage.addEventListener("mousemove", throttledZoom);
-        zoomLens.addEventListener("mousemove", throttledZoom);
-
-         loadCartFromDatabase();
-         updateCartCount();
-
-        function updateCartCount() {
-            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-            let totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
-            let cartItemCount = document.getElementById("cartItemCount");
-
-            if (cartItemCount) {
-                cartItemCount.innerText = totalItems;
-            } else {
-                console.error("cartItemCount element not found in DOM!");
-            }
-
-            console.log(`Cart updated: ${totalItems} items`);
-        }
-
-        async function addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays) {
-            try {
-
-                let response = await fetch(`/Home/CheckCartItem`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ productId, productsImageId })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
-                let result = await response.json();
-
-                let userId = getCookie("IShopId");
-
-                let quantity = parseInt(cartQuantity.value);
-                let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-
-                 let existingItemIndex = cartItems.findIndex(item => item.productId === productId && item.productsImageId === productsImageId);
-
-                     if (existingItemIndex !== -1) {
-                         // Update existing item
-                         cartItems[existingItemIndex].quantity += 1;
-                         cartItems[existingItemIndex].total = (cartItems[existingItemIndex].quantity * price).toFixed(2);
-                     }else {
-                     cartItems.push({
-                         name: productName,
-                         image: productImage,
-                         type: productType,
-                         color: productColor,
-                         description: productDescription,
-                         quantity: quantity,
-                         price: price,
-                         total: price.toFixed(2),
-                         productId: productId,
-                         productsImageId: productsImageId,
-                         arrivingDays: arrivingDays
-                     });
-                 }
-
-                localStorage.setItem("cartItems", JSON.stringify(cartItems));
-
-                console.log("Updated cartItems:", cartItems);
-                 if (userId) {
-                         // Step 4: If logged in, save to database
-                         await saveCartToDatabase(cartItems);
-                  } else {
-                         // Step 5: If guest user, store cart in cookies
-                           document.cookie = `cartItems=${JSON.stringify(cartItems)}; path=/; expires=${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()}`;
-                  }
-
-                 updateCartCount();
-                 loadCartFromDatabase();
-
-                 showMessageModal("success", "Item Added.")
-
-            } catch (error) {
-                console.error("Error checking cart item:", error);
-            }
-        }
-
-         // Function to get a cookie value
-     function getCookie(name) {
-         let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-         return match ? match[2] : null;
-     }
-
-     async function saveCartToDatabase(cartItems) {
-         let userId = getCookie("IShopId");
-
-         if (!userId) {
-             console.log("User is not logged in. Cart stored in localStorage & cookies.");
-             return;
-         }
-
-         let response = await fetch("/Home/SaveCart", {
-             method: "POST",
-             headers: { "Content-Type": "application/json" },
-             body: JSON.stringify(cartItems),
+         // Smooth show effect
+         mainImage.addEventListener("mouseenter", () => {
+             clearTimeout(hideTimeout); // Stop hiding
+             zoomLens.style.opacity = 1;
+             zoomContainer.style.opacity = 1;
+             zoomContainer.style.display = "block";
+             zoomLens.style.display = "block";
          });
 
-         if (response.ok) {
-             console.log("Cart saved to database.");
-             loadCartFromDatabase();
-         } else {
-             console.log("Failed to save cart.");
+         // Smooth hide effect with delay
+         mainImage.addEventListener("mouseleave", () => {
+             hideTimeout = setTimeout(() => {
+                 zoomLens.style.opacity = 0;
+                 zoomContainer.style.opacity = 0;
+                 setTimeout(() => {
+                     zoomLens.style.display = "none";
+                     zoomContainer.style.display = "none";
+                 }, 700); // Delay hiding to match transition
+             }, 200); // 200ms delay before hiding
+         });
+
+         // Throttle function to slow down zoom movement
+         function throttle(fn, limit) {
+             let lastCall = 0;
+             return function (...args) {
+                 let now = new Date().getTime();
+                 if (now - lastCall < limit) return;
+                 lastCall = now;
+                 return fn(...args);
+             };
          }
+
+         function zoom(e) {
+             let pos = getCursorPos(e);
+             let x = pos.x - (zoomLens.offsetWidth / 2);
+             let y = pos.y - (zoomLens.offsetHeight / 2);
+
+             if (x > mainImage.width - zoomLens.offsetWidth) x = mainImage.width - zoomLens.offsetWidth;
+             if (x < 0) x = 0;
+             if (y > mainImage.height - zoomLens.offsetHeight) y = mainImage.height - zoomLens.offsetHeight;
+             if (y < 0) y = 0;
+
+             zoomLens.style.left = x + "px";
+             zoomLens.style.top = y + "px";
+
+             zoomResult.style.backgroundPosition = `-${x * 2}px -${y * 2}px`;
+         }
+
+         function getCursorPos(e) {
+             let rect = mainImage.getBoundingClientRect();
+             return {
+                 x: e.pageX - rect.left - window.scrollX,
+                 y: e.pageY - rect.top - window.scrollY
+             };
+         }
+
+         // Add throttling to slow down zoom effect
+         let throttledZoom = throttle(zoom, 80); // Adjust delay to slow down
+
+         mainImage.addEventListener("mousemove", throttledZoom);
+         zoomLens.addEventListener("mousemove", throttledZoom);
+
+          loadCartFromDatabase();
+          updateCartCount();
+
+         function updateCartCount() {
+             let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+             let totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+             let cartItemCount = document.getElementById("cartItemCount");
+
+             if (cartItemCount) {
+                 cartItemCount.innerText = totalItems;
+             } else {
+                 console.error("cartItemCount element not found in DOM!");
+             }
+
+             console.log(`Cart updated: ${totalItems} items`);
+         }
+
+         async function addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays) {
+             try {
+
+                 let response = await fetch(`/Home/CheckCartItem`, {
+                     method: "POST",
+                     headers: { "Content-Type": "application/json" },
+                     body: JSON.stringify({ productId, productsImageId })
+                 });
+
+                 if (!response.ok) {
+                     throw new Error(`HTTP error! Status: ${response.status}`);
+                 }
+
+                 let result = await response.json();
+
+                 let userId = getCookie("IShopId");
+
+                 let quantity = parseInt(cartQuantity.value);
+                 let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+                  let existingItemIndex = cartItems.findIndex(item => item.productId === productId && item.productsImageId === productsImageId);
+
+                      if (existingItemIndex !== -1) {
+                          // Update existing item
+                          cartItems[existingItemIndex].quantity += 1;
+                          cartItems[existingItemIndex].total = (cartItems[existingItemIndex].quantity * price).toFixed(2);
+                      }else {
+                      cartItems.push({
+                          name: productName,
+                          image: productImage,
+                          type: productType,
+                          color: productColor,
+                          description: productDescription,
+                          quantity: quantity,
+                          price: price,
+                          total: price.toFixed(2),
+                          productId: productId,
+                          productsImageId: productsImageId,
+                          arrivingDays: arrivingDays
+                      });
+                  }
+
+                 localStorage.setItem("cartItems", JSON.stringify(cartItems));
+
+                 console.log("Updated cartItems:", cartItems);
+                  if (userId) {
+                          // Step 4: If logged in, save to database
+                          await saveCartToDatabase(cartItems);
+                   } else {
+                          // Step 5: If guest user, store cart in cookies
+                            document.cookie = `cartItems=${JSON.stringify(cartItems)}; path=/; expires=${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()}`;
+                   }
+
+                  updateCartCount();
+                  loadCartFromDatabase();
+
+                  showMessageModal("success", "Item Added.")
+
+             } catch (error) {
+                 console.error("Error checking cart item:", error);
+             }
+         }
+
+          // Function to get a cookie value
+      function getCookie(name) {
+          let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+          return match ? match[2] : null;
+      }
+
+      async function saveCartToDatabase(cartItems) {
+          let userId = getCookie("IShopId");
+
+          if (!userId) {
+              console.log("User is not logged in. Cart stored in localStorage & cookies.");
+              return;
+          }
+
+          let response = await fetch("/Home/SaveCart", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(cartItems),
+          });
+
+          if (response.ok) {
+              console.log("Cart saved to database.");
+              loadCartFromDatabase();
+          } else {
+              console.log("Failed to save cart.");
+          }
+      }
+
+      async function loadCartFromDatabase() {
+          let userId = getCookie("IShopId");
+
+          if (userId) {
+              // Fetch from database
+              let response = await fetch("/Home/GetCart");
+              let data = await response.json();
+
+              if (data.success && data.cartItems.length > 0) {
+                  localStorage.setItem("cartItems", JSON.stringify(data.cartItems));
+              }
+          } else {
+              // Fetch from cookies for guests
+                let cartItems = getCookie("cartItems");
+                if (cartItems) {
+                    localStorage.setItem("cartItems", cartItems);
+              }
+          }
+
+          updateCartCount();
+      }
+
+         if (addToCartBtn) {
+             addToCartBtn.addEventListener("click", function () {
+             addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays);
+              //alert("Item added to cart!");
+             });
+         }
+
+         function showMessageModal(type, message) {
+          let modalTitle = document.getElementById("messageModalLabel");
+          let modalBody = document.getElementById("messageText");
+          let modalHeader = document.querySelector("#messageModal .modal-header");
+
+          // Update the modal based on type (success or error)
+          if (type === "success") {
+              modalTitle.innerText = "Success";
+              modalBody.innerHTML = ` ${message}`;
+              modalHeader.classList.add("bg-success", "text-white");
+              modalHeader.classList.remove("bg-danger");
+          } else if (type === "error") {
+              modalTitle.innerText = "Error";
+              modalBody.innerHTML = ` ${message}`;
+              modalHeader.classList.add("bg-danger", "text-white");
+              modalHeader.classList.remove("bg-success");
+          }
+
+          // Show the modal
+          let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
+          messageModal.show();
      }
 
-     async function loadCartFromDatabase() {
-         let userId = getCookie("IShopId");
-
-         if (userId) {
-             // Fetch from database
-             let response = await fetch("/Home/GetCart");
-             let data = await response.json();
-
-             if (data.success && data.cartItems.length > 0) {
-                 localStorage.setItem("cartItems", JSON.stringify(data.cartItems));
-             }
-         } else {
-             // Fetch from cookies for guests
-               let cartItems = getCookie("cartItems");
-               if (cartItems) {
-                   localStorage.setItem("cartItems", cartItems);
-             }
-         }
-
-         updateCartCount();
-     }
-
-        if (addToCartBtn) {
-            addToCartBtn.addEventListener("click", function () {
-            addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays);
-             //alert("Item added to cart!");
-            });
-        }
-
-        function showMessageModal(type, message) {
-         let modalTitle = document.getElementById("messageModalLabel");
-         let modalBody = document.getElementById("messageText");
-         let modalHeader = document.querySelector("#messageModal .modal-header");
-
-         // Update the modal based on type (success or error)
-         if (type === "success") {
-             modalTitle.innerText = "Success";
-             modalBody.innerHTML = ` ${message}`;
-             modalHeader.classList.add("bg-success", "text-white");
-             modalHeader.classList.remove("bg-danger");
-         } else if (type === "error") {
-             modalTitle.innerText = "Error";
-             modalBody.innerHTML = ` ${message}`;
-             modalHeader.classList.add("bg-danger", "text-white");
-             modalHeader.classList.remove("bg-success");
-         }
-
-         // Show the modal
-         let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
-         messageModal.show();
-    }
-
-   });
+    });
 </script>
 
 

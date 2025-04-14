@@ -180,13 +180,23 @@
                                     <span class="price">₹@productImage.Price</span>
                                 }
                                 <ul class="list-color-product">
-                                    @foreach (var item in product.ProductImages)
+                                    @* @foreach (var item in product.ProductImages)
                                     {
                                         <li class="list-color-item color-swatch active line">
                                             <span class="swatch-value" style="background-color: @item.Color;"></span>
                                             <img class="lazyload" data-src="@item.LargeImage" src="@item.LargeImage" alt="image-product">
                                         </li>
+                                    } *@
+                                    @foreach (var item in product.ProductImages)
+                                    {
+                                        var hexColor = ColorHelper.GetHexColor(item.Color);
+                                        <li class="list-color-item color-swatch active line">
+                                            <span class="swatch-value" style="background-color: @hexColor" title="@item.Color"></span>
+                                            <img class="lazyload" data-src="@item.LargeImage" src="@item.LargeImage" alt="image-product">
+                                        </li>
                                     }
+
+
                                 </ul>
                             </div>
                         </div>
@@ -402,4 +412,16 @@
         }
 
     });
+</script>
+<script>
+    function getHexColor(colorName) {
+        const dummyDiv = document.createElement("div");
+        dummyDiv.style.color = colorName;
+        document.body.appendChild(dummyDiv);
+        const cs = window.getComputedStyle(dummyDiv);
+        const rgb = cs.color.match(/\d+/g);
+        document.body.removeChild(dummyDiv);
+        if (!rgb) return colorName;
+        return "#" + rgb.map(x => (+x).toString(16).padStart(2, '0')).join('');
+    }
 </script>

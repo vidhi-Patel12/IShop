@@ -10,6 +10,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlTypes;
 using System.Drawing;
 using System.Globalization;
 using System.Reflection.Metadata.Ecma335;
@@ -266,6 +267,8 @@ namespace ECommerce.Controllers
                                     ProductId = reader.GetInt32(reader.GetOrdinal("ProductId")),
                                     Name = reader.GetString(reader.GetOrdinal("Name")),
                                     IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                                    CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
+                                    CreatedDateTime = reader.GetDateTime(reader.GetOrdinal("CreatedDateTime")),
                                     // Initialize ProductImages as an empty list
                                     ProductImages = new List<ProductsImage>()
                                 };
@@ -294,7 +297,9 @@ namespace ECommerce.Controllers
                                         Discount = reader.GetInt32(reader.GetOrdinal("Discount")),
                                         Price = reader.GetDouble(reader.GetOrdinal("Price")),
                                         ArrivingDays = reader.GetInt32(reader.GetOrdinal("ArrivingDays")),
-                                        IsActive = reader.GetBoolean(reader.GetOrdinal("ImageIsActive"))
+                                        IsActive = reader.GetBoolean(reader.GetOrdinal("ImageIsActive")),
+                                        CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
+                                        CreatedDateTime = reader.GetDateTime(reader.GetOrdinal("CreatedDateTime")),
                                     };
 
                                     products.ProductImages.Add(productImage);
@@ -318,7 +323,6 @@ namespace ECommerce.Controllers
                 return StatusCode(500, new { success = false, message = "Error fetching product data", error = ex.Message });
             }
         }
-
 
         [HttpPost]
         public async Task<IActionResult> Edit(int id, int productsImageId, [FromForm] List<Products> productList, IFormFile? largeImageFile, IFormFile? mediumImageFile, IFormFile? smallImageFile)
@@ -344,17 +348,17 @@ namespace ECommerce.Controllers
                     }
 
                     // Update product details
-                    using (SqlCommand cmd = new SqlCommand("UPDATE Products SET Name = @Name, IsActive = @IsActive,CreatedBy = @CreatedBy,CreatedDateTime= @CreatedDateTime,UpdatedBy = @UpdatedBy,UpdatedDateTime = @UpdateDateTime WHERE ProductId = @ProductId", conn))
+                    using (SqlCommand cmd = new SqlCommand(@"UPDATE Products SET Name = @Name,IsActive = @IsActive,UpdatedBy = @UpdatedBy,UpdatedDateTime = @UpdatedDateTime WHERE ProductId = @ProductId", conn))
                     {
                         cmd.Parameters.AddWithValue("@ProductId", model.ProductId);
                         cmd.Parameters.AddWithValue("@Name", model.Name);
                         cmd.Parameters.AddWithValue("@IsActive", true);
-                        cmd.Parameters.AddWithValue("@CreatedBy", model.CreatedBy);
-                        cmd.Parameters.AddWithValue("@CreatedDateTime", model.CreatedDateTime);
                         cmd.Parameters.AddWithValue("@UpdatedBy", userId);
                         cmd.Parameters.AddWithValue("@UpdatedDateTime", DateTime.Now);
+
                         await cmd.ExecuteNonQueryAsync();
                     }
+
 
                     // Define base path for product images
                     string basePath = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "Products", model.ProductId.ToString());
@@ -416,7 +420,9 @@ namespace ECommerce.Controllers
 
 
                     // Update product image details in database
-                    using (SqlCommand cmd = new SqlCommand("UPDATE ProductsImage SET Type = @Type, Color = @Color, LargeImage = @LargeImage, MediumImage = @MediumImage, SmallImage = @SmallImage,Description = @Description, Quantity = @Quantity, MRP = @MRP,Discount = @Discount, Price = @Price, ArrivingDays = @ArrivingDays, IsActive = @IsActive ,CreatedBy = @CreatedBy,CreatedDateTime= @CreatedDateTime,UpdatedBy = @UpdatedBy,UpdatedDateTime = @UpdateDateTime WHERE ProductId = @ProductId AND ProductsImageId = @ProductsImageId;", conn))
+                    using (SqlCommand cmd = new SqlCommand(@"UPDATE ProductsImage SET Type = @Type,Color = @Color,LargeImage = @LargeImage,MediumImage = @MediumImage,SmallImage = @SmallImage,
+                        Description = @Description,Quantity = @Quantity,MRP = @MRP,Discount = @Discount,Price = @Price,ArrivingDays = @ArrivingDays,IsActive = @IsActive,UpdatedBy = @UpdatedBy,
+                         UpdatedDateTime = @UpdatedDateTime  WHERE ProductId = @ProductId AND ProductsImageId = @ProductsImageId", conn))
                     {
                         cmd.Parameters.AddWithValue("@ProductId", model.ProductId);
                         cmd.Parameters.AddWithValue("@ProductsImageId", model.ProductsImageId);
@@ -432,8 +438,6 @@ namespace ECommerce.Controllers
                         cmd.Parameters.AddWithValue("@Price", model.MRP - (model.MRP * model.Discount / 100));
                         cmd.Parameters.AddWithValue("@ArrivingDays", model.ArrivingDays);
                         cmd.Parameters.AddWithValue("@IsActive", true);
-                        cmd.Parameters.AddWithValue("@CreatedBy", model.CreatedBy);
-                        cmd.Parameters.AddWithValue("@CreatedDateTime", model.CreatedDateTime);
                         cmd.Parameters.AddWithValue("@UpdatedBy", userId);
                         cmd.Parameters.AddWithValue("@UpdatedDateTime", DateTime.Now);
 
@@ -649,7 +653,7 @@ namespace ECommerce.Controllers
                                 CoupanType = reader.GetString(reader.GetOrdinal("CoupanType")),
                                 CoupanCode = reader.GetString(reader.GetOrdinal("CoupanCode")),
                                 Discount = reader.GetDouble(reader.GetOrdinal("Discount")),
-                                ExpiryDate = DateOnly.FromDateTime(reader.GetDateTime(reader.GetOrdinal("ExpiryDate"))),
+                                ExpiryDate = reader.GetDateTime(reader.GetOrdinal("ExpiryDate")).Date,
                                 IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive"))
                             });
                         }
@@ -683,7 +687,7 @@ namespace ECommerce.Controllers
                                 model.CoupanName = reader.GetString(reader.GetOrdinal("CoupanName"));
                                 model.CoupanType = reader.GetString(reader.GetOrdinal("CoupanType"));
                                 model.Discount = reader.GetDouble(reader.GetOrdinal("Discount"));
-                                model.ExpiryDate = DateOnly.FromDateTime(reader.GetDateTime(reader.GetOrdinal("ExpiryDate")));
+                                model.ExpiryDate = reader.GetDateTime(reader.GetOrdinal("ExpiryDate")).Date;
                             }
                         }
                     }
@@ -694,10 +698,14 @@ namespace ECommerce.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddOrUpdateCoupan(Coupan model)
+        public async Task<IActionResult> AddOrUpdateCoupan([FromBody] Coupan model)
         {
             try
             {
+                if (model.ExpiryDate == default)
+                    throw new Exception("Invalid expiry date");
+
+
                 using (SqlConnection conn = new SqlConnection(_connectionString))
                 {
                     await conn.OpenAsync();
@@ -710,7 +718,7 @@ namespace ECommerce.Controllers
                         cmd.Parameters.AddWithValue("@CoupanName", model.CoupanName);
                         cmd.Parameters.AddWithValue("@CoupanType", model.CoupanType);
                         cmd.Parameters.AddWithValue("@Discount", model.Discount);
-                        cmd.Parameters.AddWithValue("@ExpiryDate", model.ExpiryDate.ToDateTime(TimeOnly.MinValue)); //  Convert DateOnly to DateTime
+                        cmd.Parameters.AddWithValue("@ExpiryDate", model.ExpiryDate.Date);
                         cmd.Parameters.AddWithValue("@IsActive", true);
 
                         await cmd.ExecuteNonQueryAsync();
@@ -718,7 +726,7 @@ namespace ECommerce.Controllers
                 }
 
                 TempData["SuccessMessage"] = "Coupon saved successfully!";
-                return RedirectToAction("Coupan");
+                return Ok(new { success = true, message = "Coupon saved successfully!" });
             }
             catch (Exception ex)
             {
@@ -766,7 +774,7 @@ namespace ECommerce.Controllers
                                 CoupanType = reader.GetString(reader.GetOrdinal("CoupanType")),
                                 CoupanCode = reader.GetString(reader.GetOrdinal("CoupanCode")),
                                 Discount = reader.GetDouble(reader.GetOrdinal("Discount")),
-                                ExpiryDate = DateOnly.FromDateTime(reader.GetDateTime(reader.GetOrdinal("ExpiryDate"))),
+                                ExpiryDate = reader.GetDateTime(reader.GetOrdinal("ExpiryDate")).Date,
                                 IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive"))
                             };
                         }

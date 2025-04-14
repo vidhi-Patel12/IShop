@@ -5,17 +5,38 @@
     var orderAmount = ViewData["OrderAmount"]?.ToString();
     var paymentMode = ViewData["PaymentMode"]?.ToString();
 }
+<style>
+    .braintree-form__field {
+        width: 253%; 
+    }
+</style>
 
-<h2>Payment</h2>
-@* <p><strong>Order ID:</strong> <span id="order-id">@orderId</span></p> *@
-<p><strong>Amount to Pay:</strong> ₹<span id="order-amount">@orderAmount</span></p>
+<div class="row">
+    <div class="col-md-2"></div>
+    <div class="col-md-6">
+        <h2>Payment</h2>
+    </div>
+    <div class="col-md-4 mt-4">
+        <p><strong>Amount to Pay:</strong> ₹<span id="order-amount">@orderAmount</span></p>
+    </div>
+</div>
 <input type="hidden" id="order-id" value="@orderId" />
 <input type="hidden" id="paymentmode" value="@paymentMode" />
 
 <!--  Payment Form -->
 <form id="payment-form">
-    <div id="dropin-container"></div> <!-- Braintree Drop-in UI will be injected here -->
-    <button type="submit" id="submit-button" disabled>Pay Now</button>
+    <div class="row">
+        <div class="col-md-2"></div>
+        <div class="col-md-8" id="dropin-container"></div> <!-- Braintree Drop-in UI will be injected here -->
+        <div class="col-md-2"></div>
+    </div>
+    @* <div class="row">
+        <div class="col-md-8"></div>
+        <div class="col-md-2 float-end"> *@
+            <button type="submit" style="margin-left:72%;" id="submit-button" disabled>Pay Now</button>
+       @*  </div>
+        <div class="col-md-2"></div>
+    </div> *@
 </form>
 
 <!--  Display Transaction Result -->
@@ -37,7 +58,7 @@
         </div>
     </div>
 </div>
-</br>
+<br />
 <!--  Load Braintree JavaScript SDK -->
 <script src="https://js.braintreegateway.com/web/dropin/1.33.5/js/dropin.min.js"></script>
 <script>
@@ -104,7 +125,7 @@
             })
             .catch(err => console.error("Client Token Error:", err));
 
-       
+
             let paymentMessage = "@ViewData["PaymentMessage"]"; //  Fetch message from ViewData
 
             if (paymentMessage && paymentMessage.trim() !== "") {
@@ -132,7 +153,7 @@
              // Show the modal
              let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
              messageModal.show();
-        }       
+        }
 
     });
 

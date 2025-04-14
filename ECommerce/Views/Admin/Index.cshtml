@@ -232,6 +232,10 @@
                                     <input type="number" id="ProductImagesArrivingDays" name="ProductImagesArrivingDays" class="form-control arrivingDays-input" placeholder="Arriving Days">
                                     <span class="text-danger"></span>
                                 </div>
+                                <input type="hidden" id="existingLargeImage" value="@($"https://localhost:44353/uploads/Products/{Model.FirstOrDefault()?.ProductId}/Large/{Model.FirstOrDefault()?.ProductImages.FirstOrDefault()?.LargeImage}")" />
+                                <input type="hidden" id="existingMediumImage" value="@($"https://localhost:44353/uploads/Products/{Model.FirstOrDefault()?.ProductId}/Medium/{Model.FirstOrDefault()?.ProductImages.FirstOrDefault()?.MediumImage}")" />
+                                <input type="hidden" id="existingSmallImage" value="@($"https://localhost:44353/uploads/Products/{Model.FirstOrDefault()?.ProductId}/Small/{Model.FirstOrDefault()?.ProductImages.FirstOrDefault()?.SmallImage}")" />
+
                                 <div class="col-4 mt-3">
                                 </div>
                             </div>
@@ -239,7 +243,7 @@
                     </div>
                     <div class="d-flex float-end">
                         <input type="button" value="Save" id="saveButton" onclick="handleSave()" class="btn btn-primary" />&nbsp;&nbsp;
-                        <button type="button" class="btn btn-secondary" id="cancelButton" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" value="Cancel" class="btn btn-secondary" id="cancelButton" data-bs-dismiss="modal">Cancel</button>
                     </div>
                 </form>
             </div>
@@ -306,7 +310,7 @@
             "border": "1px solid #ccc"
         });
 
-        @* $('#myModal').on('hidden.bs.modal', function() {
+    @* $('#myModal').on('hidden.bs.modal', function() {
           $(this).find('form')[0].reset();
         }); *@
 
@@ -500,51 +504,61 @@
     });
 
     function validateForm() {
-        let isValid = true; // Assume form is valid
+    let isValid = true;
 
-        function validateInput(id, errorMessage) {
-            let inputField = document.getElementById(id);
-            let errorSpan = inputField.nextElementSibling;
+    function validateInput(id, errorMessage) {
+        let inputField = document.getElementById(id);
+        let errorSpan = inputField.nextElementSibling;
 
-            if (!inputField.value.trim()) {
-                errorSpan.innerText = errorMessage;
-                inputField.classList.add("is-invalid");
-                isValid = false;
-            } else {
-                errorSpan.innerText = "";
-                inputField.classList.remove("is-invalid");
-            }
+        if (!inputField.value.trim()) {
+            errorSpan.innerText = errorMessage;
+            inputField.classList.add("is-invalid");
+            isValid = false;
+        } else {
+            errorSpan.innerText = "";
+            inputField.classList.remove("is-invalid");
         }
-
-        validateInput("productname", "Product name is required.");
-        validateInput("productImagesType", "Type is required.");
-        validateInput("productImagesColor", "Color is required.");
-        validateInput("ProductImagesQuantity", "Quantity is required.");
-        validateInput("ProductImagesMRP", "MRP is required.");
-        validateInput("ProductImagesDiscount", "Discount is required.");
-        validateInput("ProductImagesArrivingDays", "Arriving days are required.");
-
-        function validateFileInput(id, errorMessage) {
-            let fileInput = document.getElementById(id);
-            let errorSpan = fileInput.nextElementSibling;
-
-            if (!fileInput.files.length) {
-                errorSpan.innerText = errorMessage;
-                fileInput.classList.add("is-invalid");
-                isValid = false;
-            } else {
-                errorSpan.innerText = "";
-                fileInput.classList.remove("is-invalid");
-            }
-        }
-
-
-            validateFileInput("LargeImageUpload", "Large image is required.");
-            validateFileInput("MediumImageUpload", "Medium image is required.");
-            validateFileInput("SmallImageUpload", "Small image is required.");
-
-        return isValid;
     }
+
+    function validateFileInput(fileInputId, previewImageId, errorMessage) {
+        let fileInput = document.getElementById(fileInputId);
+        let previewImage = document.getElementById(previewImageId);
+        let errorSpan = fileInput.nextElementSibling;
+
+        if (!fileInput || !previewImage) {
+            console.error("Missing elements:", fileInputId, previewImageId);
+            return;
+        }
+
+        if (!fileInput.files.length && previewImage.src.includes("placeholder.com")) {
+            errorSpan.innerText = errorMessage;
+            fileInput.classList.add("is-invalid");
+            isValid = false;
+        } else {
+            errorSpan.innerText = "";
+            fileInput.classList.remove("is-invalid");
+        }
+    }
+
+    validateInput("productname", "Product name is required.");
+    validateInput("productImagesType", "Type is required.");
+    validateInput("productImagesColor", "Color is required.");
+    validateInput("ProductImagesQuantity", "Quantity is required.");
+    validateInput("ProductImagesMRP", "MRP is required.");
+    validateInput("ProductImagesDiscount", "Discount is required.");
+    validateInput("ProductImagesArrivingDays", "Arriving days are required.");
+
+    let imageCount = document.querySelectorAll(".image-entry").length;
+
+    for (let i = 0; i < imageCount; i++) {
+        validateFileInput("LargeImageUpload", `largePreviewImage_${i}`, "Large image is required.");
+        validateFileInput("MediumImageUpload", `mediumPreviewImage_${i}`, "Medium image is required.");
+        validateFileInput("SmallImageUpload", `smallPreviewImage_${i}`, "Small image is required.");
+    }
+
+    return isValid;
+}
+
 
     document.querySelectorAll("input, textarea,number").forEach(field => {
         field.addEventListener("input", function () {
@@ -629,7 +643,7 @@
                         {
                             showMessageModal("success", "Products added successfully!");
 
-                             @* Reset form fields but keep the product name *@
+                            @* Reset form fields but keep the product name *@
                             $("#productForm")[0].reset();
                             $("#LargeImageUpload, #MediumImageUpload, #SmallImageUpload").val("");
 
@@ -671,6 +685,7 @@
             document.getElementById("ProductModalLabel").innerText = "Edit Product";
             document.getElementById("saveButton").value = "Update Product";
             document.getElementById("cancelButton").value = "Cancel";
+                document.getElementById("cancelButton").innerText = "Cancel";
             document.getElementById("productId").value = product.productId;
             document.getElementById("productname").value = product.name;
 
@@ -684,6 +699,24 @@
 
                 let imageEntry = document.createElement('div');
                 imageEntry.className = 'row image-entry';
+
+                    let largeImageInput = document.createElement('input');
+                    largeImageInput.type = 'hidden';
+                    largeImageInput.id = `existingLargeImage_${index}`;
+                    largeImageInput.value = image.largeImage;
+                    imageEntry.appendChild(largeImageInput);
+
+                    let mediumImageInput = document.createElement('input');
+                    mediumImageInput.type = 'hidden';
+                    mediumImageInput.id = `existingMediumImage_${index}`;
+                    mediumImageInput.value = image.largeImage;
+                    imageEntry.appendChild(mediumImageInput);
+
+                    let smallImageInput = document.createElement('input');
+                    smallImageInput.type = 'hidden';
+                    smallImageInput.id = `existingSmallImage_${index}`;
+                    smallImageInput.value = image.largeImage;
+                    imageEntry.appendChild(smallImageInput);
 
                 document.getElementById("productsImageId").value = image.productsImageId;
                 document.getElementById("productImagesType").value = image.type;
@@ -757,32 +790,57 @@
                         <input type="number" id="ProductImagesArrivingDays" name="ProductImagesArrivingDays" class="form-control" value="${image.arrivingDays}" required>
                         <span class="text-danger"></span>
                     </div>
+                      <input type="hidden" id="existingLargeImage_${index}" value="${image.largeImage}">
+                      <input type="hidden" id="existingMediumImage_${index}" value="${image.mediumImage}">
+                      <input type="hidden" id="existingSmallImage_${index}" value="${image.smallImage}">
+
                 `;
 
                 imageContainer.appendChild(imageEntry);
+                    document.getElementById(`largePreviewImage_${index}`).src = image.largeImage;
+                    document.getElementById(`mediumPreviewImage_${index}`).src = image.mediumImage || "https://via.placeholder.com/150";
+                    document.getElementById(`smallPreviewImage_${index}`).src = image.smallImage || "https://via.placeholder.com/150";
+
             });
 
             // Delay setting image source until modal content is updated
             setTimeout(() => {
                 product.productImages.forEach((image, index) => {
-                    let largeImageElement = document.getElementById(`largePreviewImage_${index}`);
-                    let mediumImageElement = document.getElementById(`mediumPreviewImage_${index}`);
-                    let smallImageElement = document.getElementById(`smallPreviewImage_${index}`);
+                        let largeImageElement = document.getElementById(`largePreviewImage_${index}`);
+                        let mediumImageElement = document.getElementById(`mediumPreviewImage_${index}`);
+                        let smallImageElement = document.getElementById(`smallPreviewImage_${index}`);
 
-                    if (largeImageElement) {
-                        largeImageElement.src = image.largeImage ? image.largeImage : "https://via.placeholder.com/300";
-                        console.log("Updated Large Image:", largeImageElement.src);
-                    } else {
-                        console.error(`Error: 'largePreviewImage_${index}' element not found.`);
+                        if (largeImageElement) {
+                            largeImageElement.src = image.largeImage ? image.largeImage : "https://via.placeholder.com/300";
+                            console.log("Updated Large Image:", largeImageElement.src);
+                        } else {
+                            console.error(`Error: 'largePreviewImage_${index}' element not found.`);
+                        }
+
+                        if (mediumImageElement) {
+                            mediumImageElement.src = image.mediumImage ? image.mediumImage : "https://via.placeholder.com/150";
+                        }
+
+                        if (smallImageElement) {
+                            smallImageElement.src = image.smallImage ? image.smallImage : "https://via.placeholder.com/150";
+                        }
+
+                    // Update the hidden input dynamically
+                    let existingLargeImageInput = document.getElementById(`existingLargeImage_${index}`);
+                    if (existingLargeImageInput) {
+                        existingLargeImageInput.value = image.largeImage;
+                    } 
+
+                    let existingMediumImageInput = document.getElementById(`existingMediumImage_${index}`);
+                    if (existingMediumImageInput) {
+                        existingMediumImageInput.value = image.mediumImage;
                     }
 
-                    if (mediumImageElement) {
-                        mediumImageElement.src = image.mediumImage ? image.mediumImage : "https://via.placeholder.com/150";
+                    let existingSmallImageInput = document.getElementById(`existingSmallImage_${index}`);
+                    if (existingSmallImageInput) {
+                        existingSmallImageInput.value = image.smallImage;
                     }
 
-                    if (smallImageElement) {
-                        smallImageElement.src = image.smallImage ? image.smallImage : "https://via.placeholder.com/150";
-                    }
                 });
             }, 500);
 
@@ -798,8 +856,8 @@
         }
     }
 
-     //Function to Calculate Price Based on MRP & Discount
-        function calculatePrice() {
+    //Function to Calculate Price Based on MRP & Discount
+    function calculatePrice() {
             $("input[name^='ProductImagesMRP']").each(function (index) {
                 let mrp = parseFloat($(this).val()) || 0;
                 let discount = parseFloat($(`input[name='ProductImagesDiscount']`).val()) || 0;
@@ -808,10 +866,10 @@
             });
         }
 
-         // Automatically recalculate price when MRP or Discount changes
-         $(document).on("input", "input[name^='ProductImagesMRP'], input[name^='ProductImagesDiscount']", function () {
-            calculatePrice();
-         });
+     // Automatically recalculate price when MRP or Discount changes
+     $(document).on("input", "input[name^='ProductImagesMRP'], input[name^='ProductImagesDiscount']", function () {
+        calculatePrice();
+     });
 
     function handleSave() {
         if (!validateForm()) {
@@ -828,113 +886,142 @@
        }
     }
 
-    function updateProduct() {
-       //alert("Updating product...");
-        if (!validateForm()) {
-            return; // Stop execution if validation fails
+     function updateProduct() {
+        //alert("Updating product...");
+         if (!validateForm()) {
+             return; // Stop execution if validation fails
+         }
+        let productsList = [];
+
+        var largeImageInput = document.getElementById("LargeImageUpload");
+        var mediumImageInput = document.getElementById("MediumImageUpload");
+        var smallImageInput = document.getElementById("SmallImageUpload");
+
+
+        let index = 0;
+            // Check if a new file is selected; otherwise, use existing
+         let existingLargeImage = document.getElementById(`existingLargeImage_${index}`).value;
+         let existingMediumImage = document.getElementById(`existingMediumImage_${index}`).value;
+         let existingSmallImage = document.getElementById(`existingSmallImage_${index}`).value;
+
+          // If there's an existing image, use the URL to simulate the file object
+         let largeImageFile = $("#LargeImageUpload")[0].files.length ? $("#LargeImageUpload")[0].files[0] : createFileFromPath(existingLargeImage, existingLargeImage.split('/').pop());
+         let mediumImageFile = $("#MediumImageUpload")[0].files.length ? $("#MediumImageUpload")[0].files[0] : createFileFromPath(existingMediumImage, existingMediumImage.split('/').pop());
+         let smallImageFile = $("#SmallImageUpload")[0].files.length ? $("#SmallImageUpload")[0].files[0] : createFileFromPath(existingSmallImage, existingSmallImage.split('/').pop());
+
+         let productId = $("#productId").val();
+         let productsImageId = $("#productsImageId").val();
+
+         if (!productId || !productsImageId) {
+             showMessageModal("error", "Product ID or Product Image ID is missing.");
+             return;
+         }
+
+         calculatePrice();
+
+         let productData = {
+            ProductId: productId,
+            ProductsImageId: productsImageId,
+            Name: $("#productForm input[placeholder='Enter product name']").val() || "",
+            Type: $(`input[name='ProductImagesType']`).val() || "",
+            Color: $(`input[name='ProductImagesColor']`).val() || "",
+            Description: $(`textarea[name='ProductImagesDescription']`).val() || "",
+            LargeImage: largeImageInput?.files?.length ? largeImageInput.files.item(0).name : extractFileName(existingLargeImage),
+            MediumImage: mediumImageInput?.files?.length ? mediumImageInput.files.item(0).name : extractFileName(existingMediumImage),
+            SmallImage: smallImageInput?.files?.length ? smallImageInput.files.item(0).name : extractFileName(existingSmallImage),
+            Quantity: $(`input[name='ProductImagesQuantity']`).val() || "0",
+            MRP: $(`input[name='ProductImagesMRP']`).val() || "0",
+            Discount: $(`input[name='ProductImagesDiscount']`).val() || "0",
+            Price: $(".price-input").val() || "0",
+            ArrivingDays: parseInt($(`input[name='ProductImagesArrivingDays']`).val()) || 0
+         };
+
+        productsList.push(productData);
+        console.log("Updated Product List:", productsList);
+
+        let url = `/Admin/Edit/${productId}?productsImageId=${productsImageId}`;
+        let data = new FormData($("#productForm")[0]);
+
+        productsList.forEach((product, index) => {
+
+            data.append(`productList[${index}].ProductId`, product.ProductId);
+            data.append(`productList[${index}].ProductsImageId`, product.ProductsImageId);
+            data.append(`productList[${index}].Name`, product.Name);
+            data.append(`productList[${index}].Type`, product.Type);
+            data.append(`productList[${index}].Color`, product.Color);
+            data.append(`productList[${index}].Description`, product.Description);
+            data.append(`productList[${index}].LargeImage`, product.LargeImage || "");
+            data.append(`productList[${index}].MediumImage`, product.MediumImage || "");
+            data.append(`productList[${index}].SmallImage`, product.SmallImage || "");
+            data.append(`productList[${index}].Quantity`, product.Quantity || "0");
+            data.append(`productList[${index}].MRP`, product.MRP || "0");
+            data.append(`productList[${index}].Discount`, product.Discount || "0");
+            data.append(`productList[${index}].Price`, product.Price || "0");
+            data.append(`productList[${index}].ArrivingDays`, product.ArrivingDays || "0");
+
+        });
+
+                @*  data.append("largeImageFile", $("#LargeImageUpload")[0].files[0]);
+                  data.append("mediumImageFile", $("#MediumImageUpload")[0].files[0]);
+                 data.append("smallImageFile", $("#SmallImageUpload")[0].files[0]); *@
+             data.append("largeImageFile", largeImageFile);
+             data.append("mediumImageFile", mediumImageFile);
+             data.append("smallImageFile", smallImageFile);
+
+              // Append files only if new files are selected
+         if (mediumImageInput.files.length > 0) {
+            data.append("largeImageFile", largeImageInput.files[0]);
+            console.log("largeImageFile",existingLargeImage,972);
+         }
+         if (mediumImageInput.files.length > 0) {
+             data.append("mediumImageFile", mediumImageInput.files[0]);
+         }
+         if (smallImageInput.files.length > 0) {
+             data.append("smallImageFile", smallImageInput.files[0]);
+         }
+
+         // Debug: Check FormData contents
+         console.log("FormData Contents:");
+         for (let pair of data.entries()) {
+             console.log(pair[0], pair[1]);
+         }
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: data, // Use FormData instead of productsList
+            contentType: false,
+            processData: false,
+                success: function (response) {
+                showMessageModal("success", "Product updated successfully!");
+                $('#ProductModal').modal('hide');
+            },                                     
+           
+            error: function () {
+                showMessageModal("error", "Failed to update product.");
+            }
+        });
+     }
+       
+     function extractFileName(url) {
+             // Use regular expression to match the file name from the URL
+             const regex = /([^/]+)$/;
+             const matches = url.match(regex);
+             return matches ? matches[0] : '';
         }
-       let productsList = [];
 
-       var largeImageInput = document.getElementById("LargeImageUpload");
-       var mediumImageInput = document.getElementById("MediumImageUpload");
-       var smallImageInput = document.getElementById("SmallImageUpload");
-
-       let productId = $("#productId").val();
-       let productsImageId = $("#productsImageId").val();
-
-       if (!productId || !productsImageId) {
-           showMessageModal("error", "Product ID or Product Image ID is missing.");
-           return;
-       }
-
-       calculatePrice();
-
-       let productData = {
-           ProductId: productId,
-           ProductsImageId: productsImageId,
-           Name: $("#productForm input[placeholder='Enter product name']").val() || "",
-           Type: $(`input[name='ProductImagesType']`).val() || "",
-           Color: $(`input[name='ProductImagesColor']`).val() || "",
-           Description: $(`textarea[name='ProductImagesDescription']`).val() || "",
-           LargeImage: largeImageInput?.files?.length ? largeImageInput.files.item(0).name : null,
-           MediumImage: mediumImageInput?.files?.length ? mediumImageInput.files.item(0).name : null,
-           SmallImage: smallImageInput?.files?.length ? smallImageInput.files.item(0).name : null,
-           Quantity: $(`input[name='ProductImagesQuantity']`).val() || "0",
-           MRP: $(`input[name='ProductImagesMRP']`).val() || "0",
-           Discount: $(`input[name='ProductImagesDiscount']`).val() || "0",
-           Price: $(".price-input").val() || "0",
-           ArrivingDays: parseInt($(`input[name='ProductImagesArrivingDays']`).val()) || 0
-       };
-
-       productsList.push(productData);
-       console.log("Updated Product List:", productsList);
-
-       let url = `/Admin/Edit/${productId}?productsImageId=${productsImageId}`;
-       let data = new FormData($("#productForm")[0]);
-
-       productsList.forEach((product, index) => {
-           data.append(`productList[${index}].ProductId`, product.ProductId);
-           data.append(`productList[${index}].ProductsImageId`, product.ProductsImageId);
-           data.append(`productList[${index}].Name`, product.Name);
-           data.append(`productList[${index}].Type`, product.Type);
-           data.append(`productList[${index}].Color`, product.Color);
-           data.append(`productList[${index}].Description`, product.Description);
-           data.append(`productList[${index}].LargeImage`, product.LargeImage || "");
-           data.append(`productList[${index}].MediumImage`, product.MediumImage || "");
-           data.append(`productList[${index}].SmallImage`, product.SmallImage || "");
-           data.append(`productList[${index}].Quantity`, product.Quantity || "0");
-           data.append(`productList[${index}].MRP`, product.MRP || "0");
-           data.append(`productList[${index}].Discount`, product.Discount || "0");
-           data.append(`productList[${index}].Price`, product.Price || "0");
-           data.append(`productList[${index}].ArrivingDays`, product.ArrivingDays || "0");
-       });
-
-        data.append("largeImageFile", $("#LargeImageUpload")[0].files[0]);
-        data.append("mediumImageFile", $("#MediumImageUpload")[0].files[0]);
-        data.append("smallImageFile", $("#SmallImageUpload")[0].files[0]);
-
-        // Debug: Check FormData contents
-        console.log("FormData Contents:");
-        for (let pair of data.entries()) {
-            console.log(pair[0], pair[1]);
-        }
-
-       $.ajax({
-           url: url,
-           type: 'POST',
-           data: data, // Use FormData instead of productsList
-           contentType: false,
-           processData: false,
-           success: function (response) {
-               if (response.success) {
-                   showMessageModal("success", "Product updated successfully!");
-
-                        @*  Reset form fields but keep the product name *@
-                       $("#productForm")[0].reset();
-                       $("#LargeImageUpload, #MediumImageUpload, #SmallImageUpload").val("");
-
-                       $("#largePreviewImage").attr("src", "https://via.placeholder.com/300");
-                       $("#mediumPreviewImage").attr("src", "https://via.placeholder.com/150");
-                       $("#smallPreviewImage").attr("src", "https://via.placeholder.com/150");
-
-                       $("#productForm input[placeholder='Enter product name']").val(productData.Name);
-                       $("#ProductModal").modal("show");
-
-                       location.reload();
-               } else {
-                        showMessageModal("error", `Error: ${response.message}`);
-                   }
-           },
-           error: function () {
-               showMessageModal("error", "Failed to update product.");
-           }
-       });
-    }
+         function createFileFromPath(filePath, fileName) {
+             // Create a mock file object with the file name and some mock data (e.g., size 0, empty content)
+             // In a real scenario, you would fetch the file content from the server
+             let file = new File([], fileName, { type: "image/jpeg" });
+             return file;
+         }
 
     function resetForm() {
         $("#productForm")[0].reset();  // Reset form fields
         //$("#saveButton").value("Add Product");  // Reset button text
         document.getElementById("saveButton").value = "Add Product";
+        document.getElementById("cancelButton").value = "Cancel";
         $("#ProductModalLabel").text("Add Products");  // Reset modal title
         $("#productId").val("");  // Clear hidden product ID
         $("#productsImageId").val("");  // Clear hidden image ID
@@ -1011,26 +1098,30 @@
     }
 
     function showMessageModal(type, message) {
-    let modalTitle = document.getElementById("messageModalLabel");
-    let modalBody = document.getElementById("messageText");
-    let modalHeader = document.querySelector("#messageModal .modal-header");
+        let modalTitle = document.getElementById("messageModalLabel");
+        let modalBody = document.getElementById("messageText");
+        let modalHeader = document.querySelector("#messageModal .modal-header");
 
-    // Update the modal based on type (success or error)
-    if (type === "success") {
-        modalTitle.innerText = "Success";
-        modalBody.innerHTML = ` ${message}`;
-        modalHeader.classList.add("bg-success", "text-white");
-        modalHeader.classList.remove("bg-danger");
-    } else if (type === "error") {
-        modalTitle.innerText = "Error";
-        modalBody.innerHTML = ` ${message}`;
-        modalHeader.classList.add("bg-danger", "text-white");
-        modalHeader.classList.remove("bg-success");
+        // Update the modal based on type (success or error)
+        if (type === "success") {
+            modalTitle.innerText = "Success";
+            modalBody.innerHTML = ` ${message}`;
+            modalHeader.classList.add("bg-success", "text-white");
+            modalHeader.classList.remove("bg-danger");
+        } else if (type === "error") {
+            modalTitle.innerText = "Error";
+            modalBody.innerHTML = ` ${message}`;
+            modalHeader.classList.add("bg-danger", "text-white");
+            modalHeader.classList.remove("bg-success");
+        }
+
+        // Show the modal
+        let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
+        messageModal.show();
     }
 
-    // Show the modal
-    let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
-    messageModal.show();
-    }
+         document.addEventListener('DOMContentLoaded', function () {
+            console.log("Page ready");
+        });
 
 </script>

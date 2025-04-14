@@ -73,35 +73,67 @@
                             <img src="~/content/images/logo/ishop_logo.svg" alt="logo" class="logo">
                         </a>
                     </div>
-                    <div class="col-xl-6 d-none d-xl-block">
+                    <div class="col-xl-8 d-none d-xl-block">
                         <nav class="box-navigation text-start">
-                            <ul class="box-nav-ul d-flex align-items-start justify-content-start">
-                                <li class="menu-item active">
-                                    <a href="@Url.Action("Index", "Home")" class="item-link">Home</a>
-                                </li>
-                                <li class="menu-item">
-                                    <a href="@Url.Action("Products", "Home")" class="item-link">Products</a>
-                                </li>
-                                <li class="menu-item position-relative">
+                            @if (IShopId.HasValue)
+                            {
+                                <ul class="box-nav-ul d-flex align-items-start justify-content-start">
+                                    <li class="menu-item active">
+                                        <a href="@Url.Action("Index", "Home")" class="item-link">Home</a>
+                                    </li>
+                                    <li class="menu-item">
+                                        <a href="@Url.Action("Products", "Home")" class="item-link">Products</a>
+                                    </li>
+                                    <li class="menu-item">
+                                        <a href="@Url.Action("Orders", "Home")" class="item-link">My Orders</a>
+                                    </li>
+                                    <li class="menu-item">
+                                        <a href="@Url.Action("TrackOrder", "Tracking")" class="item-link">Track Order</a>
+                                    </li>
+                                    <li class="menu-item">
+                                        <a href="@Url.Action("MyAccount", "Home")" class="item-link">My Account</a>
+                                    </li>
+                                    <li class="menu-item">
+                                        <a href="@Url.Action("AboutUs", "Home")" class="item-link">About Us</a>
+                                    </li>
+                                    <li class="menu-item">
+                                        <a href="@Url.Action("ContactUs", "Home")" class="item-link">Contact Us</a>
+                                    </li>
+                                </ul>
+                            }
+                            else
+                            {
+                                <ul class="box-nav-ul d-flex align-items-start justify-content-start">
+                                    <li class="menu-item active">
+                                        <a href="@Url.Action("Index", "Home")" class="item-link">Home</a>
+                                    </li>
+                                    <li class="menu-item">
+                                        <a href="@Url.Action("Products", "Home")" class="item-link">Products</a>
+                                    </li>
+                                    <li class="menu-item">
+                                        <a href="@Url.Action("AboutUs", "Home")" class="item-link">About Us</a>
+                                    </li>
+                                    <li class="menu-item">
+                                        <a href="@Url.Action("ContactUs", "Home")" class="item-link">Contact Us</a>
+                                    </li>
+                                    @* <li class="menu-item position-relative">
                                     <a href="#" class="item-link">Pages<i class="icon icon-arrow-down"></i></a>
                                     <div class="sub-menu submenu-default">
                                         <ul class="menu-list">
                                             <li><a href="@Url.Action("Orders", "Home")" class="menu-link-text">My Orders</a></li>
                                             <li><a href="@Url.Action("TrackOrder", "Tracking")" class="menu-link-text">Track Order</a></li>
-                                            <li><a href="#" class="menu-link-text">About Us</a></li>
-                                            <li>
-                                                <a href="#" class="menu-link-text">Store List 1</a>
-                                            </li>
-                                            <li><a href="#" class="menu-link-text">Contact Us 1</a></li>
-                                            <li><a href="#" class="menu-link-text">Coming Soon</a></li>
+                                            <li><a href="@Url.Action("MyAccount", "Home")" class="menu-link-text">My Account</a></li>
+                                            <li><a href="@Url.Action("AboutUs", "Home")" class="menu-link-text">About Us</a></li>
+                                            <li><a href="@Url.Action("ContactUs", "Home")" class="menu-link-text">Contact Us</a></li>
                                         </ul>
                                     </div>
-                                </li>
-                            </ul>
+                                </li> *@
+                                </ul>
+                            }
                         </nav>
                     </div>
-                    <div class="col-xl-3 col-md-4 col-3">
-                       
+                    <div class="col-xl-1 col-md-4 col-3">
+
                         <ul class="nav-icon d-flex justify-content-end align-items-center">
                             <li class="nav-search">
                                 <a href="#search" data-bs-toggle="modal" class="nav-icon-item">
@@ -119,10 +151,21 @@
                                     </svg>
                                 </a>
                                 <div class="dropdown-account dropdown-login">
-                                    <div class="sub-top">
-                                        <a href="@Url.Action("Login", "Account")" class="tf-btn btn-reset">Login</a>
-                                        <p class="text-center text-secondary-2">Don’t have an account? <a href="@Url.Action("Register", "Account")">Register</a></p>
-                                    </div>
+                                    @if (IShopId.HasValue)
+                                    {
+                                        <div class="sub-top">
+                                            <a href="@Url.Action("MyAccount", "Home")" class="tf-btn btn-reset">Profile</a>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="sub-top">
+                                            <a href="@Url.Action("Login", "Account")" class="tf-btn btn-reset">Login</a>
+                                            <p class="text-center text-secondary-2">
+                                                Don’t have an account? <a href="@Url.Action("Register", "Account")">Register</a>
+                                            </p>
+                                        </div>
+                                    }
                                 </div>
                             </li>
                             @* <li class="nav-wishlist">
@@ -148,13 +191,13 @@
                                     <a href="/Account/Logout" class="logout-icon">
                                         <svg width="24" height="24" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
                                             <path d="M13.5 7.5L10.5 10.75M13.5 7.5L10.5 4.5M13.5 7.5L4 7.5M8 13.5H1.5L1.5 1.5L8 1.5" stroke="#000000" />
-                                        </svg>                                        
+                                        </svg>
                                     </a>
                                 </li>
                             }
 
                         </ul>
-                        
+
                     </div>
                 </div>
             </div>
@@ -202,10 +245,10 @@
                                         <div class="tf-collapse-content">
                                             <ul class="footer-menu-list">
                                                 <li class="text-caption-1">
-                                                    <a href="#" class="footer-menu_item">About Us</a>
+                                                    <a href="@Url.Action("AboutUs", "Home")" class="footer-menu_item">About Us</a>
                                                 </li>
                                                 <li class="text-caption-1">
-                                                    <a href="#" class="footer-menu_item">Contact us</a>
+                                                    <a href="@Url.Action("ContactUs", "Home")" class="footer-menu_item">Contact us</a>
                                                 </li>
                                             </ul>
                                         </div>
@@ -245,7 +288,7 @@
                             <div class="col-12">
                                 <div class="footer-bottom-wrap">
                                     <div class="left">
-                                        <p class="text-caption-1">©2024 Modave. All Rights Reserved.</p>
+                                        <p class="text-caption-1">©2025 IShop. All Rights Reserved.</p>
                                     </div>
                                     <div class="tf-payment">
                                         <p class="text-caption-1">Payment:</p>
@@ -297,6 +340,123 @@
         </div>
     </div>
 
+    <!-- mobile menu -->
+    <div class="offcanvas offcanvas-start canvas-mb" id="mobileMenu">
+        <span class="icon-close icon-close-popup" data-bs-dismiss="offcanvas" aria-label="Close"></span>
+        <div class="mb-canvas-content">
+            <div class="mb-body">
+                <div class="mb-content-top">
+                    @if (IShopId.HasValue)
+                    {
+                        <ul class="nav-ul-mb" id="wrapper-menu-navigation">
+                            <li class="nav-mb-item active">
+                                <a href="@Url.Action("Index", "Home")" class="item-link">Home</a>
+                            </li>
+                            <li class="nav-mb-item">
+                                <a href="@Url.Action("Products", "Home")" class="item-link">Products</a>
+                            </li>
+                            <li class="nav-mb-item">
+                                <a href="@Url.Action("Orders", "Home")" class="item-link">Orders</a>
+                            </li>
+                            <li class="nav-mb-item">
+                                <a href="@Url.Action("TrackOrder", "Tracking")" class="item-link">Track Order</a>
+                            </li>
+                            <li class="nav-mb-item">
+                                <a href="@Url.Action("MyAccount", "Home")" class="item-link">My Account</a>
+                            </li>
+                            <li class="nav-mb-item">
+                                <a href="@Url.Action("AboutUs", "Home")" class="item-link">About Us</a>
+                            </li>
+                            <li class="nav-mb-item">
+                                <a href="@Url.Action("ContactUs", "Home")" class="item-link">Contact Us</a>
+                            </li>
+                        </ul>
+                    }
+                    else
+                    {
+                        <ul class="nav-ul-mb" id="wrapper-menu-navigation">
+                            <li class="nav-mb-item active">
+                                <a href="@Url.Action("Index", "Home")" class="item-link">Home</a>
+                            </li>
+                            <li class="nav-mb-item">
+                                <a href="@Url.Action("Products", "Home")" class="item-link">Products</a>
+                            </li>
+                            <li class="nav-mb-item">
+                                <a href="@Url.Action("AboutUs", "Home")" class="item-link">About Us</a>
+                            </li>
+                            <li class="nav-mb-item">
+                                <a href="@Url.Action("ContactUs", "Home")" class="item-link">Contact Us</a>
+                            </li>
+                        </ul>
+                    }
+                </div>
+                <div class="mb-other-content">
+                    <div class="group-icon">
+                        @* <a href="wish-list.html" class="site-nav-icon">
+                            <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20.8401 4.60987C20.3294 4.09888 19.7229 3.69352 19.0555 3.41696C18.388 3.14039 17.6726 2.99805 16.9501 2.99805C16.2276 2.99805 15.5122 3.14039 14.8448 3.41696C14.1773 3.69352 13.5709 4.09888 13.0601 4.60987L12.0001 5.66987L10.9401 4.60987C9.90843 3.57818 8.50915 2.99858 7.05012 2.99858C5.59109 2.99858 4.19181 3.57818 3.16012 4.60987C2.12843 5.64156 1.54883 7.04084 1.54883 8.49987C1.54883 9.95891 2.12843 11.3582 3.16012 12.3899L4.22012 13.4499L12.0001 21.2299L19.7801 13.4499L20.8401 12.3899C21.3511 11.8791 21.7565 11.2727 22.033 10.6052C22.3096 9.93777 22.4519 9.22236 22.4519 8.49987C22.4519 7.77738 22.3096 7.06198 22.033 6.39452C21.7565 5.72706 21.3511 5.12063 20.8401 4.60987V4.60987Z" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            Wishlist
+                        </a> *@
+
+                        <a href="@Url.Action("Login", "Account")" class="site-nav-icon">
+                            <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            Login
+                        </a>
+
+                    </div>
+                    <div class="mb-notice">
+                        <a href="#" class="text-need">Need Help?</a>
+                    </div>
+                    <div class="mb-contact">
+                        <p class="text-caption-1">202, Satyamev Eminence, Science City Road, Sola, Ahmedabad, Gujarat 380060</p>
+                        <a href="#" class="tf-btn-default text-btn-uppercase">GET DIRECTION<i class="icon-arrowUpRight"></i></a>
+                    </div>
+                    <ul class="mb-info">
+                        <li>
+                            <i class="icon icon-mail"></i>
+                            <p>themesflat@gmail.com</p>
+                        </li>
+                        <li>
+                            <i class="icon icon-phone"></i>
+                            <p>315-666-6688</p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /mobile menu -->
+    <!-- Search Modal -->
+    <div class="modal fade" id="search" tabindex="-1" aria-labelledby="searchLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="searchLabel">Search</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="searchInput" class="form-control mb-3" placeholder="Type to search...">
+
+                    <!-- Search Results -->
+                    <div id="searchResults" class="row g-3"></div>
+
+                    <!-- View All Button -->
+                    <div class="wd-load view-more-button text-center mt-3">
+                        <button id="viewAllBtn" class="tf-loading btn-loadmore tf-btn btn-reset">
+                            <span class="text text-btn text-btn-uppercase">View All</span>
+                        </button>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Javascript -->
     <script type="text/javascript" src="~/content/js/bootstrap.min.js"></script>
@@ -314,6 +474,8 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 
     <script src="~/content/js/sibforms.js" defer></script>
 
@@ -359,8 +521,177 @@
         }
 
 
+
+               const input = document.getElementById("searchInput");
+        const resultsDiv = document.getElementById("searchResults");
+        const viewAllBtn = document.getElementById("viewAllBtn");
+
+        let lastResults = [];
+
+        input.addEventListener("input", async function () {
+            const query = input.value.trim();
+            resultsDiv.innerHTML = "";
+
+            if (query.length === 0) {
+                viewAllBtn.classList.add("d-none");
+                return;
+            }
+
+            resultsDiv.innerHTML = `<div class="text-center">Loading...</div>`;
+
+            try {
+                const response = await fetch(`/Home/SearchProduct?query=${encodeURIComponent(query)}`);
+                const products = await response.json();
+
+                lastResults = products;
+                resultsDiv.innerHTML = "";
+
+                if (products.length === 0) {
+                    resultsDiv.innerHTML = `<div class="text-center text-muted">No results found</div>`;
+                    viewAllBtn.classList.add("d-none");
+                    return;
+                }
+
+                // Show top 4 only
+                const topResults = products.slice(0, 4);
+                renderProducts(topResults);
+
+                viewAllBtn.classList.toggle("d-none", products.length <= 4);
+            } catch (err) {
+                console.error("Search error:", err);
+                resultsDiv.innerHTML = `<div class="text-danger text-center">Error fetching results</div>`;
+            }
+        });
+
+        viewAllBtn.addEventListener("click", function () {
+            renderProducts(lastResults);
+            viewAllBtn.classList.add("d-none");
+        });
+
+        // Function to render products as cards
+         function renderProducts(productList) {
+            const resultsDiv = document.getElementById("searchResults");
+            resultsDiv.innerHTML = "";
+
+            productList.forEach(p => {
+                const productImages = p.productImages || [];
+                const firstImage = productImages[0] || {};
+                const imageUrl = firstImage.largeImage || "https://via.placeholder.com/100";
+                const typeSlug = firstImage.typeSlug || "default-type";
+                const colorSlug = firstImage.colorSlug || "default-color";
+
+                const productUrl = `/home/productdetails/${p.slug}/${typeSlug}/${colorSlug}`;
+
+                const discount = firstImage.discount || 0;
+                const mrp = firstImage.mrp || 0;
+                const price = firstImage.price || 0;
+
+                const discountBadge = discount > 0
+                    ? `<div class="on-sale-wrap"><span class="on-sale-item">-${discount}%</span></div>`
+                    : "";
+
+                const priceHtml = discount > 0
+                    ? `<span class="price"><span class="old-price">₹${mrp}</span> ₹${price}</span>`
+                    : `<span class="price">₹${price}</span>`;
+
+                const colorHtml = productImages.map((img, index) => {
+                    return `
+                        <li class="list-pcolor-item color-swatch">
+                            <span class="swatch-value" style="background-color: ${img.color};"></span>
+                            <img class="lazyload d-none" data-src="${img.largeImage}" data-image="${img.largeImage}" alt="color-image-${index}">
+                        </li>
+                    `;
+                }).join('');
+
+                const col = document.createElement("div");
+                col.className = "col-6 col-md-3";
+
+                col.innerHTML = `
+                    <div class="card-product wow fadeInUp" data-wow-delay="0.1s">
+                        <div class="card-product-wrapper">
+                            <a href="${productUrl}" class="product-img">
+                                <img class="lazyload img-product main-product-image" data-src="${imageUrl}" src="${imageUrl}" alt="${p.name}">
+                                <img class="lazyload img-hover" data-src="${imageUrl}" src="${imageUrl}" alt="${p.name}">
+                            </a>
+                            ${discountBadge}
+                            <div class="list-btn-main">
+                                <a href="${productUrl}" class="btn-main-product">View Product</a>
+                            </div>
+                        </div>
+                        <div class="card-product-info">
+                            <a href="${productUrl}" class="title link">${p.name}</a>
+                            ${priceHtml}
+                            <ul class="list-colorproduct">${colorHtml}</ul>
+                        </div>
+                    </div>
+                `;
+                resultsDiv.appendChild(col);
+            });
+
+            // Add hover effect for color swatches
+            document.querySelectorAll(".card-product").forEach(card => {
+                const mainImage = card.querySelector(".main-product-image");
+                const swatches = card.querySelectorAll(".list-pcolor-item");
+
+                const originalSrc = mainImage?.src;
+
+                swatches.forEach(swatch => {
+                    const imageEl = swatch.querySelector("img");
+                    const hoverImage = imageEl?.getAttribute("data-image");
+
+                    if (hoverImage) {
+                        swatch.addEventListener("mouseenter", () => {
+                            if (mainImage) mainImage.src = hoverImage;
+                        });
+                        swatch.addEventListener("mouseleave", () => {
+                            if (mainImage) mainImage.src = originalSrc;
+                        });
+                    }
+                });
+            });
+        }
+
     </script>
     <script src="~/content/js/parallax.min.js"></script>
+    <style>
+        .on-sale-wrap {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+        }
+
+        .on-sale-item {
+            background-color: red;
+            color: white;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+
+        .list-colorproduct {
+            list-style: none;
+            padding-left: 0;
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .list-pcolor-item {
+            position: relative;
+            width: 20px;
+            height: 20px;
+        }
+
+        .swatch-value {
+            display: inline-block;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 1px solid #ccc;
+        }
+    </style>
 
 </body>
 </html>

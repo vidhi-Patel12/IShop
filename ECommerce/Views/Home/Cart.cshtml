@@ -417,7 +417,7 @@
 
             let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
             localStorage.setItem("checkoutItems", JSON.stringify(cartItems)); // Set checkout data after update
-
+             localStorage.removeItem("orderPlaced");
             console.log(" Redirecting to checkout...");
             window.location.href = "/Home/Checkout";
         });

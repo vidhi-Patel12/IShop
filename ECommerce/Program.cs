@@ -6,11 +6,17 @@ using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.Builder.Extensions;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+
+builder.Services.AddControllersWithViews(options =>
+{
+    options.ModelBinderProviders.Insert(0, new DateOnlyModelBinderProvider());
+});
+
 
 builder.Services.AddHttpClient();
 
@@ -46,6 +52,15 @@ builder.Services.Configure<RouteOptions>(options =>
 
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin",
+        builder => builder.WithOrigins("https://localhost:44353")
+                          .AllowAnyMethod()
+                          .AllowAnyHeader());
+});
+
+
 var options = new RewriteOptions()
     .AddRedirect("^(.*)/$", "$1"); // Remove trailing slash
 
@@ -62,6 +77,15 @@ if (!app.Environment.IsDevelopment())
 app.UseSession();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads")),
+    RequestPath = "/uploads"
+});
+
+app.UseCors("AllowSpecificOrigin");
+
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();

@@ -9,6 +9,7 @@ using System.Text.Json;
 using Newtonsoft.Json;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection.PortableExecutable;
+using Braintree;
 
 namespace ECommerce.Controllers
 {
@@ -126,7 +127,7 @@ namespace ECommerce.Controllers
                             {
                                 var image = new ProductsImage();
                                 var imageId = reader.GetInt32(reader.GetOrdinal("ProductsImageId"));
-                                if(imageId == productImageId)
+                                if (imageId == productImageId)
                                 {
                                     image.ProductsImageId = reader.GetInt32(reader.GetOrdinal("ProductsImageId"));
                                     image.ProductId = productId;
@@ -155,10 +156,10 @@ namespace ECommerce.Controllers
             return PartialView("_QuickView", result.ToList());
         }
 
-        
+
         [HttpGet]
         [Route("home/productdetails/{slug}/{typeslug}/{colorslug}")]
-        public async Task<IActionResult> ProductDetails(string slug,string typeslug,string colorslug)
+        public async Task<IActionResult> ProductDetails(string slug, string typeslug, string colorslug)
         {
             if (string.IsNullOrEmpty(slug))
             {
@@ -331,6 +332,7 @@ namespace ECommerce.Controllers
                                     ProductsImageId = reader.GetInt32(reader.GetOrdinal("ProductsImageId")),
                                     LargeImage = reader.GetString(reader.GetOrdinal("LargeImage")),
                                     Price = reader.GetDouble(reader.GetOrdinal("Price")),
+                                    Color = reader.GetString(reader.GetOrdinal("Color")),
                                     TypeSlug = reader.GetString(reader.GetOrdinal("TypeSlug")),
                                     ColorSlug = reader.GetString(reader.GetOrdinal("ColorSlug"))
                                 };
@@ -398,7 +400,7 @@ namespace ECommerce.Controllers
                                 image.Price = reader.GetDouble(reader.GetOrdinal("Price"));
                                 image.ArrivingDays = reader.GetInt32(reader.GetOrdinal("ArrivingDays"));
                                 image.TypeSlug = reader.GetString(reader.GetOrdinal("TypeSlug"));
-                                image.ColorSlug = reader.GetString(reader.GetOrdinal("ColorSlug"));                            
+                                image.ColorSlug = reader.GetString(reader.GetOrdinal("ColorSlug"));
                                 image.IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive"));
 
                                 productDict[productId].ProductImages.Add(image);
@@ -425,17 +427,17 @@ namespace ECommerce.Controllers
                 using (SqlCommand cmd = new SqlCommand("SELECT * FROM ShoppingCart WHERE IShopId = @IShopId", conn))
                 {
                     string? userId = Request.Cookies["IShopId"];
-                    
+
                     cmd.Parameters.AddWithValue("@IShopId", userId);
                     using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                     {
-                        while (await reader.ReadAsync())  
+                        while (await reader.ReadAsync())
                         {
                             cartItems.Add(new ShoppingCart
                             {
                                 IShopId = reader.GetInt32(reader.GetOrdinal("IShopId")),
                                 ArrivingDays = reader.IsDBNull(reader.GetOrdinal("ArrivingDays")) ? 0 : reader.GetInt32(reader.GetOrdinal("ArrivingDays")), // ? Handle null values
-                                Color = reader["Color"]?.ToString() ?? "", 
+                                Color = reader["Color"]?.ToString() ?? "",
                                 Description = reader["Description"]?.ToString() ?? "",
                                 Image = reader["Image"]?.ToString() ?? "",
                                 Name = reader["Name"]?.ToString() ?? "",
@@ -743,7 +745,7 @@ namespace ECommerce.Controllers
             public int? UserId { get; set; }
             public int? ProductId { get; set; }
             public int ProductsImageId { get; set; }
-        }       
+        }
 
         [HttpGet]
         public IActionResult Checkout()
@@ -936,7 +938,7 @@ namespace ECommerce.Controllers
                 using (var transaction = conn.BeginTransaction()) // Start Transaction
                 {
                     try
-                    {                      
+                    {
 
                         // Fetch IShopId from cookies
                         string shopIdString = Request.Cookies["IShopId"];
@@ -991,8 +993,8 @@ namespace ECommerce.Controllers
                         HttpContext.Session.SetString("PaymentMode", checkout.PaymentMode);
                         //HttpContext.Session.SetInt32("IShopId", IShopId);
                         Response.Cookies.Append("IShopId", IShopId.ToString());
-                        HttpContext.Session.SetInt32("IShopId",IShopId);
-                        return Ok(new { message = "Checkout saved successfully!" , paymentMode = checkout.PaymentMode });
+                        HttpContext.Session.SetInt32("IShopId", IShopId);
+                        return Ok(new { message = "Checkout saved successfully!", paymentMode = checkout.PaymentMode });
                     }
                     catch (Exception ex)
                     {
@@ -1045,7 +1047,7 @@ namespace ECommerce.Controllers
                         {
                             return BadRequest(new { success = false, message = "Checkout failed. Order deletion also failed.", error = deleteEx.Message });
                         }
-                       
+
                     }
                 }
             }
@@ -1060,7 +1062,7 @@ namespace ECommerce.Controllers
             {
                 await conn.OpenAsync();
 
-                using (SqlCommand cmd = new SqlCommand("SELECT * FROM Coupan where IsActive = 1", conn)) // Raw SQL query
+                using (SqlCommand cmd = new SqlCommand("SELECT * FROM Coupan where IsActive = 1 AND ExpiryDate >= CAST(GETDATE() AS DATE)", conn)) // Raw SQL query
                 {
                     cmd.CommandType = CommandType.Text; //  Use CommandType.Text for raw SQL
 
@@ -1075,7 +1077,7 @@ namespace ECommerce.Controllers
                                 CoupanType = reader.GetString(reader.GetOrdinal("CoupanType")),
                                 CoupanCode = reader.GetString(reader.GetOrdinal("CoupanCode")),
                                 Discount = reader.GetDouble(reader.GetOrdinal("Discount")),
-                                ExpiryDate = DateOnly.FromDateTime(reader.GetDateTime(reader.GetOrdinal("ExpiryDate"))),
+                                ExpiryDate = reader.GetDateTime(reader.GetOrdinal("ExpiryDate")).Date,
                                 IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive"))
                             });
                         }
@@ -1092,7 +1094,7 @@ namespace ECommerce.Controllers
             string shopIdString = Request.Cookies["IShopId"];
             if (string.IsNullOrEmpty(shopIdString) || !int.TryParse(shopIdString, out int iShopId))
             {
-                return BadRequest("Invalid or missing IShopId in cookies.");
+                return RedirectToAction("Login", "Account");
             }
 
             var orders = new List<OrderDetails>();
@@ -1136,7 +1138,7 @@ namespace ECommerce.Controllers
             string shopIdString = Request.Cookies["IShopId"];
             if (string.IsNullOrEmpty(shopIdString) || !int.TryParse(shopIdString, out int iShopId))
             {
-                return BadRequest("Invalid or missing IShopId in cookies.");
+                return RedirectToAction("Login", "Account");
             }
 
             var orders = new List<OrderDetails>();
@@ -1177,7 +1179,7 @@ namespace ECommerce.Controllers
                                 FullName = reader["FullName"].ToString(),
                                 Address = reader["Address"].ToString(),
                                 City = reader["City"].ToString(),
-                                State = reader["State"].ToString(),                                
+                                State = reader["State"].ToString(),
                                 Country = reader["Country"].ToString(),
                                 ZipCode = Convert.ToInt32(reader["IShopId"]),
                                 Mobile = reader["Mobile"] != DBNull.Value ? Convert.ToInt64(reader["Mobile"]) : 0
@@ -1266,6 +1268,316 @@ namespace ECommerce.Controllers
                 }
             }
         }
+
+
+        [HttpGet]
+        public async Task<IActionResult> SearchProduct(string query)
+        {
+            List<Products> products = new List<Products>();
+
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+
+                using (SqlCommand cmd = new SqlCommand("GetSearchProducts", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@Slug", query);
+                    cmd.Parameters.AddWithValue("@TypeSlug", query);
+                    cmd.Parameters.AddWithValue("@ColorSlug", query);
+
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        Dictionary<int, Products> productDict = new Dictionary<int, Products>();
+
+                        while (await reader.ReadAsync())
+                        {
+                            int productId = reader.GetInt32(reader.GetOrdinal("ProductId"));
+
+                            if (!productDict.ContainsKey(productId))
+                            {
+                                productDict[productId] = new Products
+                                {
+                                    ProductId = productId,
+                                    Name = reader.GetString(reader.GetOrdinal("Name")),
+                                    Slug = reader.GetString(reader.GetOrdinal("Slug")),
+                                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                                    ProductImages = new List<ProductsImage>()
+                                };
+                            }
+
+                            if (!reader.IsDBNull(reader.GetOrdinal("ProductsImageId")))
+                            {
+                                productDict[productId].ProductImages.Add(new ProductsImage
+                                {
+                                    ProductsImageId = reader.GetInt32(reader.GetOrdinal("ProductsImageId")),
+                                    ProductId = productId,
+                                    Type = reader.GetString(reader.GetOrdinal("Type")),
+                                    Color = reader.GetString(reader.GetOrdinal("Color")),
+                                    LargeImage = reader.GetString(reader.GetOrdinal("LargeImage")),
+                                    Description = reader.GetString(reader.GetOrdinal("Description")),
+                                    Quantity = reader.GetDouble(reader.GetOrdinal("Quantity")),
+                                    MRP = reader.GetDouble(reader.GetOrdinal("MRP")),
+                                    Discount = reader.GetInt32(reader.GetOrdinal("Discount")),
+                                    Price = reader.GetDouble(reader.GetOrdinal("Price")),
+                                    ArrivingDays = reader.GetInt32(reader.GetOrdinal("ArrivingDays")),
+                                    TypeSlug = reader.GetString(reader.GetOrdinal("TypeSlug")),
+                                    ColorSlug = reader.GetString(reader.GetOrdinal("ColorSlug")),
+                                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive"))
+                                });
+                            }
+                        }
+
+                        products = productDict.Values.ToList();
+                    }
+                }
+            }
+
+            return Json(products);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> MyAccount()
+        {
+            string shopIdString = Request.Cookies["IShopId"];
+            if (string.IsNullOrEmpty(shopIdString) || !int.TryParse(shopIdString, out int iShopId))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            Register user = null;
+
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+
+                using (SqlCommand cmd = new SqlCommand("Select * from Register where IShopId = @IShopId", conn))
+                {
+                    cmd.CommandType = CommandType.Text;
+                    cmd.Parameters.AddWithValue("@IShopId", iShopId);
+
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            user = new Register
+                            {
+                                IShopId = reader.GetInt32(reader.GetOrdinal("IShopId")),
+                                FirstName = reader["FirstName"]?.ToString(),
+                                LastName = reader["LastName"]?.ToString(),
+                                Mobile = reader.GetInt64(reader.GetOrdinal("Mobile")),
+                                Password = reader["Password"]?.ToString(),
+                                Birthdate = reader["BirthDate"] != DBNull.Value ? DateOnly.FromDateTime(Convert.ToDateTime(reader["BirthDate"])) : (DateOnly?)null,
+                                Role = reader.GetInt32(reader.GetOrdinal("Role"))
+                            };
+                        }
+                    }
+                }
+            }
+
+            if (user == null)
+            {
+                ViewBag.Error = "Profile not found.";
+            }
+
+            return View(user);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> MyAccount(Register model)
+        {
+            string shopIdString = Request.Cookies["IShopId"];
+            if (string.IsNullOrEmpty(shopIdString) || !int.TryParse(shopIdString, out int iShopId))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            // Fetch old password from database to compare
+            string oldPasswordFromDb = string.Empty;
+
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+
+                using (SqlCommand getCmd = new SqlCommand("SELECT Password FROM Register WHERE IShopId = @IShopId", conn))
+                {
+                    getCmd.Parameters.AddWithValue("@IShopId", iShopId);
+                    var result = await getCmd.ExecuteScalarAsync();
+                    oldPasswordFromDb = result?.ToString();
+                }
+
+                // Compare old password and new password
+                if (oldPasswordFromDb == model.Password)
+                {
+                    TempData["Message"] = "Password New password cannot be the same as the old password.";
+                    return View(model);
+                }
+            }
+
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+
+                using (SqlCommand cmd = new SqlCommand("UpdateAccount", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    cmd.Parameters.AddWithValue("@IShopId", iShopId);
+                    cmd.Parameters.AddWithValue("@FirstName", model.FirstName ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@LastName", model.LastName ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Mobile", model.Mobile);
+                    cmd.Parameters.AddWithValue("@Password", model.Password ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@BirthDate", model.Birthdate?.ToDateTime(TimeOnly.MinValue) ?? (object)DBNull.Value);
+
+                    await cmd.ExecuteNonQueryAsync();
+                }
+            }
+
+            TempData["Message"] = "Account updated successfully!";
+            return RedirectToAction("MyAccount");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> MyAddress()
+        {
+            string shopIdString = Request.Cookies["IShopId"];
+            if (string.IsNullOrEmpty(shopIdString) || !int.TryParse(shopIdString, out int iShopId))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            List<DelivaryAddresses> addressList = new List<DelivaryAddresses>();
+
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+
+                using (SqlCommand cmd = new SqlCommand("Select * from DelivaryAddresses where IShopId = @IShopId AND IsActive = 1", conn))
+                {
+                    cmd.Parameters.AddWithValue("@IShopId", iShopId);
+
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            DelivaryAddresses address = new DelivaryAddresses
+                            {
+                                IShopId = reader.GetInt32(reader.GetOrdinal("IShopId")),
+                                AddressId = reader.GetInt32(reader.GetOrdinal("AddressId")),
+                                FullName = reader["FullName"]?.ToString(),
+                                Mobile = reader.GetInt64(reader.GetOrdinal("Mobile")),
+                                Country = reader["Country"]?.ToString(),
+                                State = reader["State"]?.ToString(),
+                                City = reader["City"]?.ToString(),
+                                ZipCode = reader.GetInt32(reader.GetOrdinal("ZipCode")),
+                                Address = reader["Address"]?.ToString()
+                            };
+
+                            addressList.Add(address);
+                        }
+                    }
+                }
+            }
+
+            if (addressList.Count == 0)
+            {
+                ViewBag.Error = "No addresses found.";
+            }
+
+            // Set list to ViewBag
+            ViewBag.AddressList = addressList;
+
+            // Optional: pass first address as main model, or just return null
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> MyAddress(DelivaryAddresses model, string formMode)
+        {
+            string shopIdString = Request.Cookies["IShopId"];
+            if (string.IsNullOrEmpty(shopIdString) || !int.TryParse(shopIdString, out int iShopId))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+
+
+            using (var connection = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")))
+            {
+                await connection.OpenAsync();
+                using (var command = new SqlCommand("SaveDeliveryAddress", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+
+                    // Output parameter
+                    var addressIdParam = new SqlParameter("@AddressId", SqlDbType.Int)
+                    {
+                        Direction = ParameterDirection.InputOutput,
+                        Value = formMode == "Add Address" ? 0 : model.AddressId
+                    };
+                    command.Parameters.Add(addressIdParam);
+
+                    // Add required parameters
+                    command.Parameters.AddWithValue("@IShopId", iShopId); // assuming you have this field
+                    command.Parameters.AddWithValue("@FullName", model.FullName);
+                    command.Parameters.AddWithValue("@Mobile", model.Mobile);
+                    command.Parameters.AddWithValue("@Country", model.Country);
+                    command.Parameters.AddWithValue("@State", model.State);
+                    command.Parameters.AddWithValue("@City", model.City);
+                    command.Parameters.AddWithValue("@ZipCode", model.ZipCode);
+                    command.Parameters.AddWithValue("@Address", model.Address);
+                    command.Parameters.AddWithValue("@IsActive", true);
+
+                    await command.ExecuteNonQueryAsync();
+
+                    // Optional: Retrieve output value
+                    int newAddressId = Convert.ToInt32(addressIdParam.Value);
+                }
+            }
+
+            TempData["Message"] = formMode == "Add Address" ? "Address added successfully!" : "Address updated successfully!";
+            return RedirectToAction("MyAddress");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteAddress(int addressId)
+        {
+            if (addressId <= 0)
+            {
+                return BadRequest("Invalid address ID");
+            }
+
+            using (var connection = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")))
+            {
+                await connection.OpenAsync();
+                using (var command = new SqlCommand("UPDATE DelivaryAddresses SET IsActive = 0 WHERE AddressId = @AddressId", connection))
+                {
+                    command.Parameters.AddWithValue("@AddressId", addressId);
+                    await command.ExecuteNonQueryAsync();
+                }
+            }
+
+            TempData["Message"] = "Address deleted successfully!";
+            return RedirectToAction("MyAddress");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ContactUs()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> AboutUs()
+        {
+            return View();
+        }
+
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

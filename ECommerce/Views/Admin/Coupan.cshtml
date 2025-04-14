@@ -18,8 +18,8 @@
                     </div>
                     <div class="col-md-2 mt-2">
                         @* <a asp-action="AddOrUpdateCoupan" class="btn btn-success btn-sm">Add New Coupans</a> *@
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#coupanModal">
-                            Add Coupon
+                        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#coupanModal">
+                            Add Coupan
                         </button>
                     </div>
                 </div>
@@ -109,7 +109,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="coupanModalLabel">Add Coupon</h5>
+                <h5 class="modal-title" id="coupanModalLabel">Add Coupan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -119,12 +119,12 @@
 
                     <div class="mb-3">
                         <label>Coupan Name:</label>
-                        <input type="text" name="CoupanName" id="CoupanName" class="form-control" required />
+                        <input type="text" name="Coupan Name" id="CoupanName" class="form-control" required />
                     </div>
 
                     <div class="mb-3">
                         <label>Coupan Type:</label>
-                        <input type="text" name="CoupanType" id="CoupanType" class="form-control" required />
+                        <input type="text" name="Coupan Type" id="CoupanType" class="form-control" required />
                     </div>
 
                     <div class="mb-3">
@@ -134,7 +134,7 @@
 
                     <div class="mb-3">
                         <label>Expiry Date:</label>
-                        <input type="date" name="ExpiryDate" id="ExpiryDate" class="form-control" required />
+                        <input type="date" name="Expiry Date" id="ExpiryDate" class="form-control"  required />
                     </div>
 
                     <div class="modal-footer">
@@ -152,18 +152,18 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="coupanDetailsModalLabel">Coupon Details</h5>
+                <h5 class="modal-title" id="coupanDetailsModalLabel">Coupan Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="row">
-                    <div class="col-md-5"><strong>Coupon Name:</strong></div>
+                    <div class="col-md-5"><strong>Coupan Name:</strong></div>
                     <div class="col-md-7" id="modalCoupanName"></div>
 
-                    <div class="col-md-5"><strong>Coupon Type:</strong></div>
+                    <div class="col-md-5"><strong>Coupan Type:</strong></div>
                     <div class="col-md-7" id="modalCoupanType"></div>
 
-                    <div class="col-md-5"><strong>Coupon Code:</strong></div>
+                    <div class="col-md-5"><strong>Coupan Code:</strong></div>
                     <div class="col-md-7" id="modalCoupanCode"></div>
 
                     <div class="col-md-5"><strong>Discount:</strong></div>
@@ -195,7 +195,7 @@
             "ordering": true,    // Enable column sorting
             "lengthMenu": [5, 10, 25, 50], // Show entries per page options
             "language": {
-                "search": "Search Copan:"
+                "search": "Search Coupan:"
             }
         });
 
@@ -228,13 +228,13 @@
         $("#coupanModal").on("show.bs.modal", function (event) {
             var button = $(event.relatedTarget); // Button that triggered the modal
             var modal = $(this);
-
+            
             if (button.hasClass("edit-coupan")) {
                 var coupanId = button.data("id");
 
                 // Fetch coupon details via AJAX
                 $.get("/Admin/GetCoupan/" + coupanId, function (data) {
-                    modal.find("#coupanModalLabel").text("Edit Coupon");
+                    modal.find("#coupanModalLabel").text("Edit Coupan");
                     modal.find("#CoupanId").val(data.coupanId);
                     modal.find("#CoupanName").val(data.coupanName);
                     modal.find("#CoupanType").val(data.coupanType);
@@ -243,7 +243,7 @@
                 });
             } else {
                 // Reset form for new coupon
-                modal.find("#coupanModalLabel").text("Add Coupon");
+                modal.find("#coupanModalLabel").text("Add Coupan");
                 modal.find("#coupanForm")[0].reset();
                 modal.find("#CoupanId").val("");
             }
@@ -260,7 +260,7 @@
 
                 // Fetch coupon details via AJAX
                 $.get("/Admin/AddOrUpdateCoupan/" + coupanId, function (data) {
-                    modal.find("#coupanModalLabel").text("Edit Coupon");
+                    modal.find("#coupanModalLabel").text("Edit Coupan");
                     modal.find("#CoupanId").val(data.coupanId);
                     modal.find("#CoupanName").val(data.coupanName);
                     modal.find("#CoupanType").val(data.coupanType);
@@ -269,29 +269,56 @@
                 });
             } else {
                 // Reset form for adding a new coupon
-                modal.find("#coupanModalLabel").text("Add Coupon");
+                modal.find("#coupanModalLabel").text("Add Coupan");
                 modal.find("#coupanForm")[0].reset();
                 modal.find("#CoupanId").val("");
             }
         });
 
         // Submit form using AJAX
-        $("#coupanForm").submit(function (e) {
-            e.preventDefault(); // Prevent default form submission
+            $("#coupanForm").submit(function (e) {
+        e.preventDefault(); // Prevent default form submission
 
-            $.ajax({
-                url: "/Admin/AddOrUpdateCoupan",
-                type: "POST",
-                data: $(this).serialize(),
-                success: function (response) {
-                    showMessageModal("success", "Coupon saved successfully!");
-                    location.reload(); // Refresh page after saving
-                },
-                error: function (xhr, status, error) {
-                    showMessageModal("error", `Error: ${xhr.responseText}`);
-                }
-            });
+        const formArray = $(this).serializeArray();
+        const model = {};
+
+        formArray.forEach(field => {
+            switch (field.name) {
+                case "Coupan Name":
+                    model.CoupanName = field.value;
+                    break;
+                case "Coupan Type":
+                    model.CoupanType = field.value;
+                    break;
+                case "Discount":
+                    model.Discount = parseFloat(field.value);
+                    break;
+                case "Expiry Date":
+                    model.ExpiryDate = field.value; // 'yyyy-MM-dd'
+                    break;
+                case "CoupanId":
+                    model.CoupanId = field.value ? parseInt(field.value) : 0;
+                    break;
+            }
         });
+
+        console.log(model); // Verify correct model
+
+        $.ajax({
+            url: "/Admin/AddOrUpdateCoupan",
+            type: "POST",
+            contentType: "application/json", 
+            data: JSON.stringify(model),
+            success: function (response) {
+                showMessageModal("success", "Coupon saved successfully!");
+                location.reload();
+            },
+            error: function (xhr, status, error) {
+                showMessageModal("error", `Error: ${xhr.responseText}`);
+            }
+        });
+    });
+
 
         function showMessageModal(type, message) {
          let modalTitle = document.getElementById("messageModalLabel");

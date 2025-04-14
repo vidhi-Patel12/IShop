@@ -1,0 +1,111 @@
+﻿@model ECommerce.Models.Register
+
+@{
+    if (Model?.Role == 1)
+    {
+        Layout = "~/Views/Shared/_Layout.cshtml";
+    }
+    else
+    {
+        Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    }
+}
+
+<!-- about-us -->
+<section class="flat-spacing about-us-main pb_0">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="about-us-features wow fadeInLeft">
+                    <img class="lazyload" data-src="@Url.Content("~/content/images/banner/about-us.jpg")"
+                         src="@Url.Content("~/content/images/banner/about-us.jpg")" alt="image-team">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="about-us-content">
+                    <h3 class="title wow fadeInUp">IShop – Offering rare and beautiful items worldwide</h3>
+                    <div class="widget-tabs style-3">
+                        <ul class="widget-menu-tab wow fadeInUp">
+                            <li class="item-title active">
+                                <span class="inner text-button">Introduction</span>
+                            </li>
+                            <li class="item-title">
+                                <span class="inner text-button">Our Vision</span>
+                            </li>
+                            <li class="item-title">
+                                <span class="inner text-button">What Sets Us Apart</span>
+                            </li>
+                            <li class="item-title">
+                                <span class="inner text-button">Our Commitment</span>
+                            </li>
+                        </ul>
+                        <div class="widget-content-tab wow fadeInUp">
+                            <div class="widget-content-inner active">
+                                <p>Welcome to IShop Store, your trusted destination for premium beauty and skincare essentials. We offer a handpicked collection of high-quality beauty products, from nourishing skincare to luxurious makeup, all designed to enhance your natural radiance. Whether you're exploring global beauty trends or seeking everyday must-haves, IShop Store brings elegance, innovation, and care to every product we offer. Discover the beauty in you with IShop.</p>
+                            </div>
+                            <div class="widget-content-inner">
+                                <p>Our vision at IShop Store is to inspire confidence and self-expression through exceptional beauty products. We aim to create a space where quality meets affordability, empowering individuals to embrace their unique beauty. By staying ahead of trends and listening to our customers, we strive to be a trusted name in beauty—one that celebrates diversity, innovation, and well-being.</p>
+                            </div>
+                            <div class="widget-content-inner">
+                                <p>What sets IShop Store apart is our commitment to authenticity, quality, and personalized beauty experiences. We carefully curate our collection to feature both trusted brands and unique finds that cater to every skin type and style. Our expert support, ethical sourcing, and customer-first approach ensure that every visit feels like a step toward self-care, confidence, and beauty you can believe in.</p>
+                            </div>
+                            <div class="widget-content-inner">
+                                <p>At IShop Store, our commitment is to empower every individual to look and feel their best. We pledge to provide high-quality, cruelty-free beauty products that are safe, effective, and ethically sourced. With a focus on trust, transparency, and innovation, we aim to build a community where beauty is inclusive, accessible, and a true expression of self-care and confidence.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="#" class="tf-btn btn-fill wow fadeInUp"><span class="text text-button">Read More</span></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- /about-us -->
+<!-- Iconbox -->
+<section class="flat-spacing line-top-container">
+    <div class="container">
+        <div dir="ltr" class="swiper tf-sw-iconbox" data-preview="4" data-tablet="3" data-mobile-sm="2" data-mobile="1" data-space-lg="30" data-space-md="30" data-space="15" data-pagination="1" data-pagination-sm="2" data-pagination-md="3" data-pagination-lg="4">
+            <div class="swiper-wrapper">
+                <div class="swiper-slide">
+                    <div class="tf-icon-box">
+                        <div class="icon-box"><span class="icon icon-return"></span></div>
+                        <div class="content text-center">
+                            <h6>14-Day Returns</h6>
+                            <p class="text-secondary">Risk-free shopping with easy returns.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="tf-icon-box">
+                        <div class="icon-box"><span class="icon icon-shipping"></span></div>
+                        <div class="content text-center">
+                            <h6>Free Shipping Over ₹1500</h6>
+                            <p class="text-secondary">No extra costs, just the price you see.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="tf-icon-box">
+                        <div class="icon-box"><span class="icon icon-headset"></span></div>
+                        <div class="content text-center">
+                            <h6>24/7 Support</h6>
+                            <p class="text-secondary">24/7 support, always here just for you</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="tf-icon-box">
+                        <div class="icon-box"><span class="icon icon-sealCheck"></span></div>
+                        <div class="content text-center">
+                            <h6>Member Discounts</h6>
+                            <p class="text-secondary">Special prices for our loyal customers.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="sw-pagination-iconbox sw-dots type-circle justify-content-center"></div>
+        </div>
+    </div>
+</section>
+<!-- /Iconbox -->
+

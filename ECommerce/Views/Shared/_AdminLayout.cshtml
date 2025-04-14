@@ -74,30 +74,57 @@
                     </div>
                     <div class="col-xl-6 d-none d-xl-block">
                         <nav class="box-navigation text-start">
-                            <ul class="box-nav-ul d-flex align-items-start justify-content-start">
-                                <li class="menu-item active">
-                                    <a href="@Url.Action("Dashboard", "Admin")" class="item-link">Home</a>
-                                </li>
-                                <li class="menu-item">
-                                    <a href="@Url.Action("Index", "Admin")" class="item-link">Products</a>
-                                </li>
-                                <li class="menu-item position-relative">
+                            @if (IShopId.HasValue)
+                            {
+                                <ul class="box-nav-ul d-flex align-items-start justify-content-start">
+                                    <li class="menu-item active">
+                                        <a href="@Url.Action("Dashboard", "Admin")" class="item-link">Home</a>
+                                    </li>
+                                    <li class="menu-item">
+                                        <a href="@Url.Action("Index", "Admin")" class="item-link">Products</a>
+                                    </li>
+                                    <li class="menu-item">
+                                        <a href="@Url.Action("Coupan", "Admin")" class="item-link">Coupans</a>
+                                    </li>
+                                    <li class="menu-item">
+                                        <a href="@Url.Action("Orders", "Admin")" class="item-link">Orders</a>
+                                    </li>
+                                    <li class="menu-item">
+                                        <a href="@Url.Action("AboutUs", "Home")" class="item-link">About Us</a>
+                                    </li>
+                                    <li class="menu-item">
+                                        <a href="@Url.Action("ContactUs", "Home")" class="item-link">Contact Us</a>
+                                    </li>
+                                    @*  <li class="menu-item position-relative">
                                     <a href="#" class="item-link">Pages<i class="icon icon-arrow-down"></i></a>
                                     <div class="sub-menu submenu-default">
                                         <ul class="menu-list">
                                             <li><a href="@Url.Action("Coupan", "Admin")" class="menu-link-text">Coupans</a></li>
                                             <li><a href="@Url.Action("Orders", "Admin")" class="menu-link-text">Orders</a></li>
-                                            <li><a href="#" class="menu-link-text">About Us</a></li>
-                                            <li>
-                                                <a href="#" class="menu-link-text">Store List 1</a>
-                                            </li>
-                                            <li><a href="#" class="menu-link-text">Contact Us 1</a></li>
-                                            <li><a href="#" class="menu-link-text">Coming Soon</a></li>
+                                            <li><a href="#" class="menu-link-text">About Us</a></li>                                            
+                                            <li><a href="#" class="menu-link-text">Contact Us</a></li>
                                         </ul>
                                     </div>
-                                </li>
-                          
-                            </ul>
+                                </li> *@
+                                </ul>
+                            }
+                            else
+                            {
+                                <ul class="box-nav-ul d-flex align-items-start justify-content-start">
+                                    <li class="menu-item active">
+                                        <a href="@Url.Action("Index", "Home")" class="item-link">Home</a>
+                                    </li>
+                                    <li class="menu-item">
+                                        <a href="@Url.Action("Products", "Home")" class="item-link">Products</a>
+                                    </li>
+                                    <li class="menu-item">
+                                        <a href="@Url.Action("AboutUs", "Home")" class="item-link">About Us</a>
+                                    </li>
+                                    <li class="menu-item">
+                                        <a href="@Url.Action("ContactUs", "Home")" class="item-link">Contact Us</a>
+                                    </li>                                    
+                                </ul>
+                            }
                         </nav>
                     </div>
                     <div class="col-xl-3 col-md-4 col-3">
@@ -115,14 +142,14 @@
                             }
                         } *@
                         <ul class="nav-icon d-flex justify-content-end align-items-center">
-                            <li class="nav-search">
+                            @* <li class="nav-search">
                                 <a href="#search" data-bs-toggle="modal" class="nav-icon-item">
                                     <svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                         <path d="M21.35 21.0004L17 16.6504" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                     </svg>
                                 </a>
-                            </li>
+                            </li> *@
                             <li class="nav-account">
                                 <a href="#" class="nav-icon-item">
                                     <svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -131,10 +158,21 @@
                                     </svg>
                                 </a>
                                 <div class="dropdown-account dropdown-login">
-                                    <div class="sub-top">
-                                        <a href="@Url.Action("Login", "Account")" class="tf-btn btn-reset">Login</a>
-                                        <p class="text-center text-secondary-2">Don’t have an account? <a href="@Url.Action("Register", "Account")">Register</a></p>
-                                    </div>
+                                    @if (IShopId.HasValue)
+                                    {
+                                        <div class="sub-top">
+                                            <a href="@Url.Action("MyAccount", "Home")" class="tf-btn btn-reset">Profile</a>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="sub-top">
+                                            <a href="@Url.Action("Login", "Account")" class="tf-btn btn-reset">Login</a>
+                                            <p class="text-center text-secondary-2">
+                                                Don’t have an account? <a href="@Url.Action("Register", "Account")">Register</a>
+                                            </p>
+                                        </div>
+                                    }
                                 </div>
                             </li>
                             @if (IShopId.HasValue)
@@ -155,7 +193,7 @@
                                     </svg>
                                 </a>
                             </li> *@
-                           @*  <li class="nav-cart">
+                            @*  <li class="nav-cart">
                                 <a href="@Url.Action("Cart", "Home")" class="nav-icon-item">
                                     <svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M16.5078 10.8734V6.36686C16.5078 5.17166 16.033 4.02541 15.1879 3.18028C14.3428 2.33514 13.1965 1.86035 12.0013 1.86035C10.8061 1.86035 9.65985 2.33514 8.81472 3.18028C7.96958 4.02541 7.49479 5.17166 7.49479 6.36686V10.8734M4.11491 8.62012H19.8877L21.0143 22.1396H2.98828L4.11491 8.62012Z" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -217,10 +255,10 @@
                                         <div class="tf-collapse-content">
                                             <ul class="footer-menu-list">
                                                 <li class="text-caption-1">
-                                                    <a href="#" class="footer-menu_item">About Us</a>
+                                                    <a href="@Url.Action("AboutUs", "Home")" class="footer-menu_item">About Us</a>
                                                 </li>
                                                 <li class="text-caption-1">
-                                                    <a href="#" class="footer-menu_item">Contact us</a>
+                                                    <a href="@Url.Action("ContactUs", "Home")" class="footer-menu_item">Contact us</a>
                                                 </li>
                                             </ul>
                                         </div>
@@ -260,7 +298,7 @@
                             <div class="col-12">
                                 <div class="footer-bottom-wrap">
                                     <div class="left">
-                                        <p class="text-caption-1">©2024 Modave. All Rights Reserved.</p>
+                                        <p class="text-caption-1">©2025 IShop. All Rights Reserved.</p>
                                     </div>
                                     <div class="tf-payment">
                                         <p class="text-caption-1">Payment:</p>
@@ -312,7 +350,92 @@
         </div>
     </div>
 
+    <!-- mobile menu -->
+    <div class="offcanvas offcanvas-start canvas-mb" id="mobileMenu">
+        <span class="icon-close icon-close-popup" data-bs-dismiss="offcanvas" aria-label="Close"></span>
+        <div class="mb-canvas-content">
+            <div class="mb-body">
+                <div class="mb-content-top">
+                    @if (IShopId.HasValue)
+                    {
+                        <ul class="nav-ul-mb" id="wrapper-menu-navigation">
+                            <li class="nav-mb-item active">
+                                <a href="@Url.Action("Dashboard", "Admin")" class="item-link">Home</a>
+                            </li>
+                            <li class="nav-mb-item">
+                                <a href="@Url.Action("Index", "Admin")" class="item-link">Products</a>
+                            </li>
+                            <li class="nav-mb-item">
+                                <a href="@Url.Action("Coupan", "Admin")" class="item-link">Coupans</a>
+                            </li>
+                            <li class="nav-mb-item">
+                                <a href="@Url.Action("Orders", "Admin")" class="item-link">Orders</a>
+                            </li>
+                            <li class="nav-mb-item">
+                                <a href="@Url.Action("AboutUs", "Home")" class="item-link">About Us</a>
+                            </li>
+                            <li class="nav-mb-item">
+                                <a href="@Url.Action("ContactUs", "Home")" class="item-link">Contact Us</a>
+                            </li>                            
+                        </ul>
+                    }
+                    else{
+                        <ul class="nav-ul-mb" id="wrapper-menu-navigation">
+                            <li class="nav-mb-item active">
+                                <a href="@Url.Action("Index", "Home")" class="item-link">Home</a>
+                            </li>
+                            <li class="nav-mb-item">
+                                <a href="@Url.Action("Products", "Home")" class="item-link">Products</a>
+                            </li>
+                            <li class="nav-mb-item">
+                                <a href="@Url.Action("AboutUs", "Home")" class="item-link">About Us</a>
+                            </li>
+                            <li class="nav-mb-item">
+                                <a href="@Url.Action("ContactUs", "Home")" class="item-link">Contact Us</a>
+                            </li>
+                        </ul>
+                    }
+                </div>
+                <div class="mb-other-content">
+                    <div class="group-icon">
+                        @* <a href="wish-list.html" class="site-nav-icon">
+                            <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20.8401 4.60987C20.3294 4.09888 19.7229 3.69352 19.0555 3.41696C18.388 3.14039 17.6726 2.99805 16.9501 2.99805C16.2276 2.99805 15.5122 3.14039 14.8448 3.41696C14.1773 3.69352 13.5709 4.09888 13.0601 4.60987L12.0001 5.66987L10.9401 4.60987C9.90843 3.57818 8.50915 2.99858 7.05012 2.99858C5.59109 2.99858 4.19181 3.57818 3.16012 4.60987C2.12843 5.64156 1.54883 7.04084 1.54883 8.49987C1.54883 9.95891 2.12843 11.3582 3.16012 12.3899L4.22012 13.4499L12.0001 21.2299L19.7801 13.4499L20.8401 12.3899C21.3511 11.8791 21.7565 11.2727 22.033 10.6052C22.3096 9.93777 22.4519 9.22236 22.4519 8.49987C22.4519 7.77738 22.3096 7.06198 22.033 6.39452C21.7565 5.72706 21.3511 5.12063 20.8401 4.60987V4.60987Z" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            Wishlist
+                        </a> *@
 
+                        <a href="@Url.Action("Login", "Account")" class="site-nav-icon">
+                            <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            Login
+                        </a>
+
+                    </div>
+                    <div class="mb-notice">
+                        <a href="#" class="text-need">Need Help?</a>
+                    </div>
+                    <div class="mb-contact">
+                        <p class="text-caption-1">202, Satyamev Eminence, Science City Road, Sola, Ahmedabad, Gujarat 380060</p>
+                        <a href="#" class="tf-btn-default text-btn-uppercase">GET DIRECTION<i class="icon-arrowUpRight"></i></a>
+                    </div>
+                    <ul class="mb-info">
+                        <li>
+                            <i class="icon icon-mail"></i>
+                            <p>themesflat@gmail.com</p>
+                        </li>
+                        <li>
+                            <i class="icon icon-phone"></i>
+                            <p>315-666-6688</p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /mobile menu -->
     <!-- Javascript -->
     <script type="text/javascript" src="~/content/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="~/content/js/jquery.min.js"></script>

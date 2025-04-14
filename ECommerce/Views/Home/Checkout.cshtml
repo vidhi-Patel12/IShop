@@ -371,7 +371,7 @@
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", async function () {  //  Add async here
+    document.addEventListener("DOMContentLoaded", async function () {  
             let addressListContainer = document.getElementById("addressListContainer");
 
             try {
@@ -533,24 +533,22 @@
 
                  // Initialize Swiper after content is added
                          new Swiper("#couponSwiper", {
-        slidesPerView: 3, // Show 3 slides at a time
-        spaceBetween: 20, // Space between slides
-        pagination: { el: ".swiper-pagination", clickable: true },
-        grabCursor: true, // Enable grabbing cursor effect
-        slidesPerGroup: 1, // Move 1 slide at a time for smooth experience
-        loop: false, // Keep false to prevent looping issues
-        allowTouchMove: true, // Allow manual swiping
-        touchRatio: 1, // Controls swipe sensitivity
-        simulateTouch: true, // Enables mouse dragging support
-        navigation: { // Add navigation controls
-            nextEl: ".swiper-button-next",
-            prevEl: ".swiper-button-prev"
-        },
-        watchSlidesProgress: true, // Track slide progress
-        watchSlidesVisibility: true, // Ensure visibility updates
-    });
-
-
+                    slidesPerView: 3, // Show 3 slides at a time
+                    spaceBetween: 20, // Space between slides
+                    pagination: { el: ".swiper-pagination", clickable: true },
+                    grabCursor: true, // Enable grabbing cursor effect
+                    slidesPerGroup: 1, // Move 1 slide at a time for smooth experience
+                    loop: false, // Keep false to prevent looping issues
+                    allowTouchMove: true, // Allow manual swiping
+                    touchRatio: 1, // Controls swipe sensitivity
+                    simulateTouch: true, // Enables mouse dragging support
+                    navigation: { // Add navigation controls
+                        nextEl: ".swiper-button-next",
+                        prevEl: ".swiper-button-prev"
+                    },
+                    watchSlidesProgress: true, // Track slide progress
+                    watchSlidesVisibility: true, // Ensure visibility updates
+                });
            } 
            catch (error) {
             console.error("Error fetching coupons:", error);
@@ -572,12 +570,12 @@
     });
 
 
-    //  Function to display selected address in UI
-    function displaySelectedAddress(address) {
-        if (!address) return;
-        document.getElementById("fullName").innerText = address.fullName;
-        document.getElementById("address").innerText = `${address.address}, ${address.city}, ${address.state}, ${address.zipCode}, ${address.country}`;
-    }
+    // //  Function to display selected address in UI
+    // function displaySelectedAddress(address) {
+    //     if (!address) return;
+    //     document.getElementById("fullName").innerText = address.fullName;
+    //     document.getElementById("address").innerText = `${address.address}, ${address.city}, ${address.state}, ${address.zipCode}, ${address.country}`;
+    // }
 
     //  Function to display selected address
     function displaySelectedAddress(address) {
@@ -685,38 +683,38 @@
 
     });
 
-    function updateQuantity(index, amount) {
-        let checkoutItems = JSON.parse(localStorage.getItem("checkoutItems")) || [];
-        let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+    // function updateQuantity(index, amount) {
+    //     let checkoutItems = JSON.parse(localStorage.getItem("checkoutItems")) || [];
+    //     let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
 
-        if (checkoutItems[index]) {
-            checkoutItems[index].quantity += amount;
+    //     if (checkoutItems[index]) {
+    //         checkoutItems[index].quantity += amount;
 
-            if (checkoutItems[index].quantity <= 0) {
-                checkoutItems.splice(index, 1); // Remove item if quantity is 0
-            } else {
-                checkoutItems[index].total = (checkoutItems[index].quantity * checkoutItems[index].price).toFixed(2);
-            }
-        }
+    //         if (checkoutItems[index].quantity <= 0) {
+    //             checkoutItems.splice(index, 1); // Remove item if quantity is 0
+    //         } else {
+    //             checkoutItems[index].total = (checkoutItems[index].quantity * checkoutItems[index].price).toFixed(2);
+    //         }
+    //     }
 
-        // Update cartItems based on checkoutItems
-        let productId = checkoutItems[index]?.productId; // Assuming each item has a unique productId
-        let cartItem = cartItems.find(item => item.productId === productId);
-        if (cartItem) {
-            cartItem.quantity = checkoutItems[index]?.quantity || 0;
-            cartItem.total = checkoutItems[index]?.total || 0;
-            if (cartItem.quantity <= 0) {
-                cartItems = cartItems.filter(item => item.productId !== productId);
-            }
-        }
+    //     // Update cartItems based on checkoutItems
+    //     let productId = checkoutItems[index]?.productId; // Assuming each item has a unique productId
+    //     let cartItem = cartItems.find(item => item.productId === productId);
+    //     if (cartItem) {
+    //         cartItem.quantity = checkoutItems[index]?.quantity || 0;
+    //         cartItem.total = checkoutItems[index]?.total || 0;
+    //         if (cartItem.quantity <= 0) {
+    //             cartItems = cartItems.filter(item => item.productId !== productId);
+    //         }
+    //     }
 
-        localStorage.setItem("checkoutItems", JSON.stringify(checkoutItems));
-        localStorage.setItem("cartItems", JSON.stringify(cartItems));
+    //     localStorage.setItem("checkoutItems", JSON.stringify(checkoutItems));
+    //     localStorage.setItem("cartItems", JSON.stringify(cartItems));
 
-        renderCheckout(); // Re-render checkout after updating quantity
-    }
+    //     renderCheckout(); // Re-render checkout after updating quantity
+    // }
 
-        let isCouponApplied = localStorage.getItem("appliedCoupon") ? true : false;
+    let isCouponApplied = localStorage.getItem("appliedCoupon") ? true : false;
 
     //  Apply Coupon Function
     async function applyCoupon(couponCode = null, discountPercentage = null) {
@@ -870,6 +868,13 @@
     }
 
     async function loadCartFromDatabase() {
+        let orderPlaced = localStorage.getItem("orderPlaced");
+
+    if (orderPlaced === "true") {
+        console.log("Order has already been placed. No need to load cart.");
+        // Optionally, you can clear cart data here or just skip loading the cart
+        return;
+    }
         try {
             let response = await fetch("/Home/GetCart");
             let data = await response.json();
@@ -983,107 +988,105 @@
 
     }
 
-    function updateQuantity(index, action) {
-        let checkoutItems = JSON.parse(localStorage.getItem("checkoutItems")) || [];
+    // function updateQuantity(index, action) {
+    //     let checkoutItems = JSON.parse(localStorage.getItem("checkoutItems")) || [];
 
-        if (checkoutItems[index]) {
-            if (action === "increase") {
-                checkoutItems[index].quantity++;
-            } else if (action === "decrease" && checkoutItems[index].quantity > 1) {
-                checkoutItems[index].quantity--;
-            }
+    //     if (checkoutItems[index]) {
+    //         if (action === "increase") {
+    //             checkoutItems[index].quantity++;
+    //         } else if (action === "decrease" && checkoutItems[index].quantity > 1) {
+    //             checkoutItems[index].quantity--;
+    //         }
 
-            // Update total price for the item
-            checkoutItems[index].total = checkoutItems[index].quantity * checkoutItems[index].price;
+    //         // Update total price for the item
+    //         checkoutItems[index].total = checkoutItems[index].quantity * checkoutItems[index].price;
 
-            // Save updated items to localStorage
-            localStorage.setItem("checkoutItems", JSON.stringify(checkoutItems));
+    //         // Save updated items to localStorage
+    //         localStorage.setItem("checkoutItems", JSON.stringify(checkoutItems));
 
-            // Re-render checkout
-            renderCheckout();
-        }
-    }
+    //         // Re-render checkout
+    //         renderCheckout();
+    //     }
+    // }
 
-    function getExpectedArrivalDate(itemDays) {
-            if (!itemDays || isNaN(itemDays)) {
-                console.warn(`Invalid arrivingDays value:`, itemDays);
-                return "Date Not Available"; // Handle invalid values gracefully
-            }
+    // function getExpectedArrivalDate(itemDays) {
+    //         if (!itemDays || isNaN(itemDays)) {
+    //             console.warn(`Invalid arrivingDays value:`, itemDays);
+    //             return "Date Not Available"; // Handle invalid values gracefully
+    //         }
 
-            let today = new Date();
-            let totalDays = parseInt(itemDays) + 3; // Ensure conversion to number
-            today.setDate(today.getDate() + totalDays);
+    //         let today = new Date();
+    //         let totalDays = parseInt(itemDays) + 3; // Ensure conversion to number
+    //         today.setDate(today.getDate() + totalDays);
 
-            let options = { day: '2-digit', month: 'long', year: 'numeric' };
-            return today.toLocaleDateString('en-GB', options);
-        }
+    //         let options = { day: '2-digit', month: 'long', year: 'numeric' };
+    //         return today.toLocaleDateString('en-GB', options);
+    //     }
 
-    async function checkStockAndUpdate(index, change) {
-            console.log(`Checking stock for index ${index} with change ${change}`);
+    // async function checkStockAndUpdate(index, change) {
+    //         console.log(`Checking stock for index ${index} with change ${change}`);
 
-            let productElement = document.querySelector(`.product-item[data-index="${index}"]`);
+    //         let productElement = document.querySelector(`.product-item[data-index="${index}"]`);
 
-            if (!productElement) {
-                console.error(` No product item found with data-index="${index}"`);
-                return;
-            }
+    //         if (!productElement) {
+    //             console.error(` No product item found with data-index="${index}"`);
+    //             return;
+    //         }
 
-            let productImageId = productElement.getAttribute("data-productimageid");
-            let qtyElement = document.querySelector(`#qty-${index}`);
-            let totalElement = productElement.querySelector(".item-total");
+    //         let productImageId = productElement.getAttribute("data-productimageid");
+    //         let qtyElement = document.querySelector(`#qty-${index}`);
+    //         let totalElement = productElement.querySelector(".item-total");
 
-            if (!qtyElement || !totalElement) {
-                console.error(` No quantity span or total price element found for index ${index}`);
-                return;
-            }
+    //         if (!qtyElement || !totalElement) {
+    //             console.error(` No quantity span or total price element found for index ${index}`);
+    //             return;
+    //         }
 
-            let checkoutItems = JSON.parse(localStorage.getItem("checkoutItems")) || [];
-            let item = checkoutItems[index];
+    //         let checkoutItems = JSON.parse(localStorage.getItem("checkoutItems")) || [];
+    //         let item = checkoutItems[index];
 
-            if (!item) {
-                console.error(` Item not found in localStorage at index ${index}`);
-                return;
-            }
+    //         if (!item) {
+    //             console.error(` Item not found in localStorage at index ${index}`);
+    //             return;
+    //         }
 
-            let currentQty = parseInt(qtyElement.innerText);
-            let newQty = currentQty + change;
+    //         let currentQty = parseInt(qtyElement.innerText);
+    //         let newQty = currentQty + change;
 
-            if (newQty < 1) return; // Prevent negative quantity
+    //         if (newQty < 1) return; // Prevent negative quantity
 
-            console.log(` Checking stock for product ${productImageId} with requested quantity ${newQty}`);
+    //         console.log(` Checking stock for product ${productImageId} with requested quantity ${newQty}`);
 
-            try {
-                //  Only check stock
-                let response = await fetch(`/Home/CheckStockAvailability?productImageId=${productImageId}&requestedQty=${newQty}`);
-                let data = await response.json();
+    //         try {
+    //             //  Only check stock
+    //             let response = await fetch(`/Home/CheckStockAvailability?productImageId=${productImageId}&requestedQty=${newQty}`);
+    //             let data = await response.json();
 
-                if (!data.success) {
-                    console.warn(` Out of stock for product ${productImageId}`);
-                   showMessageModal("error", `Error: ${data.message}`);
-                    return;
-                }
+    //             if (!data.success) {
+    //                 console.warn(` Out of stock for product ${productImageId}`);
+    //                showMessageModal("error", `Error: ${data.message}`);
+    //                 return;
+    //             }
 
-                //  If stock is available, update UI (but do not update database)
-                item.quantity = newQty;
-                item.total = (newQty * item.price).toFixed(2);
-                localStorage.setItem("checkoutItems", JSON.stringify(checkoutItems));
+    //             //  If stock is available, update UI (but do not update database)
+    //             item.quantity = newQty;
+    //             item.total = (newQty * item.price).toFixed(2);
+    //             localStorage.setItem("checkoutItems", JSON.stringify(checkoutItems));
 
-                qtyElement.innerText = newQty;
-                totalElement.innerText = `₹${item.total}`;
+    //             qtyElement.innerText = newQty;
+    //             totalElement.innerText = `₹${item.total}`;
 
-                renderCheckout(); // Recalculate checkout totals
-            } catch (error) {
-                console.error(" Error checking stock:", error);
-            }
-        }
+    //             renderCheckout(); // Recalculate checkout totals
+    //         } catch (error) {
+    //             console.error(" Error checking stock:", error);
+    //         }
+    //     }
 
     document.addEventListener("DOMContentLoaded", async function () {
 
         await processCheckout();
-        // renderCheckout();
-
-         let storedCoupon = localStorage.getItem("appliedCoupon");
-         let discountAmount = localStorage.getItem("discountAmount");
+        let storedCoupon = localStorage.getItem("appliedCoupon");
+        let discountAmount = localStorage.getItem("discountAmount");
 
         if (storedCoupon) {
             let couponInputField = document.getElementById("CoupanCode");
@@ -1104,8 +1107,6 @@
 
             updateCouponButtons(storedCoupon);
         }
-
-
     });
 
     let selectedPaymentMode = document.querySelector('input[name="payment-mode"]:checked').value; // Set default selected value
@@ -1195,6 +1196,9 @@
                 localStorage.removeItem("selectedAddress");
                 deleteCookie("cartItems");
                 await deleteCartItem();
+
+                localStorage.setItem("orderPlaced", "true");
+
                 window.location.href = "/Payment/Payment"; // Redirect to success page
             } else {
                 //alert(checkoutResult.message || "Failed to save checkout details.");
@@ -1209,7 +1213,7 @@
 
      function deleteCookie(name) {
             document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        }
+     }
 
      async function deleteCartItem(productId, productsImageId) {
          try
@@ -1261,6 +1265,25 @@
          let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
          messageModal.show();
     }
+
+        window.onload = function () {
+        // Check if the order was placed
+        let orderPlaced = localStorage.getItem("orderPlaced");
+
+        if (orderPlaced === "true") {
+            console.log("Order has already been placed.");
+            // Optionally, you can hide cart UI elements or show a message that the order was placed successfully
+            document.getElementById("cartContainer").style.display = "none"; // Hide cart container
+            showMessageModal("success", "Your order has been placed successfully.");
+
+            // Optionally clear cart data to prevent showing it after an order
+            localStorage.removeItem("cartItems");
+            localStorage.removeItem("checkoutItems");
+        } else {
+            // Load and display cart items if the order was not placed
+            loadCartFromDatabase(); // This will run only if the order hasn't been placed
+        }
+    };
 
 </script>
 

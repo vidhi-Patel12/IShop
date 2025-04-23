@@ -14,7 +14,6 @@ namespace ECommerce.Controllers
         private const string ApiUrl = "https://api.17track.net/track/v2/gettrackinfo"; // Replace with actual 17Track API URL
         //private const string ApiUrl = "https://api.17track.net/v2/trackings/get"; // Replace with actual 17Track API URL
         private const string ApiKey = "2E9641C675F1138500413FA14221A089"; // Replace with your actual API key
-
         public TrackingController(HttpClient httpClient, IHttpClientFactory httpClientFactory)
         {
             _httpClient = httpClient;
@@ -86,9 +85,5 @@ namespace ECommerce.Controllers
             return View("TrackOrder");
         }
 
-
     }
-
 }
-
-

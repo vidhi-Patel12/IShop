@@ -18,13 +18,6 @@ namespace ECommerce.Controllers
         private readonly IConfiguration _configuration;
         private readonly SmsService _smsService;
 
-
-        //private const string AccountSid = "AC442e82f708bba2fce45fe704cd7c9de0";
-        //private const string AuthToken = "79b0b10b77f3c28300b0ce07b0738daf";
-        //private const string FromWhatsAppNumber = "+19152924665"; // Twilio sandbox number
-        //+19152924665
-
-
         public AccountController(ApplicationDbContext context,SmsService smsService)
         {
             _context = context;
@@ -59,7 +52,6 @@ namespace ECommerce.Controllers
 
             return View(model);
         }
-
 
         public IActionResult Login()
         {
@@ -175,7 +167,6 @@ namespace ECommerce.Controllers
             }
         }
 
-
         public void ExpireOTP()
         {
             var expiredOtps = _context.Login
@@ -235,16 +226,24 @@ namespace ECommerce.Controllers
                 return RedirectToAction("Index", "Home");
             }
         }
-
-
-       
-
+                
         [HttpGet]
-        public IActionResult Logout()
+        public ContentResult Logout()
         {
             HttpContext.Session.Clear();
             Response.Cookies.Delete("IShopId");
-            return RedirectToAction("Login");
-        }       
+            Response.Cookies.Delete("cartItems");
+
+            string js = @"
+            <script>
+                localStorage.removeItem('cartItems');
+                localStorage.removeItem('checkoutItems');
+                localStorage.removeItem('selectedAddress');
+                localStorage.removeItem('orderPlaced');
+                window.location.href = '/Account/Login';
+            </script>";
+
+            return Content(js, "text/html");
+        }
     }
 }

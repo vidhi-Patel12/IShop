@@ -33,12 +33,12 @@
                             <span id="lastNameError" class="text-danger"></span>
                         </fieldset>
                         <fieldset class="">
-                            <input class="" id="mobile" asp-for="Mobile" type="tel" placeholder="Mobile number*" name="mobile" pattern="[0-9]{10}" maxlength="10" tabindex="2" value="" aria-required="true" required="">
+                            <input class="" id="mobile" asp-for="Mobile" type="text" placeholder="Mobile number*" name="mobile"  tabindex="2" value="" maxlength="10" aria-required="true" required="">
                             <span id="mobileError" class="text-danger"></span>
                         </fieldset>
                         <fieldset class="position-relative password-item">
                             <input class="input-password" type="password" placeholder="Password*" name="password" id="password" asp-for="Password" tabindex="2" value="" aria-required="true" required="">
-                            <span class="toggle-password unshow">
+                            <span class="toggle-password unshow" style="margin-top: -9px;">
                                 <i class="icon-eye-hide-line"></i>
                             </span>
                             <span id="passwordError" class="text-danger"></span>
@@ -142,20 +142,27 @@
                 }
             }
 
-            if (id === "mobile") {
-                if(!/^\d{10}$/.test(value)){
-                    errorElement.innerText = "Enter a valid 10-digit mobile number.";
-                    isValid = false;
-                }
-                else{
-                    isValid = true;
-                }
+        if (id === "mobile") {
+            // Keep only digits and limit to 10 characters
+            value = value.replace(/\D/g, '').slice(0, 10);
+            inputElement.value = value; // This line had 'input', changed to 'inputElement'
+
+            if (!/^\d{10}$/.test(value)) {
+                errorElement.innerText = "Enter a valid 10-digit mobile number.";
+                isValid = false;
+            } else {
+                errorElement.innerText = ""; // Clear error
+                isValid = true;
             }
+        }
+
+
+
 
             //  Strong Password Validation
             if (id === "password") {
-                let strongPasswordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_])[A-Za-z\d\W_]{8,12}$/;
-                if (!strongPasswordRegex.test(value)) {
+                    let strongPasswordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+                    if (!strongPasswordRegex.test(value)) {
                     errorElement.innerText = "Password must be at least 8 characters, with one uppercase letter, one number, and a special character.";
                     isValid = false;
                 }

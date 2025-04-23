@@ -27,7 +27,6 @@ namespace ECommerce.Controllers
         private readonly ApplicationDbContext _dbContext;
         private readonly ILogger<AdminController> _logger;
 
-
         public AdminController(ApplicationDbContext dbContext, IConfiguration configuration, IWebHostEnvironment webHostEnvironment, ILogger<AdminController> logger)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection");
@@ -116,7 +115,6 @@ namespace ECommerce.Controllers
                     string slug = SlugHelper.GenerateSlug(model.Name);
                     string typeslug = SlugHelper.GenerateSlug(model.Type);
                     string colorslug = SlugHelper.GenerateSlug(model.Color);
-
 
                     // Check if product exists
                     using (SqlCommand checkCmd = new SqlCommand("SELECT ProductId FROM Products WHERE Name = @Name", conn))
@@ -237,7 +235,6 @@ namespace ECommerce.Controllers
                     }
                 }
             }
-
             return Json(new { success = true });
         }
 
@@ -359,7 +356,6 @@ namespace ECommerce.Controllers
                         await cmd.ExecuteNonQueryAsync();
                     }
 
-
                     // Define base path for product images
                     string basePath = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "Products", model.ProductId.ToString());
 
@@ -417,7 +413,6 @@ namespace ECommerce.Controllers
                             await smallImageFile.CopyToAsync(stream);
                         }
                     }
-
 
                     // Update product image details in database
                     using (SqlCommand cmd = new SqlCommand(@"UPDATE ProductsImage SET Type = @Type,Color = @Color,LargeImage = @LargeImage,MediumImage = @MediumImage,SmallImage = @SmallImage,
@@ -705,7 +700,6 @@ namespace ECommerce.Controllers
                 if (model.ExpiryDate == default)
                     throw new Exception("Invalid expiry date");
 
-
                 using (SqlConnection conn = new SqlConnection(_connectionString))
                 {
                     await conn.OpenAsync();
@@ -939,193 +933,6 @@ namespace ECommerce.Controllers
             return View(orders); //  Return list to the view
         }
 
-        //public async Task<IActionResult> Dashboard(string timeRange = "day")
-        //{
-        //    try
-        //    {
-        //        var authId = Request.Cookies["IShopId"];
-        //        if (string.IsNullOrEmpty(authId))
-        //        {
-        //            ViewBag.ErrorMessage = "Authentication ID not found.";
-        //            return View();
-        //        }
-
-        //        ViewBag.SelectedTimeRange = timeRange.ToLower();
-
-        //        var labels = new List<string>();
-        //        var productDataDict = new Dictionary<string, int>();
-        //        var orderDataDict = new Dictionary<string, double>();
-        //        var revenueDataDict = new Dictionary<string, double>();
-        //        var duePaymentDataDict = new Dictionary<string, double>();
-
-        //        // Step 1: Generate default labels
-        //        if (timeRange == "day")
-        //        {
-        //            int currentYear = DateTime.Now.Year;
-        //            int currentMonth = DateTime.Now.Month;
-        //            int daysInMonth = DateTime.DaysInMonth(currentYear, currentMonth);
-
-        //            for (int i = 1; i <= daysInMonth; i++)
-        //            {
-        //                string label = i.ToString();
-        //                labels.Add(label);
-        //                productDataDict[label] = 0;
-        //                orderDataDict[label] = 0;
-        //                revenueDataDict[label] = 0;
-        //                duePaymentDataDict[label] = 0;
-        //            }
-        //        }
-        //        else if (timeRange == "week")
-        //        {
-        //            var calendar = System.Globalization.DateTimeFormatInfo.CurrentInfo.Calendar;
-        //            var dtf = System.Globalization.DateTimeFormatInfo.CurrentInfo;
-
-        //            // Get the first day of last month
-        //            var previousMonthStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddMonths(-1);
-
-        //            // Get the last day of the current month
-        //            var currentMonthEnd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddMonths(1).AddDays(-1);
-
-        //            // Get all unique week numbers between those two dates
-        //            var tempDate = previousMonthStart;
-        //            var weekLabels = new HashSet<string>();
-
-        //            while (tempDate <= currentMonthEnd)
-        //            {
-        //                int weekNum = calendar.GetWeekOfYear(tempDate, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
-        //                string label = $"Week {weekNum}, {tempDate.Year}";
-
-        //                if (!weekLabels.Contains(label))
-        //                {
-        //                    weekLabels.Add(label);
-        //                    labels.Add(label);
-        //                    productDataDict[label] = 0;
-        //                    orderDataDict[label] = 0;
-        //                    revenueDataDict[label] = 0;
-        //                    duePaymentDataDict[label] = 0;
-        //                }
-
-        //                tempDate = tempDate.AddDays(7); // move to next week
-        //            }
-        //        }
-
-        //        else if (timeRange == "month")
-        //        {
-        //            for (int i = 1; i <= 12; i++)
-        //            {
-        //                string label = new DateTime(DateTime.Now.Year, i, 1).ToString("MMM");
-        //                labels.Add(label);
-        //                productDataDict[label] = 0;
-        //                orderDataDict[label] = 0;
-        //                revenueDataDict[label] = 0;
-        //                duePaymentDataDict[label] = 0;
-        //            }
-        //        }
-        //        else if (timeRange == "year")
-        //        {
-        //            int currentYear = DateTime.Now.Year;
-        //            for (int i = currentYear - 10 + 1; i <= currentYear; i++)
-        //            {
-        //                string label = i.ToString();
-        //                labels.Add(label);
-        //                productDataDict[label] = 0;
-        //                orderDataDict[label] = 0;
-        //                revenueDataDict[label] = 0;
-        //                duePaymentDataDict[label] = 0;
-        //            }
-        //        }
-
-        //        using (var connection = new SqlConnection(_connectionString))
-        //        {
-        //            await connection.OpenAsync();
-
-        //            using (var command = new SqlCommand("GetDashboardData", connection))
-        //            {
-        //                command.CommandType = CommandType.StoredProcedure;
-        //                command.Parameters.AddWithValue("@TimeRange", timeRange.ToLower());
-
-        //                using (var reader = await command.ExecuteReaderAsync())
-        //                {
-        //                    while (await reader.ReadAsync())
-        //                    {
-        //                        int year = reader.GetInt32(0);
-        //                        string label;
-        //                        int productCount;
-        //                        double orderCount, revenue, duePayment;
-
-        //                        if (timeRange == "day")
-        //                        {
-        //                            var date = reader.GetDateTime(1);
-        //                            label = date.Day.ToString();
-        //                            productCount = reader.GetInt32(2);
-        //                            orderCount = reader.GetInt32(3);
-        //                            revenue = reader.IsDBNull(4) ? 0 : reader.GetDouble(4);
-        //                            duePayment = reader.IsDBNull(5) ? 0 : reader.GetDouble(5);
-        //                        }
-        //                        else if (timeRange == "week")
-        //                        {
-        //                            // This should just extract the week number from DB
-        //                            int week = reader.GetInt32(1);
-        //                            label = $"Week {week}, {year}";
-        //                            productCount = reader.GetInt32(2);
-        //                            orderCount = reader.GetInt32(3);
-        //                            revenue = reader.IsDBNull(4) ? 0 : reader.GetDouble(4);
-        //                            duePayment = reader.IsDBNull(5) ? 0 : reader.GetDouble(5);
-        //                        }
-
-        //                        else if (timeRange == "month")
-        //                        {
-        //                            int month = reader.GetInt32(1);
-        //                            label = new DateTime(year, month, 1).ToString("MMM");
-        //                            productCount = reader.GetInt32(2);
-        //                            orderCount = reader.GetInt32(3);
-        //                            revenue = reader.IsDBNull(4) ? 0 : reader.GetDouble(4);
-        //                            duePayment = reader.IsDBNull(5) ? 0 : reader.GetDouble(5);
-        //                        }
-        //                        else // year
-        //                        {
-        //                            label = year.ToString();
-        //                            productCount = reader.GetInt32(1);
-        //                            orderCount = reader.GetInt32(2);
-        //                            revenue = reader.IsDBNull(3) ? 0 : reader.GetDouble(3);
-        //                            duePayment = reader.IsDBNull(4) ? 0 : reader.GetDouble(4);
-        //                        }
-
-        //                        // Update existing values
-        //                        if (productDataDict.ContainsKey(label))
-        //                        {
-        //                            productDataDict[label] = productCount;
-        //                            orderDataDict[label] = orderCount;
-        //                            revenueDataDict[label] = revenue;
-        //                            duePaymentDataDict[label] = duePayment;
-        //                        }
-        //                    }
-        //                }
-        //            }
-        //        }
-
-        //        // Prepare final lists from dictionaries
-        //        var productData = labels.Select(l => productDataDict[l]).ToList();
-        //        var orderData = labels.Select(l => orderDataDict[l]).ToList();
-        //        var revenueData = labels.Select(l => revenueDataDict[l]).ToList();
-        //        var duePaymentData = labels.Select(l => duePaymentDataDict[l]).ToList();
-
-        //        // Send to View
-        //        ViewBag.Labels = labels;
-        //        ViewBag.ProductData = productData;
-        //        ViewBag.OrderData = orderData;
-        //        ViewBag.RevenueData = revenueData;
-        //        ViewBag.DuePaymentData = duePaymentData;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "An error occurred.");
-        //        ViewBag.ErrorMessage = "An error occurred.";
-        //    }
-
-        //    return View();
-        //}
-
         [HttpGet]
         public async Task<IActionResult> GetDashboardChartData(string timeRange = "day")
         {
@@ -1142,9 +949,6 @@ namespace ECommerce.Controllers
                 var orderDataDict = new Dictionary<string, double>();
                 var revenueDataDict = new Dictionary<string, double>();
                 var duePaymentDataDict = new Dictionary<string, double>();
-
-                // 👇 The same label initialization logic as in your original method
-                // You can move this into a helper function to reduce duplication...
 
                 if (timeRange == "day")
                 {
@@ -1302,7 +1106,7 @@ namespace ECommerce.Controllers
         [HttpGet]
         public IActionResult Dashboard()
         {
-            return View(); // just returns the .cshtml
+            return View(); 
         }
 
     }

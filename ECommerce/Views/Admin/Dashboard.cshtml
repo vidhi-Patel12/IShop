@@ -71,176 +71,175 @@
 
 
 <script>
-        $(document).ready(function () {
-            loadDashboardData('day'); // Load day data by default
-        });
+    $(document).ready(function () {
+        loadDashboardData('day'); // Load day data by default
+    });
 
-         var productChartInstance = null;
+    var productChartInstance = null;
     var orderChartInstance = null;
     var revenueChartInstance = null;
     var duePaymentChartInstance = null;
 
+    function loadDashboardData(timeRange) {
+        $('#timeRangeButtons button').removeClass('active');
+        $(`#timeRangeButtons button[data-range="${timeRange}"]`).addClass('active');
 
-        function loadDashboardData(timeRange) {
-             $('#timeRangeButtons button').removeClass('active');
-            $(`#timeRangeButtons button[data-range="${timeRange}"]`).addClass('active');
-
-            $.ajax({
-                url: '/Admin/GetDashboardChartData?timeRange=' + timeRange,
-                method: 'GET',
-                success: function (data) {
-                    // Render cards using the returned data
-                    let html = `
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6 col-lg-3">
-                                <div class="card shadow-sm">
-                                    <div class="card-body">
-                                        <div class="d-flex align-items-center">
-                                            <div class="icon-box bg-dark text-white rounded p-3">
-                                                <i class="fas fa-box fa-2x"></i>
+        $.ajax({
+            url: '/Admin/GetDashboardChartData?timeRange=' + timeRange,
+            method: 'GET',
+            success: function (data) {
+                        // Render cards using the returned data
+                        let html = `
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6 col-lg-3">
+                                    <div class="card shadow-sm">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="icon-box bg-dark text-white rounded p-3">
+                                                    <i class="fas fa-box fa-2x"></i>
+                                                </div>
+                                                <div class="ms-auto text-end">
+                                                    <h5 class="card-title">Products</h5>
+                                                    <h4>${data.productData.reduce((a, b) => a + b, 0)}</h4>
+                                                </div>
                                             </div>
-                                            <div class="ms-auto text-end">
-                                                <h5 class="card-title">Products</h5>
-                                                <h4>${data.productData.reduce((a, b) => a + b, 0)}</h4>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 col-lg-3">
+                                    <div class="card shadow-sm">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="icon-box bg-primary text-white rounded p-3">
+                                                    <i class="fas fa-receipt fa-2x"></i>
+                                                </div>
+                                                <div class="ms-auto text-end">
+                                                    <h5 class="card-title">Orders</h5>
+                                                    <h4>${data.orderData.reduce((a, b) => a + b, 0)}</h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 col-lg-3">
+                                    <div class="card shadow-sm">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="icon-box bg-success text-white rounded p-3">
+                                                    <i class="fas fa-store fa-2x"></i>
+                                                </div>
+                                                <div class="ms-auto text-end">
+                                                    <h5 class="card-title">Revenue</h5>
+                                                    <h4>${data.revenueData.reduce((a, b) => a + b, 0).toFixed(2)}</h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 col-lg-3">
+                                    <div class="card shadow-sm">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="icon-box bg-danger text-white rounded p-3">
+                                                    <i class="fas fa-adjust fa-2x"></i>
+                                                </div>
+                                                <div class="ms-auto text-end">
+                                                    <h5 class="card-title">Due Payments</h5>
+                                                    <h4>${data.duePaymentData.reduce((a, b) => a + b, 0).toFixed(2)}</h4>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="col-md-6 col-lg-3">
-                                <div class="card shadow-sm">
-                                    <div class="card-body">
-                                        <div class="d-flex align-items-center">
-                                            <div class="icon-box bg-primary text-white rounded p-3">
-                                                <i class="fas fa-receipt fa-2x"></i>
-                                            </div>
-                                            <div class="ms-auto text-end">
-                                                <h5 class="card-title">Orders</h5>
-                                                <h4>${data.orderData.reduce((a, b) => a + b, 0)}</h4>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6 col-lg-3">
-                                <div class="card shadow-sm">
-                                    <div class="card-body">
-                                        <div class="d-flex align-items-center">
-                                            <div class="icon-box bg-success text-white rounded p-3">
-                                                <i class="fas fa-store fa-2x"></i>
-                                            </div>
-                                            <div class="ms-auto text-end">
-                                                <h5 class="card-title">Revenue</h5>
-                                                <h4>${data.revenueData.reduce((a, b) => a + b, 0).toFixed(2)}</h4>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6 col-lg-3">
-                                <div class="card shadow-sm">
-                                    <div class="card-body">
-                                        <div class="d-flex align-items-center">
-                                            <div class="icon-box bg-danger text-white rounded p-3">
-                                                <i class="fas fa-adjust fa-2x"></i>
-                                            </div>
-                                            <div class="ms-auto text-end">
-                                                <h5 class="card-title">Due Payments</h5>
-                                                <h4>${data.duePaymentData.reduce((a, b) => a + b, 0).toFixed(2)}</h4>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                        `;
 
                     $('#dashboardContainer').html(html);
 
                     if (productChartInstance) productChartInstance.destroy();
-                if (orderChartInstance) orderChartInstance.destroy();
-                if (revenueChartInstance) revenueChartInstance.destroy();
-                if (duePaymentChartInstance) duePaymentChartInstance.destroy();
+                    if (orderChartInstance) orderChartInstance.destroy();
+                    if (revenueChartInstance) revenueChartInstance.destroy();
+                    if (duePaymentChartInstance) duePaymentChartInstance.destroy();
 
-                //  Product Chart
-                const productCtx = document.getElementById('productChart').getContext('2d');
-                productChartInstance = new Chart(productCtx, {
-                    type: 'line',
-                    data: {
-                        labels: data.labels,
-                        datasets: [{
-                            label: 'Products',
-                            data: data.productData,
-                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                            borderColor: 'rgba(54, 162, 235, 1)',
-                            borderWidth: 2,
-                             tension: 0.4
-                        }]
-                    },
-                    options: { responsive: true }
-                });
+                    //  Product Chart
+                    const productCtx = document.getElementById('productChart').getContext('2d');
+                    productChartInstance = new Chart(productCtx, {
+                        type: 'line',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                label: 'Products',
+                                data: data.productData,
+                                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 2,
+                                 tension: 0.4
+                            }]
+                        },
+                        options: { responsive: true }
+                    });
 
-                //  Order Chart
-                const orderCtx = document.getElementById('orderChart').getContext('2d');
-                orderChartInstance = new Chart(orderCtx, {
-                    type: 'line',
-                    data: {
-                        labels: data.labels,
-                        datasets: [{
-                            label: 'Orders',
-                            data: data.orderData,
-                            backgroundColor: 'rgba(255, 206, 86, 0.2)',
-                            borderColor: 'rgba(255, 206, 86, 1)',
-                            borderWidth: 2,
-                            tension: 0.4
-                        }]
-                    },
-                    options: { responsive: true }
-                });
+                    //  Order Chart
+                    const orderCtx = document.getElementById('orderChart').getContext('2d');
+                    orderChartInstance = new Chart(orderCtx, {
+                        type: 'line',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                label: 'Orders',
+                                data: data.orderData,
+                                backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                                borderColor: 'rgba(255, 206, 86, 1)',
+                                borderWidth: 2,
+                                tension: 0.4
+                            }]
+                        },
+                        options: { responsive: true }
+                    });
 
-                //  Revenue Chart
-                const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-                revenueChartInstance = new Chart(revenueCtx, {
-                    type: 'line',
-                    data: {
-                        labels: data.labels,
-                        datasets: [{
-                            label: 'Revenue',
-                            data: data.revenueData,
-                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 2,
-                            tension: 0.4
-                        }]
-                    },
-                    options: { responsive: true }
-                });
+                    //  Revenue Chart
+                    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+                    revenueChartInstance = new Chart(revenueCtx, {
+                        type: 'line',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                label: 'Revenue',
+                                data: data.revenueData,
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 2,
+                                tension: 0.4
+                            }]
+                        },
+                        options: { responsive: true }
+                    });
 
-                //  Due Payment Chart
-                const dueCtx = document.getElementById('duePaymentChart').getContext('2d');
-                duePaymentChartInstance = new Chart(dueCtx, {
-                    type: 'line',
-                    data: {
-                        labels: data.labels,
-                        datasets: [{
-                            label: 'Due Payments',
-                            data: data.duePaymentData,
-                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                            borderColor: 'rgba(255, 99, 132, 1)',
-                            borderWidth: 2,
-                            tension: 0.4
-                        }]
-                    },
-                    options: { responsive: true }
-                });
-            },
-                error: function (err) {
-                    alert("Error loading dashboard data.");
-                    console.error(err);
-                }
-            });
-        }
+                    //  Due Payment Chart
+                    const dueCtx = document.getElementById('duePaymentChart').getContext('2d');
+                    duePaymentChartInstance = new Chart(dueCtx, {
+                        type: 'line',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                label: 'Due Payments',
+                                data: data.duePaymentData,
+                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                borderWidth: 2,
+                                tension: 0.4
+                            }]
+                        },
+                        options: { responsive: true }
+                    });
+                },
+            error: function (err) {
+                alert("Error loading dashboard data.");
+                console.error(err);
+            }
+        });
+    }
 </script>

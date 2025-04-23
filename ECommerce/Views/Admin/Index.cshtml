@@ -79,7 +79,7 @@
                                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                         </div>
                                                         <div class="modal-body">
-                                                            <p>Are you sure you want to delete this image?</p>
+                                                            <p>Are you sure you want to delete this product?</p>
                                                         </div>
                                                         <div class="modal-footer">
                                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -277,7 +277,6 @@
 <!-- Initialize DataTable -->
 <script type="text/javascript">
     // Handle image preview
-
     function previewImage(input, previewId) {
        if (input.files && input.files[0]) {
            let reader = new FileReader();
@@ -310,37 +309,33 @@
             "border": "1px solid #ccc"
         });
 
-    @* $('#myModal').on('hidden.bs.modal', function() {
-          $(this).find('form')[0].reset();
-        }); *@
+        // Reset form when clicking Cancel or Close (X) button
+        document.getElementById("cancelButton").addEventListener("click", resetForm);
+        document.querySelector(".btn-close").addEventListener("click", resetForm);
 
-    // Reset form when clicking Cancel or Close (X) button
-    document.getElementById("cancelButton").addEventListener("click", resetForm);
-    document.querySelector(".btn-close").addEventListener("click", resetForm);
+         $(".btn-close").on("click", function () {
+            $(this).blur(); // Remove focus from close button
+            setTimeout(() => {
+                if (document.activeElement.closest("#ProductModal")) {
+                    document.activeElement.blur(); // Ensure no element inside modal is focused
+                }
+            }, 50);
+        });
 
-     $(".btn-close").on("click", function () {
-        $(this).blur(); // Remove focus from close button
-        setTimeout(() => {
-            if (document.activeElement.closest("#ProductModal")) {
-                document.activeElement.blur(); // Ensure no element inside modal is focused
-            }
-        }, 50);
-    });
+        // Ensure modal is interactive when shown
+        $("#ProductModal").on("shown.bs.modal", function () {
+            $(this).removeAttr("aria-hidden");
+            $(this).removeAttr("inert");
+        });
 
-    // Ensure modal is interactive when shown
-    $("#ProductModal").on("shown.bs.modal", function () {
-        $(this).removeAttr("aria-hidden");
-        $(this).removeAttr("inert");
-    });
-
-    // Ensure focus is removed when modal is hidden
-    $("#ProductModal").on("hidden.bs.modal", function () {
-        setTimeout(() => {
-            document.activeElement.blur(); // Remove focus from any active element
-            $("#someSafeElement").focus(); // Move focus outside modal
-        }, 50);
-        $(this).attr("inert", "true");
-    });
+        // Ensure focus is removed when modal is hidden
+        $("#ProductModal").on("hidden.bs.modal", function () {
+            setTimeout(() => {
+                document.activeElement.blur(); // Remove focus from any active element
+                $("#someSafeElement").focus(); // Move focus outside modal
+            }, 50);
+            $(this).attr("inert", "true");
+        });
 
         $("#openModal").click(function () {
              resetForm();
@@ -396,79 +391,79 @@
             console.warn("No productId or productsImageId found in URL.");
         }
 
-      $(document).on("click", ".view-details", function () {
-        var productId = $(this).data("id");
-        var productsImageId = $(this).data("productsimageid");
+        $(document).on("click", ".view-details", function () {
+            var productId = $(this).data("id");
+            var productsImageId = $(this).data("productsimageid");
 
-        if (!productId) {
-            showMessageModal("success", "Inavid Product.");
-            return;
-        }
-
-        // Show the modal
-        $("#ProductDetailsModal").modal("show");
-
-        // Show loading message while data is being fetched
-        $("#ProductDetailsContent").html("<p class='text-center'>Loading...</p>");
-
-        // Fetch product details via AJAX from GetById
-        $.ajax({
-            url: `/Admin/GetById`,
-            type: "GET",
-            data: { id: productId, productsImageId: productsImageId },
-            dataType: "json",
-            success: function (product) {
-                if (!product || product.productId === 0) {
-                    $("#ProductDetailsContent").html("<p class='text-danger'>No details found.</p>");
-                    return;
-                }
-
-                var productDetailsHtml = `
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h5><strong>Name: </strong>${product.name}</h5>
-                            ${product.productImages.length > 0 ? `
-                                <p><strong>Type:</strong> ${product.productImages[0].type}</p>
-                                <p><strong>Color:</strong> ${product.productImages[0].color}</p>
-                                <p><strong>Quantity:</strong> ${product.productImages[0].quantity}</p>
-                                <p><strong>MRP:</strong> ₹${product.productImages[0].mrp}</p>
-                                <p><strong>Discount:</strong> ${product.productImages[0].discount}%</p>
-                                <p><strong>Price:</strong> ₹${product.productImages[0].price}</p>
-                                <div class="row">
-                                <div class="col-md-3">
-                                    <strong>Description:</strong>
-                                 </div>
-                                <div class="col-md-9">
-                                 ${product.productImages[0].description}
-                                 </div>
-                                 </div>
-                            ` : `<p>No images available</p>`}
-                        </div>
-
-                        <div class="col-md-6 text-center">
-                            ${product.productImages.length > 0 ? `
-                                <img src="${product.productImages[0].largeImage}" class="img-thumbnail" width="80%" height="150" />
-                            ` : ''}
-                        </div>
-                        <div class="col-md-10">
-
-                        </div>
-                        <div class="col-md-1 mt-2">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                         </div>
-                    </div>
-                `;
-
-                $("#ProductDetailsContent").html(productDetailsHtml);
-            },
-            error: function () {
-                $("#ProductDetailsContent").html("<p class='text-danger'>Error loading product details.</p>");
+            if (!productId) {
+                showMessageModal("success", "Inavid Product.");
+                return;
             }
+
+            // Show the modal
+            $("#ProductDetailsModal").modal("show");
+
+            // Show loading message while data is being fetched
+            $("#ProductDetailsContent").html("<p class='text-center'>Loading...</p>");
+
+            // Fetch product details via AJAX from GetById
+            $.ajax({
+                url: `/Admin/GetById`,
+                type: "GET",
+                data: { id: productId, productsImageId: productsImageId },
+                dataType: "json",
+                success: function (product) {
+                    if (!product || product.productId === 0) {
+                        $("#ProductDetailsContent").html("<p class='text-danger'>No details found.</p>");
+                        return;
+                    }
+
+                    var productDetailsHtml = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5><strong>Name: </strong>${product.name}</h5>
+                                ${product.productImages.length > 0 ? `
+                                    <p><strong>Type:</strong> ${product.productImages[0].type}</p>
+                                    <p><strong>Color:</strong> ${product.productImages[0].color}</p>
+                                    <p><strong>Quantity:</strong> ${product.productImages[0].quantity}</p>
+                                    <p><strong>MRP:</strong> ₹${product.productImages[0].mrp}</p>
+                                    <p><strong>Discount:</strong> ${product.productImages[0].discount}%</p>
+                                    <p><strong>Price:</strong> ₹${product.productImages[0].price}</p>
+                                    <div class="row">
+                                    <div class="col-md-3">
+                                        <strong>Description:</strong>
+                                     </div>
+                                    <div class="col-md-9">
+                                     ${product.productImages[0].description}
+                                     </div>
+                                     </div>
+                                ` : `<p>No images available</p>`}
+                            </div>
+
+                            <div class="col-md-6 text-center">
+                                ${product.productImages.length > 0 ? `
+                                    <img src="${product.productImages[0].largeImage}" class="img-thumbnail" width="80%" height="150" />
+                                ` : ''}
+                            </div>
+                            <div class="col-md-10">
+
+                            </div>
+                            <div class="col-md-1 mt-2">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                             </div>
+                        </div>
+                    `;
+
+                    $("#ProductDetailsContent").html(productDetailsHtml);
+                },
+                error: function () {
+                    $("#ProductDetailsContent").html("<p class='text-danger'>Error loading product details.</p>");
+                }
+            });
         });
-    });
 
 
-     // Function to calculate price
+        // Function to calculate price
         function calculatePrice() {
             let mrp = parseFloat($("input[name='ProductImagesMRP']").val()) || 0;
             let discount = parseFloat($("input[name='ProductImagesDiscount']").val()) || 0;
@@ -558,7 +553,6 @@
 
     return isValid;
 }
-
 
     document.querySelectorAll("input, textarea,number").forEach(field => {
         field.addEventListener("input", function () {
@@ -793,7 +787,6 @@
                       <input type="hidden" id="existingLargeImage_${index}" value="${image.largeImage}">
                       <input type="hidden" id="existingMediumImage_${index}" value="${image.mediumImage}">
                       <input type="hidden" id="existingSmallImage_${index}" value="${image.smallImage}">
-
                 `;
 
                 imageContainer.appendChild(imageEntry);
@@ -840,7 +833,6 @@
                     if (existingSmallImageInput) {
                         existingSmallImageInput.value = image.smallImage;
                     }
-
                 });
             }, 500);
 
@@ -848,7 +840,6 @@
             let productModal = new bootstrap.Modal(document.getElementById("ProductModal"));
             productModal.show();
         }
-
         catch (error)
         {
             console.error('Error fetching product data:', error);
@@ -866,8 +857,8 @@
             });
         }
 
-     // Automatically recalculate price when MRP or Discount changes
-     $(document).on("input", "input[name^='ProductImagesMRP'], input[name^='ProductImagesDiscount']", function () {
+    // Automatically recalculate price when MRP or Discount changes
+    $(document).on("input", "input[name^='ProductImagesMRP'], input[name^='ProductImagesDiscount']", function () {
         calculatePrice();
      });
 
@@ -886,7 +877,7 @@
        }
     }
 
-     function updateProduct() {
+    function updateProduct() {
         //alert("Updating product...");
          if (!validateForm()) {
              return; // Stop execution if validation fails
@@ -1003,14 +994,14 @@
         });
      }
        
-     function extractFileName(url) {
+    function extractFileName(url) {
              // Use regular expression to match the file name from the URL
              const regex = /([^/]+)$/;
              const matches = url.match(regex);
              return matches ? matches[0] : '';
         }
 
-         function createFileFromPath(filePath, fileName) {
+    function createFileFromPath(filePath, fileName) {
              // Create a mock file object with the file name and some mock data (e.g., size 0, empty content)
              // In a real scenario, you would fetch the file content from the server
              let file = new File([], fileName, { type: "image/jpeg" });
@@ -1120,8 +1111,8 @@
         messageModal.show();
     }
 
-         document.addEventListener('DOMContentLoaded', function () {
-            console.log("Page ready");
-        });
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log("Page ready");
+    });
 
 </script>

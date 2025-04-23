@@ -74,7 +74,6 @@ namespace ECommerce.Controllers
                                 orderAmount = (decimal)reader.GetDouble(1); // Total Amount
                                 paymentMode = reader.GetString(2); // Payment Mode
                                 HttpContext.Session.SetString("PaymentMode", paymentMode);
-
                             }
                             else
                             {
@@ -148,18 +147,15 @@ namespace ECommerce.Controllers
                     cmd.Parameters.AddWithValue("@TransactionId", transactionId);
                     cmd.Parameters.AddWithValue("@OrderId", orderId);
                     cmd.Parameters.AddWithValue("@PaymentMode", "COD");
+                    cmd.Parameters.AddWithValue("@Amount", orderAmount);
                     cmd.Parameters.AddWithValue("@Status", paymentStatus);
                     cmd.Parameters.AddWithValue("@PaymentDate", paymentDate);
 
                     cmd.ExecuteNonQuery();
                 }
             }
-
-            // Redirect to ViewOrder after saving payment
             return RedirectToAction("Orders", "Home", new { orderId });
         }
-
-
 
         //  Generate Client Token (Required for Frontend)
         [HttpGet("braintree/client-token")]
@@ -176,7 +172,6 @@ namespace ECommerce.Controllers
             return Ok(new { paymentMode = paymentMode });
         }
 
-
         //  Process Payment
         [HttpPost("braintree/checkout")]
         public async Task<IActionResult> ProcessPayment([FromBody] PaymentRequest request)
@@ -188,7 +183,7 @@ namespace ECommerce.Controllers
 
             string paymentStatus;
             string transactionId = null;
-            decimal orderAmount = 0;
+            double orderAmount = 0;
             int iShopId = 0;
             string paymentMode = null;
             DateTime paymentDate = DateTime.Now;
@@ -218,7 +213,7 @@ namespace ECommerce.Controllers
                 }
 
                 // Fetch Order Details (Amount and IShopId)
-                using (SqlCommand cmd = new SqlCommand("SELECT IShopId, OrderAmount FROM Checkout WHERE OrderId = @OrderId", conn))
+                using (SqlCommand cmd = new SqlCommand("SELECT TOP 1 IShopId, OrderAmount FROM Checkout WHERE OrderId = @OrderId ORDER BY CheckoutId DESC", conn))
                 {
                     cmd.Parameters.AddWithValue("@OrderId", request.OrderId);
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -226,7 +221,7 @@ namespace ECommerce.Controllers
                         if (reader.Read())
                         {
                             iShopId = reader.GetInt32(0);
-                            orderAmount = (decimal)reader.GetDouble(1);
+                            orderAmount = reader.GetDouble(1);
                         }
                         else
                         {
@@ -238,7 +233,7 @@ namespace ECommerce.Controllers
                 // Process Payment using Braintree
                 var transactionRequest = new TransactionRequest
                 {
-                    Amount = orderAmount,  // Use Amount from Database
+                    Amount = (decimal)orderAmount,  // Use Amount from Database
                     PaymentMethodNonce = request.Nonce,
                     Options = new TransactionOptionsRequest
                     {
@@ -258,13 +253,13 @@ namespace ECommerce.Controllers
                     cmd.Parameters.AddWithValue("@TransactionId", transactionId ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@OrderId", request.OrderId);
                     cmd.Parameters.AddWithValue("@PaymentMode", request.PaymentMode);
+                    cmd.Parameters.AddWithValue("@Amount", orderAmount);
                     cmd.Parameters.AddWithValue("@Status", paymentStatus);
                     cmd.Parameters.AddWithValue("@PaymentDate", paymentDate);
 
                     cmd.ExecuteNonQuery();
                 }
             }
-
 
             if (paymentStatus == "Success")
             {

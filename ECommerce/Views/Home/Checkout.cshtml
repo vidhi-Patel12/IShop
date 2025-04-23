@@ -4,7 +4,6 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-
 <!-- page-title -->
 <div class="page-title" style="background-image: url('@Url.Content("~/content/images/section/page-title.jpg")');">
     <div class="container-full">
@@ -32,7 +31,6 @@
                             </div> <!-- Address List Section -->
                         </div>
                     </div>
-
                     <div class="float-end">
                         <a href="#" class="text-primary" id="addNewAddress" data-bs-toggle="modal" data-bs-target="#addAddressModal">
                             Add a new delivery address
@@ -56,19 +54,9 @@
                             </div>
                         </div>
                     </div>
-                    @*  <div class="col-md-5 float-end">
-                        <input type="text" id="CoupanCode" name="CoupanCode" placeholder="Enter Code"></input>
-                        <button type="button" onclick="applyCoupon()">Apply</button>
-                    </div> *@
                 </div>
             </div>
 
-            <!-- Order Summary -->
-            @*  <div class="card p-4 mb-4">
-                <h5><strong>Items</strong></h5>
-                <div id="checkoutContainer" class="col-md-12">
-                </div>
-            </div> *@
             <div class="card p-4 mb-4 ">
                 <div class="col-xl-12">
                     <div class="flat-sidebar-checkout">
@@ -117,111 +105,19 @@
                                     <div class="swiper-wrapper" id="couponContainer">
                                         <!-- Coupons will be dynamically inserted here -->
                                     </div>
-                                </div>
-                                @*  <div dir="ltr" class="swiper tf-sw-categories" data-preview="2.25" data-tablet="3" data-mobile-sm="2.5" data-mobile="1.2" data-space-lg="20" data-space-md="20" data-space="15" data-pagination="1" data-pagination-md="1" data-pagination-lg="1">
-                                    <div class="swiper-wrapper">
-                                        <div class="swiper-slide">
-                                            <div class="box-discount">
-                                                <div class="discount-top">
-                                                    <div class="discount-off">
-                                                        <div class="text-caption-1">Discount</div>
-                                                        <span class="sale-off text-btn-uppercase">10% OFF</span>
-                                                    </div>
-                                                    <div class="discount-from">
-                                                        <p class="text-caption-1">For all orders <br> from 200$</p>
-                                                    </div>
-                                                </div>
-                                                <div class="discount-bot">
-                                                    <span class="text-btn-uppercase">Mo234231</span>
-                                                    <button class="tf-btn"><span class="text">Apply Code</span></button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="swiper-slide">
-                                            <div class="box-discount active">
-                                                <div class="discount-top">
-                                                    <div class="discount-off">
-                                                        <div class="text-caption-1">Discount</div>
-                                                        <span class="sale-off text-btn-uppercase">10% OFF</span>
-                                                    </div>
-                                                    <div class="discount-from">
-                                                        <p class="text-caption-1">For all orders <br> from 200$</p>
-                                                    </div>
-                                                </div>
-                                                <div class="discount-bot">
-                                                    <span class="text-btn-uppercase">Mo234231</span>
-                                                    <button class="tf-btn"><span class="text">Apply Code</span></button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="swiper-slide">
-                                            <div class="box-discount">
-                                                <div class="discount-top">
-                                                    <div class="discount-off">
-                                                        <div class="text-caption-1">Discount</div>
-                                                        <span class="sale-off text-btn-uppercase">10% OFF</span>
-                                                    </div>
-                                                    <div class="discount-from">
-                                                        <p class="text-caption-1">For all orders <br> from 200$</p>
-                                                    </div>
-                                                </div>
-                                                <div class="discount-bot">
-                                                    <span class="text-btn-uppercase">Mo234231</span>
-                                                    <button class="tf-btn"><span class="text">Apply Code</span></button>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </div> *@
+                                </div>                               
                                 <div class="ip-discount-code">
                                     <input type="text" id="CoupanCode" name="CoupanCode" placeholder="Add voucher discount">
                                     <button type="button" class="tf-btn" onclick="applyCoupon()">
                                         <span class="text">Apply Code</span>
                                     </button>
                                 </div>
-
-
-                                @*  <p>Discount code is only used for orders with a total value of products over $500.00</p> *@
-                            </div>
-                            @* <div class="sec-total-price">
-                                <div class="top">
-                                    <div class="item d-flex align-items-center justify-content-between text-button">
-                                        <span>Shipping</span>
-                                        <span>Free</span>
-                                    </div>
-                                    <div class="item d-flex align-items-center justify-content-between text-button">
-                                        <span>Discounts</span>
-                                        <span>-$80.00</span>
-                                    </div>
-                                </div>
-                                <div class="bottom">
-                                    <h5 class="d-flex justify-content-between">
-                                        <span>Total</span>
-                                        <span class="total-price-checkout">$186,99</span>
-                                    </h5>
-                                </div>
-                            </div> *@
+                            </div>                           
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Right Section: Order Summary -->
-        @* <div class="col-md-5">
-            <div class="card p-4">
-                <h5><strong>Order Summary</strong></h5>
-                <hr>
-                <p>Total: <span class="float-end" id="totalCheckoutAmount">₹0.00</span></p>
-                <p>Delivery: <span class="float-end" id="deliveryCharge">₹0.00</span></p>
-                <p>Final Amount: <span class="float-end" id="finalAmount">₹0.00</span></p>
-                <p>Promotion Applied: <span class="float-end" id="promotionApplied">₹0.00</span></p>
-                <hr>
-                <h5><strong>Order Total:</strong> <span class="float-end" id="orderTotalAmount">₹0.00</span></h5>
-                <button id="placeOrderBtn" class="btn btn-warning w-100 mt-3">Place Your Order</button>
-            </div>
-        </div> *@
 
         <div id="orderSummarySection" class="col-xl-4">
             <div class="fl-sidebar-cart">
@@ -249,30 +145,7 @@
                             <span id="promotionApplied" class="price">₹0.00</span>
                         </div>
                     </div>
-                    @* <div class="flex-grow-1">
-                            <fieldset class="ship-item">
-                                 <input type="radio" name="ship-check" class="tf-check-rounded" id="free" checked>
-                                <label for="free">
-                                    <span>Free Shipping</span>
-
-                                </label>
-                            </fieldset>
-                              <fieldset class="ship-item">
-                                <input type="radio" name="ship-check" class="tf-check-rounded" id="local">
-                                <label for="local">
-                                    <span>Local:</span>
-                                    <span class="price">$35.00</span>
-                                </label>
-                            </fieldset>
-                            <fieldset class="ship-item">
-                                <input type="radio" name="ship-check" class="tf-check-rounded" id="rate">
-                                <label for="rate">
-                                    <span>Flat Rate:</span>
-                                    <span class="price">$35.00</span>
-                                </label>
-                            </fieldset>
-                    </div>*@
-
+                   
                     <h5 class="total-order d-flex justify-content-between align-items-center">
                         <span>Order Total</span>
                         <span class="total" id="orderTotalAmount">₹0.00</span>
@@ -351,7 +224,6 @@
     </div>
 </div>
 
-
 <!-- Order Success Modal -->
 <div class="modal fade" id="orderSuccessModal" tabindex="-1" aria-labelledby="orderSuccessModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -372,89 +244,88 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", async function () {  
-            let addressListContainer = document.getElementById("addressListContainer");
+        let addressListContainer = document.getElementById("addressListContainer");
 
-            try {
-                let response = await fetch(`/Home/GetAddresses`);
-                let addresses = await response.json();
+        try {
+            let response = await fetch(`/Home/GetAddresses`);
+            let addresses = await response.json();
 
-                //  Ensure the response is an array
-                if (!Array.isArray(addresses)) {
-                    throw new Error("Invalid API response: Expected an array.");
-                }
+            //  Ensure the response is an array
+            if (!Array.isArray(addresses)) {
+                throw new Error("Invalid API response: Expected an array.");
+            }
 
-                if (addresses.length === 0) {
-                    addressListContainer.innerHTML = `<p>No saved addresses found.</p>`;
-                    return;
-                }
+            if (addresses.length === 0) {
+                addressListContainer.innerHTML = `<p>No saved addresses found.</p>`;
+                return;
+            }
 
-                let storedAddress = JSON.parse(localStorage.getItem("selectedAddress")) || null;
+            let storedAddress = JSON.parse(localStorage.getItem("selectedAddress")) || null;
 
+            let addressHTML = "";
+            addresses.forEach((address, index) => {
+                let isHidden = index >= 2 ? "d-none extra-address" : ""; // Hide addresses beyond the first two
 
-                let addressHTML = "";
-                addresses.forEach((address, index) => {
-                    let isHidden = index >= 2 ? "d-none extra-address" : ""; // Hide addresses beyond the first two
+                addressHTML += `
+                    <div class="delivery-address p-2 border rounded mb-2 d-flex align-items-start ${isHidden}">
+                        <div class="me-2">
+                            <input type="radio" name="selectedAddress" class="select-address mt-2" ${index === 0 ? "checked" : ""} data-id="${address.addressId}">
+                        </div>
+                        <div class="flex-grow-1">
+                            <strong>${address.fullName}</strong>
+                            <p class="mb-1">${address.address}, ${address.city}, ${address.state}, ${address.zipCode}, ${address.country}</p>
+                            <a href="#" class="text-primary edit-address" data-id="${address.addressId}">Edit address</a>
+                        </div>
+                    </div>`;
+            });
 
-                    addressHTML += `
-                        <div class="delivery-address p-2 border rounded mb-2 d-flex align-items-start ${isHidden}">
-                            <div class="me-2">
-                                <input type="radio" name="selectedAddress" class="select-address mt-2" ${index === 0 ? "checked" : ""} data-id="${address.addressId}">
-                            </div>
-                            <div class="flex-grow-1">
-                                <strong>${address.fullName}</strong>
-                                <p class="mb-1">${address.address}, ${address.city}, ${address.state}, ${address.zipCode}, ${address.country}</p>
-                                <a href="#" class="text-primary edit-address" data-id="${address.addressId}">Edit address</a>
-                            </div>
-                        </div>`;
+            // Add "Show More / Show Less" button if there are more than 2 addresses
+            if (addresses.length > 2) {
+                addressHTML += `
+                    <button id="toggleAddresses" class="btn btn-link text-primary">Show More</button>`;
+            }
+
+            addressListContainer.innerHTML = addressHTML;
+
+            // Attach event listeners to Edit buttons
+            document.querySelectorAll(".edit-address").forEach(button => {
+                button.addEventListener("click", function () {
+                    let addressId = this.getAttribute("data-id");
+                    editAddress(addressId);
                 });
+            });
 
-                // Add "Show More / Show Less" button if there are more than 2 addresses
-                if (addresses.length > 2) {
-                    addressHTML += `
-                        <button id="toggleAddresses" class="btn btn-link text-primary">Show More</button>`;
-                }
-
-                addressListContainer.innerHTML = addressHTML;
-
-                // Attach event listeners to Edit buttons
-                document.querySelectorAll(".edit-address").forEach(button => {
-                    button.addEventListener("click", function () {
-                        let addressId = this.getAttribute("data-id");
-                        editAddress(addressId);
-                    });
-                });
-
-                // Store selected address when changed
-                document.querySelectorAll(".select-address").forEach(radio => {
-                    radio.addEventListener("change", function () {
-                        let selectedId = this.getAttribute("data-id");
-                        let selectedAddr = addresses.find(addr => addr.addressId == selectedId);
-                         if (selectedAddr) {
-                            localStorage.setItem("selectedAddress", JSON.stringify(selectedAddr));
-                            console.log(" Address saved:", selectedAddr);
-                        }
-                        displaySelectedAddress(selectedAddr);
+            // Store selected address when changed
+            document.querySelectorAll(".select-address").forEach(radio => {
+                radio.addEventListener("change", function () {
+                    let selectedId = this.getAttribute("data-id");
+                    let selectedAddr = addresses.find(addr => addr.addressId == selectedId);
+                     if (selectedAddr) {
                         localStorage.setItem("selectedAddress", JSON.stringify(selectedAddr));
-                    });
-                });
-
-                if (storedAddress) {
-                    let selectedRadio = document.querySelector(`.select-address[data-id="${storedAddress.addressId}"]`);
-                    if (selectedRadio) {
-                        selectedRadio.checked = true;
-                        displaySelectedAddress(storedAddress);
-                    } else {
-                        console.warn(" Stored address not found in list, selecting first available.");
-                        selectFirstAvailableAddress(addresses);
+                        console.log(" Address saved:", selectedAddr);
                     }
-                } 
-                else 
-                {
+                    displaySelectedAddress(selectedAddr);
+                    localStorage.setItem("selectedAddress", JSON.stringify(selectedAddr));
+                });
+            });
+
+            if (storedAddress) {
+                let selectedRadio = document.querySelector(`.select-address[data-id="${storedAddress.addressId}"]`);
+                if (selectedRadio) {
+                    selectedRadio.checked = true;
+                    displaySelectedAddress(storedAddress);
+                } else {
+                    console.warn(" Stored address not found in list, selecting first available.");
+                    selectFirstAvailableAddress(addresses);
+                }
+            } 
+            else 
+            {
                 console.warn(" No stored address found. Selecting first available.");
                 selectFirstAvailableAddress(addresses);
-                }
+            }
 
-                function selectFirstAvailableAddress(addresses) {
+            function selectFirstAvailableAddress(addresses) {
                     if (addresses.length > 0) {
                         let firstAddress = addresses[0]; // First address from API
                         let firstRadio = document.querySelector(`.select-address[data-id="${firstAddress.addressId}"]`);
@@ -467,28 +338,28 @@
                     }
                 }
 
-                // Handle Show More / Show Less toggle
-                let toggleButton = document.getElementById("toggleAddresses");
-                if (toggleButton) {
-                    toggleButton.addEventListener("click", function () {
-                        let hiddenAddresses = document.querySelectorAll(".extra-address");
-                        let isExpanded = hiddenAddresses.length > 0 && !hiddenAddresses[0].classList.contains("d-none");
+            // Handle Show More / Show Less toggle
+            let toggleButton = document.getElementById("toggleAddresses");
+            if (toggleButton) {
+                toggleButton.addEventListener("click", function () {
+                    let hiddenAddresses = document.querySelectorAll(".extra-address");
+                    let isExpanded = hiddenAddresses.length > 0 && !hiddenAddresses[0].classList.contains("d-none");
 
-                        if (isExpanded) {
-                            hiddenAddresses.forEach(addr => addr.classList.add("d-none"));
-                            toggleButton.innerText = "Show More";
-                        } else {
-                            hiddenAddresses.forEach(addr => addr.classList.remove("d-none"));
-                            toggleButton.innerText = "Show Less";
-                        }
-                    });
-                }
-
-            } catch (error) {
-                console.error("Error fetching addresses:", error);
+                    if (isExpanded) {
+                        hiddenAddresses.forEach(addr => addr.classList.add("d-none"));
+                        toggleButton.innerText = "Show More";
+                    } else {
+                        hiddenAddresses.forEach(addr => addr.classList.remove("d-none"));
+                        toggleButton.innerText = "Show Less";
+                    }
+                });
             }
 
-           try {
+        } catch (error) {
+                console.error("Error fetching addresses:", error);
+        }
+
+        try {
                  let response = await fetch("/Home/Coupan"); // Fetch coupons
                  let coupons = await response.json();
                  let couponContainer = document.getElementById("couponContainer");
@@ -550,9 +421,9 @@
                     watchSlidesVisibility: true, // Ensure visibility updates
                 });
            } 
-           catch (error) {
-            console.error("Error fetching coupons:", error);
-           }
+        catch (error) {
+         console.error("Error fetching coupons:", error);
+        }
     });
 
     document.getElementById("couponContainer").addEventListener("click", function (event) {
@@ -569,22 +440,14 @@
         }
     });
 
-
-    // //  Function to display selected address in UI
-    // function displaySelectedAddress(address) {
-    //     if (!address) return;
-    //     document.getElementById("fullName").innerText = address.fullName;
-    //     document.getElementById("address").innerText = `${address.address}, ${address.city}, ${address.state}, ${address.zipCode}, ${address.country}`;
-    // }
-
     //  Function to display selected address
     function displaySelectedAddress(address) {
         if (!address) return;
         document.getElementById("fullName").innerText = address.fullName;
         document.getElementById("address").innerText = `${address.address}, ${address.city}, ${address.state}, ${address.zipCode}, ${address.country}`;
 
-         document.body.classList.remove("modal-open");
-                document.querySelectorAll(".modal-backdrop").forEach(el => el.remove());
+        document.body.classList.remove("modal-open");
+        document.querySelectorAll(".modal-backdrop").forEach(el => el.remove());
     }
 
     // Function to Edit Address
@@ -682,37 +545,6 @@
         modalInstance.show();
 
     });
-
-    // function updateQuantity(index, amount) {
-    //     let checkoutItems = JSON.parse(localStorage.getItem("checkoutItems")) || [];
-    //     let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-
-    //     if (checkoutItems[index]) {
-    //         checkoutItems[index].quantity += amount;
-
-    //         if (checkoutItems[index].quantity <= 0) {
-    //             checkoutItems.splice(index, 1); // Remove item if quantity is 0
-    //         } else {
-    //             checkoutItems[index].total = (checkoutItems[index].quantity * checkoutItems[index].price).toFixed(2);
-    //         }
-    //     }
-
-    //     // Update cartItems based on checkoutItems
-    //     let productId = checkoutItems[index]?.productId; // Assuming each item has a unique productId
-    //     let cartItem = cartItems.find(item => item.productId === productId);
-    //     if (cartItem) {
-    //         cartItem.quantity = checkoutItems[index]?.quantity || 0;
-    //         cartItem.total = checkoutItems[index]?.total || 0;
-    //         if (cartItem.quantity <= 0) {
-    //             cartItems = cartItems.filter(item => item.productId !== productId);
-    //         }
-    //     }
-
-    //     localStorage.setItem("checkoutItems", JSON.stringify(checkoutItems));
-    //     localStorage.setItem("cartItems", JSON.stringify(cartItems));
-
-    //     renderCheckout(); // Re-render checkout after updating quantity
-    // }
 
     let isCouponApplied = localStorage.getItem("appliedCoupon") ? true : false;
 
@@ -817,7 +649,7 @@
     }
 
      //  Function to fetch `IShopId` from cookies
-        function getCookie(name) {
+    function getCookie(name) {
         let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
         return match ? decodeURIComponent(match[2]) : null;
     }
@@ -870,11 +702,12 @@
     async function loadCartFromDatabase() {
         let orderPlaced = localStorage.getItem("orderPlaced");
 
-    if (orderPlaced === "true") {
-        console.log("Order has already been placed. No need to load cart.");
-        // Optionally, you can clear cart data here or just skip loading the cart
-        return;
-    }
+        if (orderPlaced === "true") {
+            console.log("Order has already been placed. No need to load cart.");
+            // Optionally, you can clear cart data here or just skip loading the cart
+            return;
+        }
+
         try {
             let response = await fetch("/Home/GetCart");
             let data = await response.json();
@@ -893,7 +726,6 @@
             console.error(" Error loading cart from database:", error);
         }
     }
-
 
     function renderCheckout() {
         let checkoutItems = JSON.parse(localStorage.getItem("checkoutItems")) || [];
@@ -987,100 +819,6 @@
         });
 
     }
-
-    // function updateQuantity(index, action) {
-    //     let checkoutItems = JSON.parse(localStorage.getItem("checkoutItems")) || [];
-
-    //     if (checkoutItems[index]) {
-    //         if (action === "increase") {
-    //             checkoutItems[index].quantity++;
-    //         } else if (action === "decrease" && checkoutItems[index].quantity > 1) {
-    //             checkoutItems[index].quantity--;
-    //         }
-
-    //         // Update total price for the item
-    //         checkoutItems[index].total = checkoutItems[index].quantity * checkoutItems[index].price;
-
-    //         // Save updated items to localStorage
-    //         localStorage.setItem("checkoutItems", JSON.stringify(checkoutItems));
-
-    //         // Re-render checkout
-    //         renderCheckout();
-    //     }
-    // }
-
-    // function getExpectedArrivalDate(itemDays) {
-    //         if (!itemDays || isNaN(itemDays)) {
-    //             console.warn(`Invalid arrivingDays value:`, itemDays);
-    //             return "Date Not Available"; // Handle invalid values gracefully
-    //         }
-
-    //         let today = new Date();
-    //         let totalDays = parseInt(itemDays) + 3; // Ensure conversion to number
-    //         today.setDate(today.getDate() + totalDays);
-
-    //         let options = { day: '2-digit', month: 'long', year: 'numeric' };
-    //         return today.toLocaleDateString('en-GB', options);
-    //     }
-
-    // async function checkStockAndUpdate(index, change) {
-    //         console.log(`Checking stock for index ${index} with change ${change}`);
-
-    //         let productElement = document.querySelector(`.product-item[data-index="${index}"]`);
-
-    //         if (!productElement) {
-    //             console.error(` No product item found with data-index="${index}"`);
-    //             return;
-    //         }
-
-    //         let productImageId = productElement.getAttribute("data-productimageid");
-    //         let qtyElement = document.querySelector(`#qty-${index}`);
-    //         let totalElement = productElement.querySelector(".item-total");
-
-    //         if (!qtyElement || !totalElement) {
-    //             console.error(` No quantity span or total price element found for index ${index}`);
-    //             return;
-    //         }
-
-    //         let checkoutItems = JSON.parse(localStorage.getItem("checkoutItems")) || [];
-    //         let item = checkoutItems[index];
-
-    //         if (!item) {
-    //             console.error(` Item not found in localStorage at index ${index}`);
-    //             return;
-    //         }
-
-    //         let currentQty = parseInt(qtyElement.innerText);
-    //         let newQty = currentQty + change;
-
-    //         if (newQty < 1) return; // Prevent negative quantity
-
-    //         console.log(` Checking stock for product ${productImageId} with requested quantity ${newQty}`);
-
-    //         try {
-    //             //  Only check stock
-    //             let response = await fetch(`/Home/CheckStockAvailability?productImageId=${productImageId}&requestedQty=${newQty}`);
-    //             let data = await response.json();
-
-    //             if (!data.success) {
-    //                 console.warn(` Out of stock for product ${productImageId}`);
-    //                showMessageModal("error", `Error: ${data.message}`);
-    //                 return;
-    //             }
-
-    //             //  If stock is available, update UI (but do not update database)
-    //             item.quantity = newQty;
-    //             item.total = (newQty * item.price).toFixed(2);
-    //             localStorage.setItem("checkoutItems", JSON.stringify(checkoutItems));
-
-    //             qtyElement.innerText = newQty;
-    //             totalElement.innerText = `₹${item.total}`;
-
-    //             renderCheckout(); // Recalculate checkout totals
-    //         } catch (error) {
-    //             console.error(" Error checking stock:", error);
-    //         }
-    //     }
 
     document.addEventListener("DOMContentLoaded", async function () {
 
@@ -1211,11 +949,11 @@
         }
     });
 
-     function deleteCookie(name) {
-            document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-     }
+    function deleteCookie(name) {
+       document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    }
 
-     async function deleteCartItem(productId, productsImageId) {
+    async function deleteCartItem(productId, productsImageId) {
          try
          {
                 let response = await fetch("/Home/DeleteCartItem", {
@@ -1238,12 +976,12 @@
          }
      }
 
-     function showOrderSuccessModal() {
+    function showOrderSuccessModal() {
             let orderSuccessModal = new bootstrap.Modal(document.getElementById("orderSuccessModal"));
             orderSuccessModal.show();
      }
 
-     function showMessageModal(type, message) {
+    function showMessageModal(type, message) {
          let modalTitle = document.getElementById("messageModalLabel");
          let modalBody = document.getElementById("messageText");
          let modalHeader = document.querySelector("#messageModal .modal-header");
@@ -1266,7 +1004,7 @@
          messageModal.show();
     }
 
-        window.onload = function () {
+    window.onload = function () {
         // Check if the order was placed
         let orderPlaced = localStorage.getItem("orderPlaced");
 
@@ -1286,5 +1024,3 @@
     };
 
 </script>
-
-

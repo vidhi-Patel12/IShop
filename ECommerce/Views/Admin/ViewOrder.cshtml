@@ -25,16 +25,13 @@
                 <p class="mb-1 text-muted">SHIP TO</p>
 
                 <p class="fw-bold text-primary"
-                   data-bs-toggle="popover"
-                   data-bs-trigger="hover"
-                   data-bs-placement="bottom"
-                   title="Shipping Address"
-                   data-bs-html="true"
-                   data-bs-content="
-                <strong>@Model.First().Address</strong><br>
-                <span>@Model.First().City, @Model.First().State</span><br>
-                <span>@Model.First().ZipCode, @Model.First().Country</span><br>
-                <strong>Phone:</strong> @Model.First().Mobile">
+                    data-bs-toggle="popover"
+                    data-bs-trigger="hover"
+                    data-bs-placement="bottom"
+                    title="Shipping Address"
+                    data-bs-html="true"
+                    data-bs-content=" <strong>@Model.First().Address</strong><br> <span>@Model.First().City, @Model.First().State</span><br>
+                    <span>@Model.First().ZipCode, @Model.First().Country</span><br> <strong>Phone:</strong> @Model.First().Mobile">
                     <strong>@Model.First().FullName <i class="a-icon a-icon-popover"></i></strong>
                 </p>
             </div>
@@ -66,7 +63,6 @@
             <button type="submit" class="btn btn-primary">Back</button>
         </form>
     </div>
-
     <br />
 </div>
 

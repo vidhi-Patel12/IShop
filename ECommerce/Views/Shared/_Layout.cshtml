@@ -116,18 +116,6 @@
                                     <li class="menu-item">
                                         <a href="@Url.Action("ContactUs", "Home")" class="item-link">Contact Us</a>
                                     </li>
-                                    @* <li class="menu-item position-relative">
-                                    <a href="#" class="item-link">Pages<i class="icon icon-arrow-down"></i></a>
-                                    <div class="sub-menu submenu-default">
-                                        <ul class="menu-list">
-                                            <li><a href="@Url.Action("Orders", "Home")" class="menu-link-text">My Orders</a></li>
-                                            <li><a href="@Url.Action("TrackOrder", "Tracking")" class="menu-link-text">Track Order</a></li>
-                                            <li><a href="@Url.Action("MyAccount", "Home")" class="menu-link-text">My Account</a></li>
-                                            <li><a href="@Url.Action("AboutUs", "Home")" class="menu-link-text">About Us</a></li>
-                                            <li><a href="@Url.Action("ContactUs", "Home")" class="menu-link-text">Contact Us</a></li>
-                                        </ul>
-                                    </div>
-                                </li> *@
                                 </ul>
                             }
                         </nav>
@@ -195,9 +183,7 @@
                                     </a>
                                 </li>
                             }
-
                         </ul>
-
                     </div>
                 </div>
             </div>
@@ -398,15 +384,24 @@
                             </svg>
                             Wishlist
                         </a> *@
-
-                        <a href="@Url.Action("Login", "Account")" class="site-nav-icon">
-                            <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            </svg>
-                            Login
-                        </a>
-
+                        @if (IShopId.HasValue)
+                        {
+                                <a href="@Url.Action("Logout", "Account")" class="site-nav-icon">
+                                <svg class="icon mt-2" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M13.5 7.5L10.5 10.75M13.5 7.5L10.5 4.5M13.5 7.5L4 7.5M8 13.5H1.5L1.5 1.5L8 1.5" stroke="#000000" />
+                                </svg>
+                                Logout
+                            </a>
+                        }
+                        else{
+                            <a href="@Url.Action("Login", "Account")" class="site-nav-icon">
+                                <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                Login
+                            </a>
+                        }
                     </div>
                     <div class="mb-notice">
                         <a href="#" class="text-need">Need Help?</a>
@@ -429,7 +424,7 @@
             </div>
         </div>
     </div>
-    <!-- /mobile menu -->
+    <!-- mobile menu -->
     <!-- Search Modal -->
     <div class="modal fade" id="search" tabindex="-1" aria-labelledby="searchLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -450,13 +445,10 @@
                             <span class="text text-btn text-btn-uppercase">View All</span>
                         </button>
                     </div>
-
-
                 </div>
             </div>
         </div>
     </div>
-
 
     <!-- Javascript -->
     <script type="text/javascript" src="~/content/js/bootstrap.min.js"></script>
@@ -475,7 +467,6 @@
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
 
     <script src="~/content/js/sibforms.js" defer></script>
 
@@ -514,20 +505,17 @@
                 modalHeader.classList.add("bg-danger", "text-white");
                 modalHeader.classList.remove("bg-success");
             }
-
-            // Show the modal
             let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
             messageModal.show();
         }
 
-
-
-               const input = document.getElementById("searchInput");
+        const input = document.getElementById("searchInput");
         const resultsDiv = document.getElementById("searchResults");
         const viewAllBtn = document.getElementById("viewAllBtn");
 
         let lastResults = [];
 
+        viewAllBtn.classList.add("d-none");
         input.addEventListener("input", async function () {
             const query = input.value.trim();
             resultsDiv.innerHTML = "";
@@ -555,6 +543,7 @@
                 // Show top 4 only
                 const topResults = products.slice(0, 4);
                 renderProducts(topResults);
+                setupSwatchHoverAndClick();
 
                 viewAllBtn.classList.toggle("d-none", products.length <= 4);
             } catch (err) {
@@ -565,22 +554,24 @@
 
         viewAllBtn.addEventListener("click", function () {
             renderProducts(lastResults);
+                setupSwatchHoverAndClick();
             viewAllBtn.classList.add("d-none");
         });
 
         // Function to render products as cards
-         function renderProducts(productList) {
+        function renderProducts(productList) {
             const resultsDiv = document.getElementById("searchResults");
             resultsDiv.innerHTML = "";
 
             productList.forEach(p => {
                 const productImages = p.productImages || [];
                 const firstImage = productImages[0] || {};
-                const imageUrl = firstImage.largeImage || "https://via.placeholder.com/100";
+                const imageUrl = firstImage.smallImage || "https://via.placeholder.com/100";
                 const typeSlug = firstImage.typeSlug || "default-type";
                 const colorSlug = firstImage.colorSlug || "default-color";
 
                 const productUrl = `/home/productdetails/${p.slug}/${typeSlug}/${colorSlug}`;
+                const nameLinkId = `product-name-link-${p.productId}`;
 
                 const discount = firstImage.discount || 0;
                 const mrp = firstImage.mrp || 0;
@@ -595,12 +586,16 @@
                     : `<span class="price">₹${price}</span>`;
 
                 const colorHtml = productImages.map((img, index) => {
-                    return `
-                        <li class="list-pcolor-item color-swatch">
-                            <span class="swatch-value" style="background-color: ${img.color};"></span>
-                            <img class="lazyload d-none" data-src="${img.largeImage}" data-image="${img.largeImage}" alt="color-image-${index}">
-                        </li>
-                    `;
+                   return `
+                       <li class="list-pcolor-item color-swatch active line"
+                           data-image="${img.smallImage}"
+                           data-color="${img.color}"
+                           data-colorslug="${img.colorSlug}"
+                           data-typeslug="${img.typeSlug}"
+                           data-slug="${p.slug}">
+                           <span class="swatch-value" style="background-color: ${img.color};"></span>
+                       </li>
+                   `;
                 }).join('');
 
                 const col = document.createElement("div");
@@ -619,7 +614,7 @@
                             </div>
                         </div>
                         <div class="card-product-info">
-                            <a href="${productUrl}" class="title link">${p.name}</a>
+                    <a id="${nameLinkId}" href="${productUrl}" class="title link" data-slug="${p.slug}">${p.name}</a>
                             ${priceHtml}
                             <ul class="list-colorproduct">${colorHtml}</ul>
                         </div>
@@ -627,27 +622,68 @@
                 `;
                 resultsDiv.appendChild(col);
             });
+         }
 
-            // Add hover effect for color swatches
+        function setupSwatchHoverAndClick() {
             document.querySelectorAll(".card-product").forEach(card => {
                 const mainImage = card.querySelector(".main-product-image");
-                const swatches = card.querySelectorAll(".list-pcolor-item");
+                const hoverImage = card.querySelector(".img-hover");
+                const swatches = card.querySelectorAll(".list-pcolor-item.color-swatch");
+                const viewBtn = card.querySelector(".btn-main-product");
+                const productAnchor = card.querySelector(".product-img");
+                const productTextLink = card.querySelector(".title.link");
 
-                const originalSrc = mainImage?.src;
+                let activeImage = mainImage?.getAttribute("data-src") || "";
 
                 swatches.forEach(swatch => {
-                    const imageEl = swatch.querySelector("img");
-                    const hoverImage = imageEl?.getAttribute("data-image");
+                    const swatchImage = swatch.getAttribute("data-image");
+                    const slug = swatch.getAttribute("data-slug");
+                    const colorSlug = swatch.getAttribute("data-colorslug");
+                    const typeSlug = swatch.getAttribute("data-typeslug");
 
-                    if (hoverImage) {
-                        swatch.addEventListener("mouseenter", () => {
-                            if (mainImage) mainImage.src = hoverImage;
-                        });
-                        swatch.addEventListener("mouseleave", () => {
-                            if (mainImage) mainImage.src = originalSrc;
-                        });
-                    }
+                    swatch.addEventListener("mouseenter", () => {
+                        if (mainImage && hoverImage && swatchImage) {
+                            hoverImage.src = swatchImage;
+                            mainImage.src = swatchImage;
+                        }
+
+                        // Update links during hover
+                        const productUrl = `/home/productdetails/${slug}/${typeSlug}/${colorSlug}`;
+                        if (viewBtn) viewBtn.href = productUrl;
+                        if (productAnchor) productAnchor.href = productUrl;
+                        if (productTextLink) productTextLink.href = productUrl;
+
+                    });
+
+                    swatch.addEventListener("click", () => {
+                        // Set clicked swatch as active
+                        swatches.forEach(s => s.classList.remove("active"));
+                        swatch.classList.add("active");
+
+                        // Update images to stay
+                        activeImage = swatchImage;
+                        if (mainImage && hoverImage && activeImage) {
+                            mainImage.src = activeImage;
+                            hoverImage.src = activeImage;
+                        }
+
+                        // Update links
+                        const productUrl = `/home/productdetails/${slug}/${typeSlug}/${colorSlug}`;
+                        if (viewBtn) viewBtn.href = productUrl;
+                        if (productAnchor) productAnchor.href = productUrl;
+                        if (productTextLink) productTextLink.href = productUrl;
+                    });
                 });
+
+                // Optional: set default active if needed
+                const defaultActive = card.querySelector(".list-pcolor-item.color-swatch.active");
+                if (defaultActive) {
+                    const defaultImage = defaultActive.getAttribute("data-image");
+                    if (mainImage && hoverImage && defaultImage) {
+                        mainImage.src = defaultImage;
+                        hoverImage.src = defaultImage;
+                    }
+                }
             });
         }
 
@@ -676,12 +712,16 @@
             display: flex;
             justify-content: center;
             gap: 5px;
+            border: 1px solid transparent;
         }
 
         .list-pcolor-item {
             position: relative;
-            width: 20px;
-            height: 20px;
+            width: 30px;
+            height: 30px;
+            padding: 3px;
+            border: 1px solid transparent;
+            border-radius: 6px;
         }
 
         .swatch-value {
@@ -691,7 +731,43 @@
             border-radius: 50%;
             border: 1px solid #ccc;
         }
-    </style>
 
+        .list-colorproduct .list-pcolor-item {
+            width: 24px;
+            height: 24px;
+            border: 1px solid transparent;
+            background-color: transparent;
+            -webkit-transition: all 0.4s ease;
+            -moz-transition: all 0.4s ease;
+            -ms-transition: all 0.4s ease;
+            -o-transition: all 0.4s ease;
+            transition: all 0.4s ease;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+            .list-colorproduct .list-pcolor-item img {
+                visibility: hidden;
+                width: 18px;
+                height: 18px;
+                position: absolute;
+            }
+
+            .list-colorproduct .list-pcolor-item.line {
+                border: 1px solid var(--line);
+            }
+
+            .list-colorproduct .list-pcolor-item.active, .list-colorproduct .list-pcolor-item:hover {
+                border-color: var(--main);
+            }
+
+            .list-colorproduct .list-pcolor-item.active .swatch-value, .list-colorproduct .list-pcolor-item:hover .swatch-value {
+                border-color: var(--white);
+            }
+    </style>
 </body>
 </html>

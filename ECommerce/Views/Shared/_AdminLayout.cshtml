@@ -122,7 +122,7 @@
                                     </li>
                                     <li class="menu-item">
                                         <a href="@Url.Action("ContactUs", "Home")" class="item-link">Contact Us</a>
-                                    </li>                                    
+                                    </li>
                                 </ul>
                             }
                         </nav>
@@ -177,7 +177,7 @@
                             </li>
                             @if (IShopId.HasValue)
                             {
-                                <!-- ✅ Logout Button with SVG Icon -->
+                                <!--  Logout Button with SVG Icon -->
                                 <li>
                                     <a href="/Account/Logout" class="logout-icon">
                                         <svg width="24" height="24" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -376,10 +376,11 @@
                             </li>
                             <li class="nav-mb-item">
                                 <a href="@Url.Action("ContactUs", "Home")" class="item-link">Contact Us</a>
-                            </li>                            
+                            </li>
                         </ul>
                     }
-                    else{
+                    else
+                    {
                         <ul class="nav-ul-mb" id="wrapper-menu-navigation">
                             <li class="nav-mb-item active">
                                 <a href="@Url.Action("Index", "Home")" class="item-link">Home</a>
@@ -404,15 +405,25 @@
                             </svg>
                             Wishlist
                         </a> *@
-
-                        <a href="@Url.Action("Login", "Account")" class="site-nav-icon">
-                            <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            </svg>
-                            Login
-                        </a>
-
+                        @if (IShopId.HasValue)
+                        {
+                            <a href="@Url.Action("Logout", "Account")" class="site-nav-icon">
+                                <svg class="icon mt-2" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M13.5 7.5L10.5 10.75M13.5 7.5L10.5 4.5M13.5 7.5L4 7.5M8 13.5H1.5L1.5 1.5L8 1.5" stroke="#000000" />
+                                </svg>
+                                Logout
+                            </a>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("Login", "Account")" class="site-nav-icon">
+                                <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                Login
+                            </a>
+                        }
                     </div>
                     <div class="mb-notice">
                         <a href="#" class="text-need">Need Help?</a>

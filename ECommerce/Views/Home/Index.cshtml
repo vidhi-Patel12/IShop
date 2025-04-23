@@ -173,10 +173,31 @@
                         <div class="swiper-slide">
                             <div class="card-product wow fadeInUp" data-wow-delay="0.1s">
                                 <div class="card-product-wrapper">
-                                    <a asp-action="ProductDetails" asp-route-slug="@product.Slug" asp-route-typeslug="@productImage.TypeSlug"
+                                   @*  <a asp-action="ProductDetails" asp-route-slug="@product.Slug" asp-route-typeslug="@productImage.TypeSlug"
                                        asp-route-colorslug="@productImage.ColorSlug" class="product-img">
                                         <img class="lazyload img-product" data-src="@productImage.MediumImage" src="@productImage.MediumImage" alt="image-product">
                                         <img class="lazyload img-hover" data-src="@productImage.MediumImage" src="@productImage.MediumImage" alt="image-product">
+                                    </a> *@
+                                    <a id="product-link-@product.ProductId"
+                                       class="product-img"
+                                       asp-action="ProductDetails"
+                                       asp-controller="Home"
+                                       asp-route-slug="@product.Slug"
+                                       asp-route-typeslug="@product.ProductImages.FirstOrDefault()?.TypeSlug"
+                                       asp-route-colorslug="@product.ProductImages.FirstOrDefault()?.ColorSlug"
+                                       data-slug="@product.Slug">
+
+                                        <img id="main-img-@product.ProductId"
+                                             class="lazyload img-product"
+                                             data-src="@product.ProductImages.FirstOrDefault()?.MediumImage"
+                                             src="@product.ProductImages.FirstOrDefault()?.MediumImage"
+                                             alt="image-product">
+
+                                        <img id="hover-img-@product.ProductId"
+                                             class="lazyload img-hover"
+                                             data-src="@product.ProductImages.FirstOrDefault()?.MediumImage"
+                                             src="@product.ProductImages.FirstOrDefault()?.MediumImage"
+                                             alt="image-product">
                                     </a>
                                     @if (productImage.Discount > 0)
                                     {
@@ -189,25 +210,39 @@
                                     </a>
                                 </div> *@
                                     <div class="list-btn-main">
-                                        <a href="#" data-bs-toggle="modal" class="btn-main-product add-to-cart-btn"
+                                        <a href="#" data-bs-toggle="modal"
+                                           id="add-to-cart-btn-@product.ProductId"
+                                           class="btn-main-product add-to-cart-btn"
                                            data-name="@Html.Raw(product.Name)"
-                                           data-image="@Html.Raw(productImage?.LargeImage)"
+                                           data-image="@Html.Raw(productImage?.MediumImage)"
                                            data-type="@Html.Raw(productImage.Type)"
                                            data-color="@Html.Raw(productImage.Color)"
                                            data-description="@Html.Raw(productImage.Description)"
                                            data-price="@Json.Serialize(productImage?.Price)"
                                            data-productid="@Json.Serialize(product?.ProductId)"
                                            data-productsimageid="@Json.Serialize(productImage?.ProductsImageId)"
-                                           data-arrivingDays="@productImage.ArrivingDays ?? 0">
+                                           data-arrivingdays="@productImage.ArrivingDays ?? 0">
                                             Add To cart
                                         </a>
                                     </div>
                                 </div>
                                 <div class="card-product-info">
-                                    <a asp-action="ProductDetails" asp-route-slug="@product.Slug" asp-route-typeslug="@productImage.TypeSlug"
+                                  @*   <a asp-action="ProductDetails" asp-route-slug="@product.Slug" asp-route-typeslug="@productImage.TypeSlug"
                                        asp-route-colorslug="@productImage.ColorSlug" class="title link">
                                         @product.Name
+                                    </a> *@
+
+                                    <a id="product-text-link-@product.ProductId"
+                                       class="title link"
+                                       asp-action="ProductDetails"
+                                       asp-controller="Home"
+                                       asp-route-slug="@product.Slug"
+                                       asp-route-typeslug="@productImage.TypeSlug"
+                                       asp-route-colorslug="@productImage.ColorSlug"
+                                       data-slug="@product.Slug">
+                                        @product.Name
                                     </a>
+
                                     @if (productImage.Discount > 0)
                                     {
                                         <span class="price"><span class="old-price">₹@productImage.MRP</span> ₹@productImage.Price</span>
@@ -216,12 +251,31 @@
                                     {
                                         <span class="price">₹@productImage.Price</span>
                                     }
-                                    <ul class="list-color-product">
+                                  @*   <ul class="list-color-product">
                                         @foreach (var item in product.ProductImages)
                                         {
                                             <li class="list-color-item color-swatch active line">
                                                 <span class="swatch-value" style="background-color: @item.Color;"></span>
-                                                <img class="lazyload" data-src="@item.LargeImage" src="@item.LargeImage" alt="image-product">
+                                                <img class="lazyload" data-src="@item.MediumImage" src="@item.MediumImage" alt="image-product">
+                                            </li>
+                                        }
+                                    </ul> *@
+                                    <ul class="list-color-product" data-product="@product.ProductId">
+                                        @foreach (var item in product.ProductImages)
+                                        {
+                                            var hexColor = ColorHelper.GetHexColor(item.Color);
+                                            <li class="color-swatch list-color-item @(item == product.ProductImages.First() ? "active" : "")"
+                                                data-image="@item.MediumImage"
+                                                data-colorslug="@item.ColorSlug"
+                                                data-typeslug="@item.TypeSlug"
+                                                data-product="@product.ProductId"
+                                                data-color="@item.Color"
+                                                data-type="@item.Type"
+                                                data-description="@item.Description"
+                                                data-price="@item.Price"
+                                                data-productsimageid="@item.ProductsImageId"
+                                                data-arrivingdays="@item.ArrivingDays">
+                                                <span class="swatch-value" style="background-color: @hexColor" title="@item.Color"></span>
                                             </li>
                                         }
                                     </ul>
@@ -312,167 +366,153 @@
 
 @* <script src="~/lib/jquery/dist/jquery.min.js"></script> *@
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-         loadCartFromDatabase();
-         updateCartCount();
+  document.addEventListener("DOMContentLoaded", function () {
+     loadCartFromDatabase();
+     updateCartCount();
 
-        function updateCartCount() {
-            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-            let totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+     document.querySelectorAll('.list-color-product .color-swatch').forEach(swatch => {
+        swatch.addEventListener('mouseenter', function () {
+            const newImage = this.getAttribute('data-image');
+            const productId = this.getAttribute('data-product');
+            const colorSlug = this.getAttribute('data-colorslug');
+            const typeSlug = this.getAttribute('data-typeslug');
+            const slug = document.getElementById('product-link-' + productId)?.getAttribute('data-slug');
+            const productTextLink = document.getElementById('product-text-link-' + productId);
 
-            let cartItemCount = document.getElementById("cartItemCount");
-            if (cartItemCount) {
-                cartItemCount.innerText = totalItems;
-            } else {
-                console.error("cartItemCount element not found in DOM!");
+
+            const mainImg = document.getElementById('main-img-' + productId);
+            const hoverImg = document.getElementById('hover-img-' + productId);
+            const productLink = document.getElementById('product-link-' + productId);
+            const addToCartBtn = document.getElementById('add-to-cart-btn-' + productId);
+
+            if (mainImg && hoverImg) {
+                mainImg.src = newImage;
+                hoverImg.src = newImage;
             }
 
-            console.log(`Cart updated: ${totalItems} items`);
-        }
+            if (productLink) {
+                const slug = productLink.getAttribute('data-slug');
+                const newUrl = `/Home/ProductDetails/${slug}/${typeSlug}/${colorSlug}`;
+                productLink.setAttribute('href', newUrl);
+            }
 
-         async function saveCartToDatabase(cartItems) {
-        let userId = getCookie("IShopId");
+            if (productTextLink && slug && typeSlug && colorSlug) {
+              const newUrl = `/home/productdetails/${(slug)}/${typeSlug}/${colorSlug}`;
+              productTextLink.setAttribute('href', newUrl);
+            }
 
-        if (!userId) {
-            console.log("User is not logged in. Cart stored in localStorage & cookies.");
-            return;
-        }
+            // Remove active class
+            swatch.parentElement.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('active'));
+            swatch.classList.add('active');
 
-        let response = await fetch("/Home/SaveCart", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(cartItems),
+            //  UPDATE BUTTON DATA (important part)
+            if (addToCartBtn) {
+                addToCartBtn.setAttribute('data-image', swatch.getAttribute('data-image'));
+                addToCartBtn.setAttribute('data-color', swatch.getAttribute('data-color'));
+                addToCartBtn.setAttribute('data-type', swatch.getAttribute('data-type'));
+                addToCartBtn.setAttribute('data-description', swatch.getAttribute('data-description'));
+                addToCartBtn.setAttribute('data-price', swatch.getAttribute('data-price'));
+                addToCartBtn.setAttribute('data-productsimageid', swatch.getAttribute('data-productsimageid'));
+                addToCartBtn.setAttribute('data-arrivingdays', swatch.getAttribute('data-arrivingdays'));
+            }
         });
+     });
 
-        if (response.ok) {
-            console.log("Cart saved to database.");
-            loadCartFromDatabase();
-        } else {
-            console.log("Failed to save cart.");
-        }
-    }
+     function updateCartCount() {
+         let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+         let totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
 
-       
-        // async function saveCartToDatabase() {
-        //     let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+         let cartItemCount = document.getElementById("cartItemCount");
+         if (cartItemCount) {
+             cartItemCount.innerText = totalItems;
+         } else {
+             console.error("cartItemCount element not found in DOM!");
+         }
 
-        //     if (cartItems.length === 0) {
-        //         console.log("Cart is empty. Nothing to save.");
-        //         return;
-        //     }
+         console.log(`Cart updated: ${totalItems} items`);
+     }
 
-        //     console.log("Saving cart to database...", cartItems);
+     async function saveCartToDatabase(cartItems) {
+         let userId = getCookie("IShopId");
 
-        //     let response = await fetch("/Home/SaveCart", {
-        //         method: "POST",
-        //         headers: { "Content-Type": "application/json" },
-        //         body: JSON.stringify(cartItems),
-        //     });
+         if (!userId) {
+             console.log("User is not logged in. Cart stored in localStorage & cookies.");
+             return;
+         }
 
-        //     if (response.ok) {
-        //         console.log("Cart saved successfully.");
-        //          //localStorage.setItem("cartItems", JSON.stringify(cartItems));
-        //          loadCartFromDatabase();
-        //     } else {
-        //         console.log("Failed to save cart.", response);
-        //     }
-        // }
+         let response = await fetch("/Home/SaveCart", {
+             method: "POST",
+             headers: { "Content-Type": "application/json" },
+             body: JSON.stringify(cartItems),
+         });
 
-        document.querySelectorAll(".add-to-cart-btn").forEach(button => {
-            button.addEventListener("click", function () {
-                let productName = this.getAttribute("data-name");
-                let productImage = this.getAttribute("data-image");
-                let productType = this.getAttribute("data-type");
-                let productColor = this.getAttribute("data-color");
-                let productDescription = this.getAttribute("data-description");
-                let price = parseFloat(this.getAttribute("data-price")) || 0;
-                let productId = parseFloat(this.getAttribute("data-productid")) || 0;
-                let productsImageId = parseFloat(this.getAttribute("data-productsimageid")) || 0;
-                let arrivingDays = parseInt(this.getAttribute("data-arrivingDays")) || 0;
+         if (response.ok) {
+             console.log("Cart saved to database.");
+             loadCartFromDatabase();
+         } else {
+             console.log("Failed to save cart.");
+         }
+     }
 
-                addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays);
+     document.querySelectorAll(".add-to-cart-btn").forEach(button => {
+         button.addEventListener("click", function () {
+             let productName = this.getAttribute("data-name");
+             let productImage = this.getAttribute("data-image");
+             let productType = this.getAttribute("data-type");
+             let productColor = this.getAttribute("data-color");
+             let productDescription = this.getAttribute("data-description");
+             let price = parseFloat(this.getAttribute("data-price")) || 0;
+             let productId = parseFloat(this.getAttribute("data-productid")) || 0;
+             let productsImageId = parseFloat(this.getAttribute("data-productsimageid")) || 0;
+             let arrivingDays = parseInt(this.getAttribute("data-arrivingDays")) || 0;
 
-                 //showMessageModal("success", "Added to Cart Successfully");
-            });
-            updateCartCount();
-        });
+             addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays);
 
-        // async function addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays) {
-        //     try {
-        //     // Step 1: Check if the product exists in the database
-        //     let response = await fetch(`/Home/CheckCartItem`, {
-        //         method: "POST",
-        //         headers: { "Content-Type": "application/json" },
-        //         body: JSON.stringify({ productId, productsImageId })
-        //     });
+              //showMessageModal("success", "Added to Cart Successfully");
+         });
+         updateCartCount();
+     });
 
-        //     if (!response.ok) {
-        //         throw new Error(`HTTP error! Status: ${response.status}`);
-        //     }
+     async function checkStockAvailability(productImageId, requestedQty) {
+           try {
+               let response = await fetch(`/Home/CheckStockAvailability?productImageId=${productImageId}&requestedQty=${requestedQty}`);
+               let data = await response.json();
+               return response.ok && data.success; //  Return true if stock is available
+           } catch (error) {
+               console.error(" Error checking stock:", error);
+               return false;
+           }
+     }
 
-        //     let result = await response.json();
+     async function addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays) {
+         try {
+             let userId = getCookie("IShopId"); // Get IShopId from cookies
 
-        //     // Step 2: Ensure cartItems is not null
-        //     let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+             // Step 1: Get existing cart items
+             let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
 
-        //      //  Step 2: Find existing item in the cart
-        //     let existingItemIndex = cartItems.findIndex(item => item.productId === productId && item.productsImageId === productsImageId);
+             // Step 2: Find existing item in the cart
+             let existingItemIndex = cartItems.findIndex(item => item.productId === productId && item.productsImageId === productsImageId);
 
-        //     if (existingItemIndex !== -1) {
-        //         //  Step 3: Update existing item (increase quantity & update total price)
-        //         cartItems[existingItemIndex].quantity += 1;
-        //         cartItems[existingItemIndex].total = (cartItems[existingItemIndex].quantity * price).toFixed(2);
-        //     } else {
-        //         // Step 4: If not exists, add new item without clearing LocalStorage
-        //          //localStorage.removeItem("cartItems");
-        //         cartItems.push({
-        //             name: productName,
-        //             image: productImage,
-        //             type: productType,
-        //             color: productColor,
-        //             description: productDescription,
-        //             quantity: 1,
-        //             price: price,
-        //             total: price.toFixed(2),
-        //             productid: productId,
-        //             productsimageid: productsImageId,
-        //             arrivingDays: arrivingDays
-        //         });
-        //     }
+             let newQuantity = 1;
 
-        //     // Step 5: Save updated cart to localStorage
-        //     localStorage.setItem("cartItems", JSON.stringify(cartItems));
+              if (existingItemIndex !== -1) {
+                  // Calculate future quantity
+                  newQuantity = cartItems[existingItemIndex].quantity + 1;
+              }
 
-        //     // Step 6: Log cartItems to check if it's being stored properly
-        //     console.log("Updated cartItems:", cartItems);
+              // Step 2: Check stock for future quantity
+              const isAvailable = await checkStockAvailability(productsImageId, newQuantity);
+              if (!isAvailable) {
+                  showMessageModal("error", "Quantity is out of stock!");
+                  return;
+              }
 
-        //     // Step 7: Update UI & Save cart to DB
-        //     saveCartToDatabase();
-        //     loadCartFromDatabase();
-        //     updateCartCount();
-
-        //     showMessageModal("success", "Item Added.")
-
-        // } catch (error) {
-        //         console.error("Error checking cart item:", error);
-        //     }
-        // }
-
-        async function addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays) {
-            try {
-                let userId = getCookie("IShopId"); // Get IShopId from cookies
-
-                // Step 1: Get existing cart items
-                let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-
-                // Step 2: Find existing item in the cart
-                let existingItemIndex = cartItems.findIndex(item => item.productId === productId && item.productsImageId === productsImageId);
-
-                if (existingItemIndex !== -1) {
-                    // Update existing item
-                    cartItems[existingItemIndex].quantity += 1;
-                    cartItems[existingItemIndex].total = (cartItems[existingItemIndex].quantity * price).toFixed(2);
-                } else {
+              // Step 3: Update cart items
+              if (existingItemIndex !== -1) {
+                  cartItems[existingItemIndex].quantity = newQuantity;
+                  cartItems[existingItemIndex].total = (newQuantity * price).toFixed(2);
+              } else {
                     // Add new item
                     cartItems.push({
                         name: productName,
@@ -487,54 +527,35 @@
                         productsImageId: productsImageId,
                         arrivingDays: arrivingDays
                     });
-                }
+              }
 
-                // Step 3: Save updated cart to localStorage
-                localStorage.setItem("cartItems", JSON.stringify(cartItems));
+             // Step 3: Save updated cart to localStorage
+             localStorage.setItem("cartItems", JSON.stringify(cartItems));
 
-                if (userId) {
-                    // Step 4: If logged in, save to database
-                    await saveCartToDatabase(cartItems);
-                } else {
-                    // Step 5: If guest user, store cart in cookies
-                      document.cookie = `cartItems=${JSON.stringify(cartItems)}; path=/; expires=${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()}`;
-                }
+             if (userId) {
+                 // Step 4: If logged in, save to database
+                 await saveCartToDatabase(cartItems);
+             } else {
+                 // Step 5: If guest user, store cart in cookies
+                   document.cookie = `cartItems=${JSON.stringify(cartItems)}; path=/; expires=${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()}`;
+             }
 
-                // Step 6: Update UI
-                updateCartCount();
-                showMessageModal("success", "Item Added.");
+             // Step 6: Update UI
+             updateCartCount();
+             showMessageModal("success", "Item Added.");
 
-            } catch (error) {
-                console.error("Error adding to cart:", error);
-            }
+         } catch (error) {
+             console.error("Error adding to cart:", error);
+         }
+     }
+
+     // Function to get a cookie value
+     function getCookie(name) {
+            let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? match[2] : null;
         }
 
-    // Function to get a cookie value
-    function getCookie(name) {
-        let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-        return match ? match[2] : null;
-    }
-
-        // async function loadCartFromDatabase() {
-        //     try {
-        //         let response = await fetch("/Home/GetCart");
-        //         let data = await response.json(); //  Correct: Parse JSON once
-
-        //         console.log(" API Response:", data); // Debugging
-
-        //         if (data.success && data.cartItems.length > 0) {
-        //             let cartItems = data.cartItems;
-        //             localStorage.setItem("cartItems", JSON.stringify(cartItems)); //  Save updated cart items
-        //             console.log(" Cart loaded and saved to localStorage:", cartItems);
-        //         } else {
-        //             console.warn(" No items in the cart.");
-        //         }
-        //     } catch (error) {
-        //         console.error(" Error loading cart from database:", error);
-        //     }
-        //  }
-
-    async function loadCartFromDatabase() {
+     async function loadCartFromDatabase() {
         let userId = getCookie("IShopId");
 
         if (userId) {
@@ -547,16 +568,16 @@
             }
         } else {
             // Fetch from cookies for guests
-              let cartItems = getCookie("cartItems");
-              if (cartItems) {
-                  localStorage.setItem("cartItems", cartItems);
-            }
-        }
+               let cartItems = getCookie("cartItems");
+                if (cartItems) {
+                    localStorage.setItem("cartItems", cartItems);
+              }
+          }
 
         updateCartCount();
-    }
+     }
 
-    function showMessageModal(type, message) {
+     function showMessageModal(type, message) {
              let modalTitle = document.getElementById("messageModalLabel");
              let modalBody = document.getElementById("messageText");
              let modalHeader = document.querySelector("#messageModal .modal-header");
@@ -577,7 +598,7 @@
              // Show the modal
              let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
              messageModal.show();
-        }
+     }
     
   });
 </script>

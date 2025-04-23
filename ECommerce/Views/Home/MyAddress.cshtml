@@ -13,7 +13,6 @@
         : "";
 }
 
-
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -66,13 +65,13 @@
                         </li>
                         <li>
                            <span class="my-account-nav-item active">
-                            <a href="@Url.Action("MyAddress", "Home")" class="my-account-nav-item">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                    <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                                My Address
-                            </a>
+                                <a href="@Url.Action("MyAddress", "Home")" class="my-account-nav-item">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke="#181818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    My Address
+                                </a>
                            </span>
                         </li>
                         <li>
@@ -103,7 +102,7 @@
                     {
                         @foreach (var item in addressList.OrderByDescending(a => a.AddressId))
                         {
-                                            <div class="account-address-item">
+                          <div class="account-address-item">
                                                 <h6 class="mb_20">Default</h6>
                                                 <p>@item.FullName</p>
                                                 <p>@item.Address</p>
@@ -189,20 +188,18 @@
             </div>
         </div>
     </div>
-    </div>
-
 </section>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-    @if (TempData["Message"] != null)
-    {
-        <text>
-                       showMessageModal("success", "@TempData["Message"]");
-        </text>
-    }
+        @if (TempData["Message"] != null)
+        {
+            <text>
+                           showMessageModal("success", "@TempData["Message"]");
+            </text>
+        }
 
-     document.querySelectorAll('.btn-edit-address').forEach(function (button) {
+        document.querySelectorAll('.btn-edit-address').forEach(function (button) {
             button.addEventListener('click', function () {
                 // Get data attributes
                 const id = this.getAttribute('data-id');
@@ -235,7 +232,7 @@
             });
         });
 
-         document.getElementById('cancelBtn').addEventListener('click', function () {
+        document.getElementById('cancelBtn').addEventListener('click', function () {
             document.getElementById('addressForm').reset();
             document.getElementById('formMode').value = "Add Address";
             document.querySelector("#addressFormContainer button[type=submit] .text-button").innerText = "Add a new Address";
@@ -264,8 +261,7 @@
 </script>
 
 <script>
-
-     $(document).ready(function () {
+    $(document).ready(function () {
         // ADD NEW ADDRESS - open empty form
         $('.btn-address').click(function () {
             $('#addressForm')[0].reset(); // clear all fields

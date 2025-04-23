@@ -5,6 +5,8 @@
     // var productDetails = Model.ProductImages.FirstOrDefault(x => x.ProductsImageId == @ViewBag.ProductImageId);
     var productDetails = Model?.ProductImages?.FirstOrDefault(x => x.ProductsImageId == ViewBag.ProductImageId);
 
+    var slug = Model.Slug;
+    var defaultImage = productDetails.LargeImage;
 }
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/easyzoom/2.5.2/easyzoom.min.css">
@@ -13,11 +15,11 @@
 
 <style>
     /*  .image-container {
-            position: relative;
-            width: 400px;  Adjust as needed
-             height: 400px;
-             border: 1px solid #ddd;
-        } */
+                         position: relative;
+                         width: 400px;  Adjust as needed
+                         height: 400px;
+                         border: 1px solid #ddd;
+    } */
 
     .swiper-slide img {
         width: 100%;
@@ -38,8 +40,8 @@
         position: absolute;
         left: 600px; /* Adjust position for side-by-side zoom */
         top: 0;
-        width: 400px;
-        height: 400px;
+        width: 600px;
+        height: 500px;
         overflow: hidden;
         border: 1px solid #ddd;
         display: none; /* Hide until hover */
@@ -60,7 +62,6 @@
     }
 
 </style>
-
 
 <!-- breadcrumb -->
 <div class="tf-breadcrumb">
@@ -113,12 +114,22 @@
                                             <div class="swiper-slide">
                                                 <!-- Container for Zoom Effect -->
                                                 @* <div class="image-container"> *@
-                                                <img id="mainImage" class="tf-image-zoom lazyload"
+                                                @*  <img id="mainImage" class="tf-image-zoom ls-is-cached lazyloaded"
                                                      src="@productDetails.LargeImage"
                                                      data-src="@productDetails.LargeImage"
-                                                     alt="Product Image">
+                                                     alt="Product Image"> *@
+                                                @*  <img id="mainImage"
+                                                     class="tf-image-zoom lazyload"
+                                                     src="@productDetails.LargeImage"
+                                                     data-src="@productDetails.LargeImage"
+                                                     alt="Product Image" /> *@
+
+                                                <img id="mainImage"
+                                                     class="tf-image-zoom lazyload"
+                                                     src="@defaultImage"
+                                                     data-src="@defaultImage"
+                                                     alt="Product Image" />
                                                 <div id="zoomLens"></div>
-                                                @*  </div> *@
                                             </div>
                                         </div>
                                     </div>
@@ -142,22 +153,6 @@
                                 <div class="tf-product-info-name">
                                     <div class="text text-btn-uppercase">@productDetails.Type</div>
                                     <h3 class="name">@Model.Name</h3>
-                                    @* <div class="sub">
-                                        <div class="tf-product-info-rate">
-                                            <div class="list-star">
-                                                <i class="icon icon-star"></i>
-                                                <i class="icon icon-star"></i>
-                                                <i class="icon icon-star"></i>
-                                                <i class="icon icon-star"></i>
-                                                <i class="icon icon-star"></i>
-                                            </div>
-                                            <div class="text text-caption-1">(134 reviews)</div>
-                                        </div>
-                                        <div class="tf-product-info-sold">
-                                            <i class="icon icon-lightning"></i>
-                                            <div class="text text-caption-1">18 sold in last 32 hours</div>
-                                        </div>
-                                    </div> *@
                                 </div>
                                 <div class="tf-product-info-desc">
                                     <div class="tf-product-info-price">
@@ -182,7 +177,7 @@
                                     <div class="variant-picker-label mb_12">
                                         Colors:<span class="text-title variant-picker-label-value value-currentColor">@productDetails.Color</span>
                                     </div>
-                                    <div class="list-color-product">
+                                    @* <div class="list-color-product">
                                         @{
                                             int? productImageId = ViewBag.ProductImageId;
                                         }
@@ -192,14 +187,28 @@
                                                asp-route-colorslug="@item.ColorSlug" class="list-color-item color-swatch active line">
                                                 <span class="swatch-value" style="background-color: @item.Color;"></span>
                                                 @*<img class="lazyload" data-src="@item.LargeImage" src="@item.LargeImage" alt="image-product"> *@
-                                            </a>
+                                    @*  </a>
                                         }
-                                    </div>
+                                    </div> *@ 
+                                   <ul class="list-color-product" data-product="@Model.ProductId">
+                                        @foreach (var item in Model.ProductImages)
+                                        {
+                                            var hexColor = ColorHelper.GetHexColor(item.Color);
+                                            <li class="color-swatch list-color-item"
+                                                data-image="@item.MediumImage"
+                                                data-colorslug="@item.ColorSlug"
+                                                data-typeslug="@item.TypeSlug"
+                                                data-color="@item.Color"
+                                                style="cursor: pointer;">
+                                                <span class="swatch-value" style="background-color: @hexColor" title="@item.Color"></span>
+                                            </li>
+                                        }
+                                   </ul>
                                 </div>
 
                                 <div class="tf-product-info-quantity">
                                     <div class="title mb_12">Quantity:</div>
-                                    <div class="wg-quantity">
+                                    <div class="wg-quantity" data-products-image-id="@Model.ProductsImageId">
                                         <span class="btn-quantity btn-decrease">-</span>
                                         <input id="cartQuantity" class="quantity-product" type="text" name="number" value="1">
                                         <span class="btn-quantity btn-increase">+</span>
@@ -247,27 +256,19 @@
                                     </div>
                                 </div>
                                 <ul class="tf-product-info-sku">
-                                    @* <li>
-                                        <p class="text-caption-1">SKU:</p>
-                                        <p class="text-caption-1 text-1">53453412</p>
-                                    </li>
                                     <li>
-                                        <p class="text-caption-1">Vendor:</p>
-                                        <p class="text-caption-1 text-1">Modave</p>
-                                    </li> *@
-                                    <li>
-                                        <p class="text-caption-1">Available:</p>
+                                        <p class="text-caption-1">Available :</p>
                                         @if (productDetails.Quantity > 0)
                                         {
-                                            <p class="text-caption-1 text-1">Instock</p>
+                                            <p class="text-caption-1 text-1 fs-6 fw-6 text-success">In stock</p>
                                         }
                                         else
                                         {
-                                            <p class="text-caption-1 text-1">Nostock</p>
+                                            <p class="text-caption-1 text-1 fs-6 fw-6 text-danger">Out of stock</p>
                                         }
                                     </li>
                                     <li>
-                                        <p class="text-caption-1">Categories:</p>
+                                        <p class="text-caption-1">Categories :</p>
                                         <p class="text-caption-1">@productDetails.Type</p>
                                     </li>
                                 </ul>
@@ -297,7 +298,6 @@
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -362,10 +362,10 @@
                                 <div class="w-100">
                                     <div class="text-btn-uppercase mb_12">Need more information?</div>
                                     <div>
-                                        <a href="#" class="link text-secondary text-decoration-underline mb_6 font-2">About US</a>
+                                        <a href="@Url.Action("AboutUs", "Home")" class="link text-secondary text-decoration-underline mb_6 font-2">About US</a>
                                     </div>
                                     <div>
-                                        <a href="#" class="link text-secondary text-decoration-underline mb_6 font-2">Contact US</a>
+                                        <a href="@Url.Action("ContactUs", "Home")" class="link text-secondary text-decoration-underline mb_6 font-2">Contact US</a>
                                     </div>
                                 </div>
                             </div>
@@ -401,7 +401,7 @@
     <div class="container flat-animate-tab">
         <ul class="tab-product justify-content-sm-center wow fadeInUp" data-wow-delay="0s" role="tablist">
             <li class="nav-tab-item" role="presentation">
-                <a href="#ralatedProducts" class="active" data-bs-toggle="tab">Ralated Products</a>
+                <a href="#ralatedProducts" class="active" data-bs-toggle="tab">Related Products</a>
             </li>
         </ul>
         <div class="tab-content">
@@ -419,29 +419,58 @@
                                     <div class="swiper-slide">
                                         <div class="card-product wow fadeInUp" data-wow-delay="0.1s">
                                             <div class="card-product-wrapper">
-                                                <a asp-action="ProductDetails" asp-route-slug="@product.Slug" asp-route-typeslug="@productImage.TypeSlug"
+                                                @* <a asp-action="ProductDetails" asp-route-slug="@product.Slug" asp-route-typeslug="@productImage.TypeSlug"
                                                    asp-route-colorslug="@productImage.ColorSlug" class="product-img">
-                                                    <img class="lazyload img-product" data-src="@productImage.LargeImage" src="@productImage.LargeImage" alt="image-product">
-                                                    <img class="lazyload img-hover" data-src="@productImage.LargeImage" src="@productImage.LargeImage" alt="image-product">
-                                                </a>
+                                                    <img class="lazyload img-product" data-src="@productImage.MediumImage" src="@productImage.MediumImage" alt="image-product">
+                                                    <img class="lazyload img-hover" data-src="@productImage.MediumImage" src="@productImage.MediumImage" alt="image-product">
+                                                </a> *@
+                                                <div class="list-color-product">
+                                                    <a id="product-link-@product.ProductId"
+                                                       class="product-img"
+                                                       asp-action="ProductDetails"
+                                                       asp-controller="Home"
+                                                       asp-route-slug="@product.Slug"
+                                                       asp-route-typeslug="@product.ProductImages.FirstOrDefault()?.TypeSlug"
+                                                       asp-route-colorslug="@product.ProductImages.FirstOrDefault()?.ColorSlug"
+                                                       data-slug="@product.Slug">
+
+                                                        <img id="main-img-@product.ProductId"
+                                                             class="img-product"
+                                                             src="@product.ProductImages.FirstOrDefault()?.MediumImage"
+                                                             alt="product image" />
+
+                                                        <img id="hover-img-@product.ProductId"
+                                                             class="img-hover"
+                                                             src="@product.ProductImages.FirstOrDefault()?.MediumImage"
+                                                             alt="hover image" />
+                                                    </a>
+                                                </div>
+
                                                 @if (productImage.Discount > 0)
                                                 {
                                                     <div class="on-sale-wrap"><span class="on-sale-item">-@productImage.Discount%</span></div>
                                                 }
-                                                @* <div class="list-product-btn">
-                                            <a href="#quickView" data-bs-toggle="modal" class="box-icon quickview tf-btn-loading">
-                                                <span class="icon icon-eye"></span>
-                                                <span class="tooltip">Quick View</span>
-                                            </a>
-                                        </div> *@
-                                                <div class="list-btn-main">
-                                                    <a asp-action="ProductDetails" asp-route-slug="@product.Slug" asp-route-typeslug="@productImage.TypeSlug"
-                                                       asp-route-colorslug="@productImage.ColorSlug" class="btn-main-product">View product</a>
+
+                                                <div class="list-btn-main-">
+                                                    <a id="view-product-btn-@product.ProductId"
+                                                       asp-action="ProductDetails"
+                                                       asp-route-slug="@product.Slug"
+                                                       asp-route-typeslug="@productImage.TypeSlug"
+                                                       asp-route-colorslug="@productImage.ColorSlug"
+                                                       class="btn-main-product">
+                                                        View product
+                                                    </a>
                                                 </div>
                                             </div>
                                             <div class="card-product-info">
-                                                <a asp-action="ProductDetails" asp-route-slug="@product.Slug" asp-route-typeslug="@productImage.TypeSlug"
-                                                   asp-route-colorslug="@productImage.ColorSlug" class="title link">
+                                                <a id="product-text-link-@product.ProductId"
+                                                   class="title link"
+                                                   asp-action="ProductDetails"
+                                                   asp-controller="Home"
+                                                   asp-route-slug="@product.Slug"
+                                                   asp-route-typeslug="@product.ProductImages.FirstOrDefault()?.TypeSlug"
+                                                   asp-route-colorslug="@product.ProductImages.FirstOrDefault()?.ColorSlug"
+                                                   data-slug="@product.Slug">
                                                     @product.Name
                                                 </a>
                                                 @if (productImage.Discount > 0)
@@ -452,15 +481,37 @@
                                                 {
                                                     <span class="price">₹@productImage.Price</span>
                                                 }
-                                                <ul class="list-color-product">
-                                                    @foreach (var item in product.ProductImages)
-                                                    {
-                                                        <li class="list-color-item color-swatch active line">
-                                                            <span class="swatch-value" style="background-color: @item.Color;"></span>
-                                                            <img class="lazyload" data-src="@item.LargeImage" src="@item.LargeImage" alt="image-product">
-                                                        </li>
-                                                    }
-                                                </ul>
+                                                @*  <ul class="list-color-product">
+                                                 @foreach (var item in product.ProductImages)
+                                                 {
+                                                     <li class="list-color-item color-swatch active line">
+                                                         <span class="swatch-value" style="background-color: @item.Color;"></span>
+                                                         <img class="lazyload" data-src="@item.MediumImage" src="@item.MediumImage" alt="image-product">
+                                                     </li>
+                                                 }
+                                             </ul> *@
+                                                <div class="list-color-productrelated">
+                                                    <ul class="list-color-product" data-product="@product.ProductId">
+                                                        @foreach (var item in product.ProductImages)
+                                                        {
+                                                            var hexColor = ColorHelper.GetHexColor(item.Color);
+                                                            <li class="color-swatch list-color-item @(item == product.ProductImages.First() ? "active" : "")"
+                                                                data-image="@item.MediumImage"
+                                                                data-colorslug="@item.ColorSlug"
+                                                                data-typeslug="@item.TypeSlug"
+                                                                data-product="@product.ProductId"
+                                                                data-color="@item.Color"
+                                                                data-type="@item.Type"
+                                                                data-description="@item.Description"
+                                                                data-price="@item.Price"
+                                                                data-productsimageid="@item.ProductsImageId"
+                                                                data-arrivingdays="@item.ArrivingDays">
+                                                                <span class="swatch-value" style="background-color: @hexColor;" title="@item.Color"></span>
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                </div>
+                                               
                                             </div>
                                         </div>
                                     </div>
@@ -504,96 +555,241 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-         let mainImage = document.getElementById("mainImage");
-         let zoomLens = document.getElementById("zoomLens");
-         let zoomResult = document.getElementById("zoomResult");
-         let zoomContainer = document.getElementById("zoomContainer");
+        let mainImage = document.getElementById("mainImage");
+        let zoomLens = document.getElementById("zoomLens");
+        let zoomResult = document.getElementById("zoomResult");
+        let zoomContainer = document.getElementById("zoomContainer");
 
-         let hideTimeout; // Variable to store timeout
+        let hideTimeout; // Variable to store timeout
 
 
-         let addToCartBtn = document.getElementById("addToCartBtn");
-         let cartQuantity = document.getElementById("cartQuantity");
+        let addToCartBtn = document.getElementById("addToCartBtn");
+        let cartQuantity = document.getElementById("cartQuantity");
 
-         let price = @productDetails?.Price ?? 0;
-         let productName = "@Html.Raw(Model.Name)";
-         let productImage = "@Html.Raw(productDetails?.LargeImage)";
-         let productType = "@Html.Raw(productDetails?.Type)";
-         let productColor = "@Html.Raw(productDetails?.Color)";
-         let productDescription = "@Html.Raw(productDetails?.Description)";
-         let productId = @Model.ProductId ?? 0;
-         let productsImageId = @productDetails?.ProductsImageId ?? 0;
-         let arrivingDays = @productDetails?.ArrivingDays ?? 0;
+        let price = @productDetails?.Price ?? 0;
+        let productName = "@Html.Raw(Model.Name)";
+        let productImage = "@Html.Raw(productDetails?.LargeImage)";
+        let productType = "@Html.Raw(productDetails?.Type)";
+        let productColor = "@Html.Raw(productDetails?.Color)";
+        let productDescription = "@Html.Raw(productDetails?.Description)";
+        let productId = @Model.ProductId ?? 0;
+        let productsImageId = @productDetails?.ProductsImageId ?? 0;
+        let arrivingDays = @productDetails?.ArrivingDays ?? 0;
 
-         // Set zoom background image
-         zoomResult.style.backgroundImage = `url(${mainImage.src})`;
+        // Set zoom background image
+        zoomResult.style.backgroundImage = `url(${mainImage.src})`;
 
-         // Smooth show effect
-         mainImage.addEventListener("mouseenter", () => {
-             clearTimeout(hideTimeout); // Stop hiding
-             zoomLens.style.opacity = 1;
-             zoomContainer.style.opacity = 1;
-             zoomContainer.style.display = "block";
-             zoomLens.style.display = "block";
-         });
+        // Smooth show effect
+        mainImage.addEventListener("mouseenter", () => {
+            clearTimeout(hideTimeout); // Stop hiding
+            zoomLens.style.opacity = 1;
+            zoomContainer.style.opacity = 1;
+            zoomContainer.style.display = "block";
+            zoomLens.style.display = "block";
+        });
 
-         // Smooth hide effect with delay
-         mainImage.addEventListener("mouseleave", () => {
-             hideTimeout = setTimeout(() => {
-                 zoomLens.style.opacity = 0;
-                 zoomContainer.style.opacity = 0;
-                 setTimeout(() => {
-                     zoomLens.style.display = "none";
-                     zoomContainer.style.display = "none";
-                 }, 700); // Delay hiding to match transition
-             }, 200); // 200ms delay before hiding
-         });
+        // Smooth hide effect with delay
+        mainImage.addEventListener("mouseleave", () => {
+            hideTimeout = setTimeout(() => {
+                zoomLens.style.opacity = 0;
+                zoomContainer.style.opacity = 0;
+                setTimeout(() => {
+                    zoomLens.style.display = "none";
+                    zoomContainer.style.display = "none";
+                }, 700); // Delay hiding to match transition
+            }, 200); // 200ms delay before hiding
+        });
 
-         // Throttle function to slow down zoom movement
-         function throttle(fn, limit) {
-             let lastCall = 0;
-             return function (...args) {
-                 let now = new Date().getTime();
-                 if (now - lastCall < limit) return;
-                 lastCall = now;
-                 return fn(...args);
-             };
-         }
+        // Throttle function to slow down zoom movement
+        function throttle(fn, limit) {
+            let lastCall = 0;
+            return function (...args) {
+                let now = new Date().getTime();
+                if (now - lastCall < limit) return;
+                lastCall = now;
+                return fn(...args);
+            };
+        }
 
-         function zoom(e) {
-             let pos = getCursorPos(e);
-             let x = pos.x - (zoomLens.offsetWidth / 2);
-             let y = pos.y - (zoomLens.offsetHeight / 2);
+        function zoom(e) {
+            let pos = getCursorPos(e);
+            let x = pos.x - (zoomLens.offsetWidth / 2);
+            let y = pos.y - (zoomLens.offsetHeight / 2);
 
-             if (x > mainImage.width - zoomLens.offsetWidth) x = mainImage.width - zoomLens.offsetWidth;
-             if (x < 0) x = 0;
-             if (y > mainImage.height - zoomLens.offsetHeight) y = mainImage.height - zoomLens.offsetHeight;
-             if (y < 0) y = 0;
+            if (x > mainImage.width - zoomLens.offsetWidth) x = mainImage.width - zoomLens.offsetWidth;
+            if (x < 0) x = 0;
+            if (y > mainImage.height - zoomLens.offsetHeight) y = mainImage.height - zoomLens.offsetHeight;
+            if (y < 0) y = 0;
 
-             zoomLens.style.left = x + "px";
-             zoomLens.style.top = y + "px";
+            zoomLens.style.left = x + "px";
+            zoomLens.style.top = y + "px";
 
-             zoomResult.style.backgroundPosition = `-${x * 2}px -${y * 2}px`;
-         }
+            zoomResult.style.backgroundPosition = `-${x * 2}px -${y * 2}px`;
+        }
 
-         function getCursorPos(e) {
-             let rect = mainImage.getBoundingClientRect();
-             return {
-                 x: e.pageX - rect.left - window.scrollX,
-                 y: e.pageY - rect.top - window.scrollY
-             };
-         }
+        function getCursorPos(e) {
+            let rect = mainImage.getBoundingClientRect();
+            return {
+                x: e.pageX - rect.left - window.scrollX,
+                y: e.pageY - rect.top - window.scrollY
+            };
+        }
 
-         // Add throttling to slow down zoom effect
-         let throttledZoom = throttle(zoom, 80); // Adjust delay to slow down
+        // Add throttling to slow down zoom effect
+        let throttledZoom = throttle(zoom, 80); // Adjust delay to slow down
 
-         mainImage.addEventListener("mousemove", throttledZoom);
-         zoomLens.addEventListener("mousemove", throttledZoom);
+        mainImage.addEventListener("mousemove", throttledZoom);
+        zoomLens.addEventListener("mousemove", throttledZoom);
 
-          loadCartFromDatabase();
-          updateCartCount();
+        loadCartFromDatabase();
+        updateCartCount();
 
-         function updateCartCount() {
+        document.querySelectorAll('.list-color-productrelated .color-swatch').forEach(swatch => {
+            swatch.addEventListener('mouseenter', function () {
+                const productId = this.getAttribute('data-product');
+                const newImage = this.getAttribute('data-image');
+                const colorSlug = this.getAttribute('data-colorslug');
+                const typeSlug = this.getAttribute('data-typeslug');
+
+                const mainImg = document.getElementById('main-img-' + productId);
+                const hoverImg = document.getElementById('hover-img-' + productId);
+                const productLink = document.getElementById('product-link-' + productId);
+                const productTextLink = document.getElementById('product-text-link-' + productId);
+                const viewProductBtn = document.getElementById('view-product-btn-' + productId); 
+                const addToCartBtn = document.getElementById('add-to-cart-btn-' + productId);
+
+                //  Change images
+                if (mainImg && newImage) mainImg.src = newImage;
+                if (hoverImg && newImage) hoverImg.src = newImage;
+
+                //  Update product detail URLs
+                if (productLink && productLink.dataset.slug && typeSlug && colorSlug) {
+                    productLink.href = `/Home/ProductDetails/${productLink.dataset.slug}/${typeSlug}/${colorSlug}`;
+                }
+
+                if (productTextLink && productTextLink.dataset.slug && typeSlug && colorSlug) {
+                    productTextLink.href = `/Home/ProductDetails/${productTextLink.dataset.slug}/${typeSlug}/${colorSlug}`;
+                }
+
+                if (viewProductBtn && productLink && productLink.dataset.slug && typeSlug && colorSlug) {
+                    const url = `/Home/ProductDetails/${productLink.dataset.slug}/${typeSlug}/${colorSlug}`;
+                    viewProductBtn.href = url;
+                }
+
+                //  Active state for swatches
+                const parentList = swatch.closest('.list-color-productrelated');
+                if (parentList) {
+                    parentList.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('active'));
+                    swatch.classList.add('active');
+                }
+
+                //  Update add to cart attributes
+                if (addToCartBtn) {
+                    addToCartBtn.setAttribute('data-image', newImage);
+                    addToCartBtn.setAttribute('data-color', swatch.getAttribute('data-color'));
+                    addToCartBtn.setAttribute('data-type', swatch.getAttribute('data-type'));
+                    addToCartBtn.setAttribute('data-description', swatch.getAttribute('data-description'));
+                    addToCartBtn.setAttribute('data-price', swatch.getAttribute('data-price'));
+                    addToCartBtn.setAttribute('data-productsimageid', swatch.getAttribute('data-productsimageid'));
+                    addToCartBtn.setAttribute('data-arrivingdays', swatch.getAttribute('data-arrivingdays'));
+                }
+
+                swatch.addEventListener('click', function () {
+                    const productId = this.getAttribute('data-product');
+                    const colorSlug = this.getAttribute('data-colorslug');
+                    const typeSlug = this.getAttribute('data-typeslug');
+
+                    const productLink = document.getElementById('product-link-' + productId);
+                    if (productLink && productLink.dataset.slug && typeSlug && colorSlug) {
+                        const slug = productLink.dataset.slug;
+                        const url = `/Home/ProductDetails/${slug}/${typeSlug}/${colorSlug}`;
+                        window.location.href = url;
+                    }
+                });
+            });
+        });
+
+        const slug = '@slug';
+        const defaultImage = '@defaultImage';
+        const defaultColorName = '@productDetails.Color'; //  Default color name from Razor
+        const mainImg = document.getElementById('mainImage');
+        const colorLabel = document.querySelector('.value-currentColor');
+
+        if (mainImg && defaultImage) {
+            mainImg.src = defaultImage;
+        }
+
+        if (colorLabel && defaultColorName) {
+            colorLabel.textContent = defaultColorName;
+        }
+
+        document.querySelectorAll('.list-color-product .color-swatch').forEach(swatch => {
+            // Hover: change image and color name
+            swatch.addEventListener('mouseenter', function () {
+                const newImage = this.getAttribute('data-image');
+                const newColorName = this.getAttribute('data-color');
+
+                if (mainImg && newImage) {
+                    mainImg.src = newImage;
+                }
+
+                if (colorLabel && newColorName) {
+                    colorLabel.textContent = newColorName;
+                }
+            });
+
+            // Mouse leave: revert to default image and color name
+            swatch.addEventListener('mouseleave', function () {
+                if (mainImg && defaultImage) {
+                    mainImg.src = defaultImage;
+                }
+
+                if (colorLabel && defaultColorName) {
+                    colorLabel.textContent = defaultColorName;
+                }
+            });
+
+            // Click: go to detail page
+            swatch.addEventListener('click', function () {
+                const colorSlug = this.getAttribute('data-colorslug');
+                const typeSlug = this.getAttribute('data-typeslug');
+
+                if (slug && typeSlug && colorSlug) {
+                    const newUrl = `/Home/ProductDetails/${slug}/${typeSlug}/${colorSlug}`;
+                    window.location.href = newUrl;
+                }
+            });
+        });
+
+        async function checkStockAvailability(productImageId, requestedQty) {
+            try {
+                let response = await fetch(`/Home/CheckStockAvailability?productImageId=${productImageId}&requestedQty=${requestedQty}`);
+                let data = await response.json();
+                return response.ok && data.success; //  Return true if stock is available
+            } catch (error) {
+                console.error(" Error checking stock:", error);
+                return false;
+            }
+        }
+
+        document.querySelector(".wg-quantity").addEventListener("click", async (event) => {
+                const quantityInput = event.currentTarget.querySelector(".quantity-product");
+                let currentQty = parseInt(quantityInput.value);
+                const productImageId = event.currentTarget.getAttribute("data-products-image-id");
+
+                 if (event.target.classList.contains("btn-increase")) {
+                       let isAvailable = await checkStockAvailability(productsImageId, quantity + 1);
+                       if (!isAvailable) {
+                          showMessageModal("error"," Stock limit reached! Cannot increase quantity.");
+                           return;
+                       }
+                        quantity + 1;
+                    } else if (event.target.classList.contains("btn-decrease") && quantity > 1) {
+                        quantity - 1;
+                    }
+            });
+
+        function updateCartCount() {
              let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
              let totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
              let cartItemCount = document.getElementById("cartItemCount");
@@ -607,7 +803,7 @@
              console.log(`Cart updated: ${totalItems} items`);
          }
 
-         async function addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays) {
+        async function addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays) {
              try {
 
                  let response = await fetch(`/Home/CheckCartItem`, {
@@ -625,13 +821,20 @@
                  let userId = getCookie("IShopId");
 
                  let quantity = parseInt(cartQuantity.value);
+
+                 const isAvailable = await checkStockAvailability(productsImageId, quantity);
+                 if (!isAvailable) {
+                       showMessageModal("error", "Quantity is out of stock!");
+                       return; // Stop here if not enough stock
+                 }
+
                  let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
 
                   let existingItemIndex = cartItems.findIndex(item => item.productId === productId && item.productsImageId === productsImageId);
 
                       if (existingItemIndex !== -1) {
                           // Update existing item
-                          cartItems[existingItemIndex].quantity += 1;
+                          cartItems[existingItemIndex].quantity += quantity;
                           cartItems[existingItemIndex].total = (cartItems[existingItemIndex].quantity * price).toFixed(2);
                       }else {
                       cartItems.push({
@@ -668,90 +871,87 @@
              } catch (error) {
                  console.error("Error checking cart item:", error);
              }
-         }
+        }
 
-          // Function to get a cookie value
-      function getCookie(name) {
-          let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-          return match ? match[2] : null;
-      }
+        // Function to get a cookie value
+        function getCookie(name) {
+            let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? match[2] : null;
+        }
 
-      async function saveCartToDatabase(cartItems) {
-          let userId = getCookie("IShopId");
+        async function saveCartToDatabase(cartItems) {
+            let userId = getCookie("IShopId");
 
-          if (!userId) {
-              console.log("User is not logged in. Cart stored in localStorage & cookies.");
-              return;
-          }
+            if (!userId) {
+                console.log("User is not logged in. Cart stored in localStorage & cookies.");
+                return;
+            }
 
-          let response = await fetch("/Home/SaveCart", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(cartItems),
-          });
+            let response = await fetch("/Home/SaveCart", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(cartItems),
+            });
 
-          if (response.ok) {
-              console.log("Cart saved to database.");
-              loadCartFromDatabase();
-          } else {
-              console.log("Failed to save cart.");
-          }
-      }
+            if (response.ok) {
+                console.log("Cart saved to database.");
+                loadCartFromDatabase();
+            } else {
+                console.log("Failed to save cart.");
+            }
+        }
 
-      async function loadCartFromDatabase() {
-          let userId = getCookie("IShopId");
+        async function loadCartFromDatabase() {
+            let userId = getCookie("IShopId");
 
-          if (userId) {
-              // Fetch from database
-              let response = await fetch("/Home/GetCart");
-              let data = await response.json();
+            if (userId) {
+                // Fetch from database
+                let response = await fetch("/Home/GetCart");
+                let data = await response.json();
 
-              if (data.success && data.cartItems.length > 0) {
-                  localStorage.setItem("cartItems", JSON.stringify(data.cartItems));
-              }
-          } else {
-              // Fetch from cookies for guests
-                let cartItems = getCookie("cartItems");
-                if (cartItems) {
-                    localStorage.setItem("cartItems", cartItems);
-              }
-          }
+                if (data.success && data.cartItems.length > 0) {
+                    localStorage.setItem("cartItems", JSON.stringify(data.cartItems));
+                }
+            } else {
+                // Fetch from cookies for guests
+                  let cartItems = getCookie("cartItems");
+                  if (cartItems) {
+                      localStorage.setItem("cartItems", cartItems);
+                }
+            }
 
-          updateCartCount();
-      }
+            updateCartCount();
+        }
 
-         if (addToCartBtn) {
-             addToCartBtn.addEventListener("click", function () {
-             addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays);
-              //alert("Item added to cart!");
-             });
-         }
+        if (addToCartBtn) {
+              addToCartBtn.addEventListener("click", function () {
+              addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays);
+               //alert("Item added to cart!");
+              });
+        }
 
-         function showMessageModal(type, message) {
-          let modalTitle = document.getElementById("messageModalLabel");
-          let modalBody = document.getElementById("messageText");
-          let modalHeader = document.querySelector("#messageModal .modal-header");
+        function showMessageModal(type, message) {
+            let modalTitle = document.getElementById("messageModalLabel");
+            let modalBody = document.getElementById("messageText");
+            let modalHeader = document.querySelector("#messageModal .modal-header");
 
-          // Update the modal based on type (success or error)
-          if (type === "success") {
-              modalTitle.innerText = "Success";
-              modalBody.innerHTML = ` ${message}`;
-              modalHeader.classList.add("bg-success", "text-white");
-              modalHeader.classList.remove("bg-danger");
-          } else if (type === "error") {
-              modalTitle.innerText = "Error";
-              modalBody.innerHTML = ` ${message}`;
-              modalHeader.classList.add("bg-danger", "text-white");
-              modalHeader.classList.remove("bg-success");
-          }
+            // Update the modal based on type (success or error)
+            if (type === "success") {
+                modalTitle.innerText = "Success";
+                modalBody.innerHTML = ` ${message}`;
+                modalHeader.classList.add("bg-success", "text-white");
+                modalHeader.classList.remove("bg-danger");
+            } else if (type === "error") {
+                modalTitle.innerText = "Error";
+                modalBody.innerHTML = ` ${message}`;
+                modalHeader.classList.add("bg-danger", "text-white");
+                modalHeader.classList.remove("bg-success");
+            }
 
-          // Show the modal
-          let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
-          messageModal.show();
-     }
+            // Show the modal
+            let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
+            messageModal.show();
+        }
 
     });
 </script>
-
-
-

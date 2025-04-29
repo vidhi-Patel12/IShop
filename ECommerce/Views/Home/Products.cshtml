@@ -255,8 +255,10 @@
                     let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
 
                     // Step 2: Find existing item in the cart
-                    let existingItemIndex = cartItems.findIndex(item => item.productId === productId && item.productsImageId === productsImageId);
-
+                    let existingItemIndex = cartItems.findIndex(
+                        item => item.productId.toString() === productId.toString() &&
+                                item.productsImageId.toString() === productsImageId.toString()
+                    );
                     let newQuantity = 1;
 
                     if (existingItemIndex !== -1) {
@@ -303,9 +305,42 @@
                         // Step 4: If logged in, save to database
                         await saveCartToDatabase(cartItems);
                  } else {
-                        // Step 5: If guest user, store cart in cookies
-                          document.cookie = `cartItems=${JSON.stringify(cartItems)}; path=/; expires=${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()}`;
-                 }
+                    // Guest user - handle cart in cookies
+                    let cookieCart = [];
+                    try {
+                        let cookieRaw = getCookie("cartItems");
+                        cookieCart = cookieRaw ? JSON.parse(cookieRaw) : [];
+                    } catch (err) {
+                        console.warn("Bad cartItems cookie, resetting.");
+                        cookieCart = [];
+                    }
+
+                    let cookieIndex = cookieCart.findIndex(
+                        item => item.productId.toString() === productId.toString() &&
+                                item.productsImageId.toString() === productsImageId.toString()
+                    );
+
+                    if (cookieIndex !== -1) {
+                        cookieCart[cookieIndex].quantity += 1;
+                        cookieCart[cookieIndex].total = (cookieCart[cookieIndex].quantity * price).toFixed(2);
+                    } else {
+                        cookieCart.push({
+                            name: productName,
+                            image: productImage,
+                            type: productType,
+                            color: productColor,
+                            description: productDescription,
+                            quantity: 1,
+                            price: price,
+                            total: price.toFixed(2),
+                            productId: productId,
+                            productsImageId: productsImageId,
+                            arrivingDays: arrivingDays
+                        });
+                    }
+
+                    document.cookie = `cartItems=${JSON.stringify(cookieCart)}; path=/; expires=${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()}`;
+                }
 
                 updateCartCount();
                 // loadCartFromDatabase();
@@ -349,17 +384,21 @@
                 let price = parseFloat(this.getAttribute("data-price")) || 0;
                 let productId = parseFloat(this.getAttribute("data-productid")) || 0;
                 let productsImageId = parseFloat(this.getAttribute("data-productsimageid")) || 0;
-                let arrivingDays = parseInt(this.getAttribute("data-arrivingDays")) || 0;
+                let arrivingDays = parseInt(this.getAttribute("data-arrivingdays")) || 0;
 
                 addToCart(productName, productImage, productType, productColor, productDescription, price, productId, productsImageId, arrivingDays);
             });
              updateCartCount();
         });
 
-        function getCookie(name) {
-            let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-            return match ? match[2] : null;
-        }
+       function getCookie(name) {
+           const value = `; ${document.cookie}`;
+           const parts = value.split(`; ${name}=`);
+           if (parts.length === 2) {
+               return parts.pop().split(';').shift();
+           }
+           return null;
+       }
 
         async function loadCartFromDatabase() {
             let userId = getCookie("IShopId");

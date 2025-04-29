@@ -240,6 +240,7 @@ namespace ECommerce.Controllers
                 localStorage.removeItem('checkoutItems');
                 localStorage.removeItem('selectedAddress');
                 localStorage.removeItem('orderPlaced');
+                localStorage.removeItem('cartSynced');
                 window.location.href = '/Account/Login';
             </script>";
 

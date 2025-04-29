@@ -12,18 +12,31 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/easyzoom/2.5.2/easyzoom.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/easyzoom/2.5.2/easyzoom.min.js"></script>
+<script src="https://unpkg.com/drift-zoom/dist/Drift.min.js"></script>
 
 <style>
-    /*  .image-container {
-                         position: relative;
-                         width: 400px;  Adjust as needed
-                         height: 400px;
-                         border: 1px solid #ddd;
-    } */
+    .zoom-layout {
+        display: flex;
+        align-items: flex-start;
+        gap: 30px;
+    }
 
-    .swiper-slide img {
+    .image-box {
+        position: relative;
+        width: 500px;
+        height: 500px;
+    }
+
+    .image-wrapper {
+        position: relative;
         width: 100%;
         height: 100%;
+    }
+
+    #mainImage {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
 
     #zoomLens {
@@ -31,36 +44,26 @@
         width: 100px;
         height: 100px;
         border: 1px solid #000;
-        background: rgba(0,0,0,0.2);
-        cursor: pointer;
+        background: rgba(0, 0, 0, 0.2);
         display: none;
+        pointer-events: none;
     }
 
     #zoomContainer {
-        position: absolute;
-        left: 600px; /* Adjust position for side-by-side zoom */
-        top: 0;
         width: 600px;
         height: 500px;
-        overflow: hidden;
         border: 1px solid #ddd;
-        display: none; /* Hide until hover */
+        overflow: hidden;
+        background-color: white;
+        display: none;
     }
 
     #zoomResult {
-        width: 800px; /* Adjust zoom level */
-        height: 800px;
-        background-size: 800px 800px;
+        width: 100%;
+        height: 100%;
         background-repeat: no-repeat;
-        transition: background-position 0.1s linear;
-        background-color: white;
+        background-size: 800px 800px; /* 2x zoom */
     }
-
-    #zoomLens, #zoomContainer {
-        transition: opacity 10.3s ease-in-out; /* Smooth appearance */
-        opacity: 0; /* Initially hidden */
-    }
-
 </style>
 
 <!-- breadcrumb -->
@@ -96,50 +99,22 @@
                                     </div>
                                 </div>
                             </div>
-                            @* <div dir="ltr" class="swiper tf-product-media-main" id="gallery-swiper-started">
-                                <div class="swiper-wrapper">
-                                    <div class="swiper-slide" data-color="gray">
-                                        <div class="easyzoom easyzoom--overlay">
-                                            <a href="@productDetails.LargeImage" target="_blank" class="item" data-pswp-width="600px" data-pswp-height="800px">
-                                                <img class="tf-image-zoom lazyload" data-zoom="@productDetails.LargeImage" data-src="@productDetails.LargeImage" src="@productDetails.LargeImage" alt="Product Image">
-                                            </a>
-                                        </div>
+                           
+                            <div class="zoom-layout">
+                                <!-- Image Section -->
+                                <div class="image-box">
+                                    <div class="image-wrapper">
+                                        <img id="mainImage" src="@defaultImage" alt="Product Image">
+                                        <div id="zoomLens"></div>
                                     </div>
                                 </div>
-                            </div> *@
-                            <div class="tf-product-media-wrap sticky-top">
-                                <div class="thumbs-slider">
-                                    <div class="swiper tf-product-media-main" id="gallery-swiper-started">
-                                        <div class="swiper-wrapper">
-                                            <div class="swiper-slide">
-                                                <!-- Container for Zoom Effect -->
-                                                @* <div class="image-container"> *@
-                                                @*  <img id="mainImage" class="tf-image-zoom ls-is-cached lazyloaded"
-                                                     src="@productDetails.LargeImage"
-                                                     data-src="@productDetails.LargeImage"
-                                                     alt="Product Image"> *@
-                                                @*  <img id="mainImage"
-                                                     class="tf-image-zoom lazyload"
-                                                     src="@productDetails.LargeImage"
-                                                     data-src="@productDetails.LargeImage"
-                                                     alt="Product Image" /> *@
 
-                                                <img id="mainImage"
-                                                     class="tf-image-zoom lazyload"
-                                                     src="@defaultImage"
-                                                     data-src="@defaultImage"
-                                                     alt="Product Image" />
-                                                <div id="zoomLens"></div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <!-- Zoom Result Section -->
+                                <div id="zoomContainer">
+                                    <div id="zoomResult"></div>
                                 </div>
                             </div>
-
-                            <!-- Side Zoom Window -->
-                            <div id="zoomContainer">
-                                <div id="zoomResult"></div>
-                            </div>
+                              
                         </div>
                     </div>
                 </div>
@@ -165,11 +140,7 @@
                                             </div>
                                         }
                                     </div>
-                                    <p>@productDetails.Description</p>
-                                    @* <div class="tf-product-info-liveview">
-                                        <i class="icon icon-eye"></i>
-                                        <p class="text-caption-1"><span class="liveview-count">28</span> people are viewing this right now</p>
-                                    </div> *@
+                                    <p>@productDetails.Description</p>                                  
                                 </div>
                             </div>
                             <div class="tf-product-info-choose-option">
@@ -177,19 +148,6 @@
                                     <div class="variant-picker-label mb_12">
                                         Colors:<span class="text-title variant-picker-label-value value-currentColor">@productDetails.Color</span>
                                     </div>
-                                    @* <div class="list-color-product">
-                                        @{
-                                            int? productImageId = ViewBag.ProductImageId;
-                                        }
-                                        @foreach (var item in Model.ProductImages)
-                                        {
-                                            <a asp-action="ProductDetails" asp-route-slug="@Model.Slug" asp-route-typeslug="@item.TypeSlug"
-                                               asp-route-colorslug="@item.ColorSlug" class="list-color-item color-swatch active line">
-                                                <span class="swatch-value" style="background-color: @item.Color;"></span>
-                                                @*<img class="lazyload" data-src="@item.LargeImage" src="@item.LargeImage" alt="image-product"> *@
-                                    @*  </a>
-                                        }
-                                    </div> *@ 
                                    <ul class="list-color-product" data-product="@Model.ProductId">
                                         @foreach (var item in Model.ProductImages)
                                         {
@@ -203,9 +161,8 @@
                                                 <span class="swatch-value" style="background-color: @hexColor" title="@item.Color"></span>
                                             </li>
                                         }
-                                   </ul>
+                                    </ul>
                                 </div>
-
                                 <div class="tf-product-info-quantity">
                                     <div class="title mb_12">Quantity:</div>
                                     <div class="wg-quantity" data-products-image-id="@Model.ProductsImageId">
@@ -216,32 +173,10 @@
                                 </div>
                                 <div>
                                     <div class="tf-product-info-by-btn mb_10">
-                                        @* <a id="addToCartBtn" href="#" data-bs-toggle="modal" class="btn-style-2 flex-grow-1 text-btn-uppercase fw-6 btn-add-to-cart"><span>Add to cart -&nbsp;</span><span class="tf-qty-price total-price">₹@productDetails.Price</span></a> *@
                                         <a id="addToCartBtn" href="#" data-bs-toggle="modal" class="btn-style-2 flex-grow-1 text-btn-uppercase fw-6 btn-add-to-cart"><span>Add to cart</span></a>
                                     </div>
-                                    @* <a href="#" class="btn-style-3 text-btn-uppercase">Buy it now</a> *@
                                 </div>
-                                <div class="tf-product-info-help">
-                                    @* <div class="tf-product-info-extra-link">
-                                        <a href="#delivery_return" data-bs-toggle="modal" class="tf-product-extra-icon">
-                                            <div class="icon">
-                                                <i class="icon-shipping"></i>
-                                            </div>
-                                            <p class="text-caption-1">Delivery & Return</p>
-                                        </a>
-                                        <a href="#ask_question" data-bs-toggle="modal" class="tf-product-extra-icon">
-                                            <div class="icon">
-                                                <i class="icon-question"></i>
-                                            </div>
-                                            <p class="text-caption-1">Ask A Question</p>
-                                        </a>
-                                        <a href="#share_social" data-bs-toggle="modal" class="tf-product-extra-icon">
-                                            <div class="icon">
-                                                <i class="icon-share"></i>
-                                            </div>
-                                            <p class="text-caption-1">Share</p>
-                                        </a>
-                                    </div> *@
+                                <div class="tf-product-info-help">                                   
                                     <div class="tf-product-info-time">
                                         <div class="icon">
                                             <i class="icon-timer"></i>
@@ -419,11 +354,6 @@
                                     <div class="swiper-slide">
                                         <div class="card-product wow fadeInUp" data-wow-delay="0.1s">
                                             <div class="card-product-wrapper">
-                                                @* <a asp-action="ProductDetails" asp-route-slug="@product.Slug" asp-route-typeslug="@productImage.TypeSlug"
-                                                   asp-route-colorslug="@productImage.ColorSlug" class="product-img">
-                                                    <img class="lazyload img-product" data-src="@productImage.MediumImage" src="@productImage.MediumImage" alt="image-product">
-                                                    <img class="lazyload img-hover" data-src="@productImage.MediumImage" src="@productImage.MediumImage" alt="image-product">
-                                                </a> *@
                                                 <div class="list-color-product">
                                                     <a id="product-link-@product.ProductId"
                                                        class="product-img"
@@ -481,15 +411,6 @@
                                                 {
                                                     <span class="price">₹@productImage.Price</span>
                                                 }
-                                                @*  <ul class="list-color-product">
-                                                 @foreach (var item in product.ProductImages)
-                                                 {
-                                                     <li class="list-color-item color-swatch active line">
-                                                         <span class="swatch-value" style="background-color: @item.Color;"></span>
-                                                         <img class="lazyload" data-src="@item.MediumImage" src="@item.MediumImage" alt="image-product">
-                                                     </li>
-                                                 }
-                                             </ul> *@
                                                 <div class="list-color-productrelated">
                                                     <ul class="list-color-product" data-product="@product.ProductId">
                                                         @foreach (var item in product.ProductImages)
@@ -511,7 +432,7 @@
                                                         }
                                                     </ul>
                                                 </div>
-                                               
+
                                             </div>
                                         </div>
                                     </div>
@@ -555,15 +476,12 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        let mainImage = document.getElementById("mainImage");
-        let zoomLens = document.getElementById("zoomLens");
-        let zoomResult = document.getElementById("zoomResult");
-        let zoomContainer = document.getElementById("zoomContainer");
+        const mainImage = document.getElementById("mainImage");
+        const zoomLens = document.getElementById("zoomLens");
+        const zoomContainer = document.getElementById("zoomContainer");
+        const zoomResult = document.getElementById("zoomResult");
 
-        let hideTimeout; // Variable to store timeout
-
-
-        let addToCartBtn = document.getElementById("addToCartBtn");
+         let addToCartBtn = document.getElementById("addToCartBtn");
         let cartQuantity = document.getElementById("cartQuantity");
 
         let price = @productDetails?.Price ?? 0;
@@ -576,70 +494,45 @@
         let productsImageId = @productDetails?.ProductsImageId ?? 0;
         let arrivingDays = @productDetails?.ArrivingDays ?? 0;
 
-        // Set zoom background image
-        zoomResult.style.backgroundImage = `url(${mainImage.src})`;
+        function setZoomImage() {
+          zoomResult.style.backgroundImage = `url(${mainImage.src})`;
+        }
 
-        // Smooth show effect
+        if (mainImage.complete) {
+          setZoomImage();
+        } else {
+          mainImage.addEventListener("load", setZoomImage);
+        }
+
         mainImage.addEventListener("mouseenter", () => {
-            clearTimeout(hideTimeout); // Stop hiding
-            zoomLens.style.opacity = 1;
-            zoomContainer.style.opacity = 1;
-            zoomContainer.style.display = "block";
-            zoomLens.style.display = "block";
+          zoomLens.style.display = "block";
+          zoomContainer.style.display = "block";
         });
 
-        // Smooth hide effect with delay
         mainImage.addEventListener("mouseleave", () => {
-            hideTimeout = setTimeout(() => {
-                zoomLens.style.opacity = 0;
-                zoomContainer.style.opacity = 0;
-                setTimeout(() => {
-                    zoomLens.style.display = "none";
-                    zoomContainer.style.display = "none";
-                }, 700); // Delay hiding to match transition
-            }, 200); // 200ms delay before hiding
+          zoomLens.style.display = "none";
+          zoomContainer.style.display = "none";
         });
 
-        // Throttle function to slow down zoom movement
-        function throttle(fn, limit) {
-            let lastCall = 0;
-            return function (...args) {
-                let now = new Date().getTime();
-                if (now - lastCall < limit) return;
-                lastCall = now;
-                return fn(...args);
-            };
+        mainImage.addEventListener("mousemove", moveLens);
+        zoomLens.addEventListener("mousemove", moveLens);
+
+        function moveLens(e) {
+          const rect = mainImage.getBoundingClientRect();
+          const x = e.pageX - rect.left - window.scrollX - zoomLens.offsetWidth / 2;
+          const y = e.pageY - rect.top - window.scrollY - zoomLens.offsetHeight / 2;
+
+          const maxX = mainImage.width - zoomLens.offsetWidth;
+          const maxY = mainImage.height - zoomLens.offsetHeight;
+
+          const lensX = Math.max(0, Math.min(x, maxX));
+          const lensY = Math.max(0, Math.min(y, maxY));
+
+          zoomLens.style.left = `${lensX}px`;
+          zoomLens.style.top = `${lensY}px`;
+
+          zoomResult.style.backgroundPosition = `-${lensX * 2}px -${lensY * 2}px`;
         }
-
-        function zoom(e) {
-            let pos = getCursorPos(e);
-            let x = pos.x - (zoomLens.offsetWidth / 2);
-            let y = pos.y - (zoomLens.offsetHeight / 2);
-
-            if (x > mainImage.width - zoomLens.offsetWidth) x = mainImage.width - zoomLens.offsetWidth;
-            if (x < 0) x = 0;
-            if (y > mainImage.height - zoomLens.offsetHeight) y = mainImage.height - zoomLens.offsetHeight;
-            if (y < 0) y = 0;
-
-            zoomLens.style.left = x + "px";
-            zoomLens.style.top = y + "px";
-
-            zoomResult.style.backgroundPosition = `-${x * 2}px -${y * 2}px`;
-        }
-
-        function getCursorPos(e) {
-            let rect = mainImage.getBoundingClientRect();
-            return {
-                x: e.pageX - rect.left - window.scrollX,
-                y: e.pageY - rect.top - window.scrollY
-            };
-        }
-
-        // Add throttling to slow down zoom effect
-        let throttledZoom = throttle(zoom, 80); // Adjust delay to slow down
-
-        mainImage.addEventListener("mousemove", throttledZoom);
-        zoomLens.addEventListener("mousemove", throttledZoom);
 
         loadCartFromDatabase();
         updateCartCount();
@@ -655,7 +548,7 @@
                 const hoverImg = document.getElementById('hover-img-' + productId);
                 const productLink = document.getElementById('product-link-' + productId);
                 const productTextLink = document.getElementById('product-text-link-' + productId);
-                const viewProductBtn = document.getElementById('view-product-btn-' + productId); 
+                const viewProductBtn = document.getElementById('view-product-btn-' + productId);
                 const addToCartBtn = document.getElementById('add-to-cart-btn-' + productId);
 
                 //  Change images
@@ -820,7 +713,14 @@
 
                  let userId = getCookie("IShopId");
 
-                 let quantity = parseInt(cartQuantity.value);
+                 let cartQuantity = document.getElementById("cartQuantity");
+                 let quantity = 1;
+
+                 if (cartQuantity) {
+                    quantity = parseInt(cartQuantity.value) || 1; // Use the value of cartQuantity or default to 1 if it's not a valid number
+                 } else {
+                     console.warn("cartQuantity element not found, using default quantity of 1");
+                 }
 
                  const isAvailable = await checkStockAvailability(productsImageId, quantity);
                  if (!isAvailable) {
@@ -830,13 +730,16 @@
 
                  let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
 
-                  let existingItemIndex = cartItems.findIndex(item => item.productId === productId && item.productsImageId === productsImageId);
+                 let existingItemIndex = cartItems.findIndex(
+                       item => item.productId.toString() === productId.toString() &&
+                               item.productsImageId.toString() === productsImageId.toString()
+                 );
 
-                      if (existingItemIndex !== -1) {
-                          // Update existing item
-                          cartItems[existingItemIndex].quantity += quantity;
-                          cartItems[existingItemIndex].total = (cartItems[existingItemIndex].quantity * price).toFixed(2);
-                      }else {
+                  if (existingItemIndex !== -1) {
+                      // Update existing item
+                      cartItems[existingItemIndex].quantity += quantity;
+                      cartItems[existingItemIndex].total = (cartItems[existingItemIndex].quantity * price).toFixed(2);
+                  }else {
                       cartItems.push({
                           name: productName,
                           image: productImage,
@@ -855,13 +758,47 @@
                  localStorage.setItem("cartItems", JSON.stringify(cartItems));
 
                  console.log("Updated cartItems:", cartItems);
-                  if (userId) {
-                          // Step 4: If logged in, save to database
-                          await saveCartToDatabase(cartItems);
-                   } else {
-                          // Step 5: If guest user, store cart in cookies
-                            document.cookie = `cartItems=${JSON.stringify(cartItems)}; path=/; expires=${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()}`;
-                   }
+
+                if (userId) {
+                        // Step 4: If logged in, save to database
+                        await saveCartToDatabase(cartItems);
+                } else {
+                    // Guest user - handle cart in cookies
+                    let cookieCart = [];
+                    try {
+                        let cookieRaw = getCookie("cartItems");
+                        cookieCart = cookieRaw ? JSON.parse(cookieRaw) : [];
+                    } catch (err) {
+                        console.warn("Bad cartItems cookie, resetting.");
+                        cookieCart = [];
+                    }
+
+                    let cookieIndex = cookieCart.findIndex(
+                        item => item.productId.toString() === productId.toString() &&
+                                item.productsImageId.toString() === productsImageId.toString()
+                    );
+
+                    if (cookieIndex !== -1) {
+                        cookieCart[cookieIndex].quantity += quantity;
+                        cookieCart[cookieIndex].total = (cookieCart[cookieIndex].quantity * price).toFixed(2);
+                    } else {
+                        cookieCart.push({
+                            name: productName,
+                            image: productImage,
+                            type: productType,
+                            color: productColor,
+                            description: productDescription,
+                            quantity: quantity,
+                            price: price,
+                            total: price.toFixed(2),
+                            productId: productId,
+                            productsImageId: productsImageId,
+                            arrivingDays: arrivingDays
+                        });
+                    }
+
+                    document.cookie = `cartItems=${JSON.stringify(cookieCart)}; path=/; expires=${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()}`;
+                }
 
                   updateCartCount();
                   loadCartFromDatabase();
@@ -875,8 +812,12 @@
 
         // Function to get a cookie value
         function getCookie(name) {
-            let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-            return match ? match[2] : null;
+           const value = `; ${document.cookie}`;
+           const parts = value.split(`; ${name}=`);
+           if (parts.length === 2) {
+               return parts.pop().split(';').shift();
+           }
+           return null;
         }
 
         async function saveCartToDatabase(cartItems) {
@@ -952,6 +893,5 @@
             let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
             messageModal.show();
         }
-
     });
 </script>

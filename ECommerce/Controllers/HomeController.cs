@@ -551,7 +551,7 @@ namespace ECommerce.Controllers
                 }
                 else // Guest user: store in localStorage & cookies
                 {
-                    Response.Cookies.Append("GuestCart", System.Text.Json.JsonSerializer.Serialize(cartItems),
+                    Response.Cookies.Append("cartItems", System.Text.Json.JsonSerializer.Serialize(cartItems),
                         new CookieOptions { Expires = DateTime.UtcNow.AddDays(7) });
 
                     return Json(new { success = true, message = "Cart saved in localStorage & cookies for guests." });

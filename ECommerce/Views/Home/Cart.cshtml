@@ -278,36 +278,7 @@
             }
         });
 
-        async function syncGuestCartToDatabase() {
-            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-
-            if (cartItems.length === 0) {
-                console.warn("No items in local cart to sync.");
-                return;
-            }
-
-            try {
-                console.log("Syncing guest cart to database...", cartItems);
-
-                let response = await fetch("/Home/SaveCart", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(cartItems),
-                });
-
-                if (!response.ok) {
-                    console.error("Failed to sync cart. Server Response:", await response.text());
-                    return;
-                }
-
-                console.log("Guest cart successfully synced to database.");
-                localStorage.removeItem("cartItems"); // Clear local storage after syncing
-                loadCartFromDatabase(); // Refresh cart from DB
-            } catch (error) {
-                console.error("Error syncing guest cart:", error);
-            }
-        }
-
+          
         let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
         console.log("Local Storage Cart Items:", cartItems); 
 
@@ -380,6 +351,118 @@
                 console.log(" Redirecting to checkout...");
                 window.location.href = "/Home/Checkout";
         });
+
+            // Normalize cart item function
+    function normalizeCartItem(item) {
+        return {
+            shoppingCartId: parseInt(item.shoppingCartId) || 0,
+            iShopId: parseInt(item.iShopId) || 0,
+            arrivingDays: parseInt(item.arrivingDays) || 0,
+            color: item.color ?? "",
+            description: item.description ?? "",
+            image: item.image ?? "",
+            name: item.name ?? "",
+            price: parseFloat(item.price) || 0,
+            productId: parseInt(item.productId) || 0,
+            productsImageId: parseInt(item.productsImageId || item.productImageId) || 0,
+            quantity: parseInt(item.quantity) || 1,
+            total: parseFloat(item.total) || 0,
+            type: item.type ?? ""
+        };
+    }
+
+    // Get the server cart from the database
+    async function getServerCart() {
+        const response = await fetch('/Home/GetCart');
+        if (!response.ok) return [];
+        const data = await response.json();
+        return (data.cartItems || []).map(normalizeCartItem);
+    }
+
+    // Sync guest cart to the server (after login)
+    async function syncGuestCartToDatabase() {
+        try {
+            const IShopId = getCookie('IShopId');
+            let localCart = JSON.parse(localStorage.getItem("cartItems")) || [];
+            localCart = localCart.map(normalizeCartItem); // Normalize local cart items
+
+            if (localCart.length === 0) {
+                console.warn("No items in local cart to sync.");
+                return;
+            }
+
+            // If the user is a guest (IShopId doesn't exist in cookies), store cart in cookies and exit
+            if (!IShopId) {
+                document.cookie = `cartItems=${JSON.stringify(localCart)}; path=/; expires=${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()}`;
+                return;
+            }
+
+            // If user is logged in (IShopId exists), merge local cart with server cart
+            console.log("User logged in — merging guest cart into DB.");
+
+            const serverCart = await getServerCart(); // Get the server cart from the database
+            const mergedCart = [];
+
+            // Loop through the local cart and merge it with the server cart
+            for (let localItem of localCart) {
+                const match = serverCart.find(serverItem =>
+                    serverItem.productsImageId === localItem.productsImageId
+                );
+
+                if (match) {
+                    // If item exists in the server cart, update the quantity and total
+                    const updatedQuantity = localItem.quantity + match.quantity;
+                    mergedCart.push({
+                        ...localItem,
+                        quantity: updatedQuantity,
+                        total: updatedQuantity * localItem.price, // Recalculate total
+                        shoppingCartId: match.shoppingCartId, // Keep the shoppingCartId from the server
+                    });
+                } else {
+                    // If item doesn't exist in the server cart, add it as a new item
+                    mergedCart.push(localItem);
+                }
+            }
+
+            // Add any remaining items from the server cart that aren't in the local cart
+            for (let serverItem of serverCart) {
+                if (!mergedCart.some(item => item.productsImageId === serverItem.productsImageId)) {
+                    mergedCart.push(serverItem);
+                }
+            }
+
+            // Update the local cart with the merged items
+            localCart = mergedCart;
+            console.log("Merged cart:", localCart);
+
+            // Save the merged cart to the server
+            const response = await fetch("/Home/SaveCart", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(localCart),
+            });
+
+            if (!response.ok) {
+                console.error("Failed to sync cart. Server Response:", await response.text());
+                return;
+            }
+
+            console.log("Guest cart successfully synced to database.");
+
+            // Update localStorage with the synced cart and refresh UI
+            localStorage.setItem("cartItems", JSON.stringify(localCart)); // Update local with merged cart
+            // localStorage.removeItem("cartItems"); // OPTIONAL: Remove if you no longer need the local cart here
+
+            // Update UI elements (total and item count)
+            updateCartTotal?.();  // Update the cart total if necessary
+            updateCartCount?.();  // Update the cart count if necessary
+            loadCartFromDatabase?.(); // Refresh cart from DB if needed
+
+        } catch (error) {
+            console.error("Error syncing guest cart:", error);
+        }
+    }
+
 
         //Ensure Click Event is Attached
         document.addEventListener("click", async function (event) {
@@ -550,73 +633,83 @@
              let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
              return match ? match[2] : null;
         }
+        
+        
+      async function saveCartToDatabase() {
+        try {
+            let IShopId = getCookie('IShopId'); // Get the IShopId from cookies (assuming user is logged in)
+            let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
 
-        async function saveCartToDatabase() {
-            try {
-                let IShopId = getCookie('IShopId');
-                let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-
-                if (!IShopId) {
-                    localStorage.getItem("cartItems", JSON.stringify(cartItems));
-                    document.cookie = `cartItems=${JSON.stringify(cartItems)}; path=/; expires=${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()}`;
-
-                    console.warn(" User not logged in. Cannot save cart.");
-                    return;
-                }
-
-                if (cartItems.length === 0) {
-                    console.warn(" No items in cart. Clearing from database...");
-                    await deleteCartItem();
-                    localStorage.removeItem("orderPlaced");
-                    return;
-                }
-
-                //  Ensure all fields have proper default values
-                cartItems = cartItems.map(item => ({
-                    shoppingCartId: isNaN(parseInt(item.shoppingCartId)) ? 0 : parseInt(item.shoppingCartId),
-                    iShopId: isNaN(parseInt(item.iShopId)) ? 0 : parseInt(item.iShopId),
-                    arrivingDays: isNaN(parseInt(item.arrivingDays)) ? 0 : parseInt(item.arrivingDays),
-                    color: item.color ?? "",
-                    description: item.description ?? "",
-                    image: item.image ?? "",
-                    name: item.name ?? "",
-                    price: isNaN(parseFloat(item.price)) ? 0 : parseFloat(item.price),
-                    productId: isNaN(parseInt(item.productId)) ? 0 : parseInt(item.productId),
-                    productsImageId: isNaN(parseInt(item.productsImageId)) ? (isNaN(parseInt(item.productImageId)) ? 0 : parseInt(item.productImageId)) : parseInt(item.productsImageId),
-                    quantity: isNaN(parseInt(item.quantity)) ? 1 : parseInt(item.quantity),
-                    total: isNaN(parseFloat(item.total)) ? 0 : parseFloat(item.total),
-                    type: item.type ?? ""
-                }));
-
-                console.log(" Sending Cart Data to Backend:", cartItems);
-
-                let response = await fetch("/Home/SaveCart", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(cartItems),
-                });
-
-                if (!response.ok) {
-                    let errorText;
-                    try {
-                        errorText = await response.json(); // Try to parse JSON
-                    } catch (err) {
-                        errorText = await response.text(); // Fallback to text
-                    }
-                    console.error(" Failed to save cart. Server Response:", errorText);
-                    alert(" Error saving cart. Please try again.");
-                    return;
-                }
-
-                console.log(" Cart saved successfully.");
-                localStorage.setItem("cartItems", JSON.stringify(cartItems)); // Ensure LocalStorage updates
-                updateCartTotal();
-                updateCartCount();
-
-            } catch (error) {
-                console.error(" Error saving cart:", error);
+            // If the user is not logged in, save the cart in cookies
+            if (!IShopId) {
+                document.cookie = `cartItems=${JSON.stringify(cartItems)}; path=/; expires=${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()}`;
+                console.warn("User not logged in. Cannot save cart.");
+                return;
             }
+
+            // If the cart is empty, clear the items from the database
+            if (cartItems.length === 0) {
+                console.warn("No items in cart. Clearing from database...");
+                await deleteCartItem(); // Call function to delete the cart items from DB
+                localStorage.removeItem("orderPlaced"); // Optional: remove any order placed flag
+                return;
+            }
+
+            // Normalize the cart items to ensure all fields are populated correctly
+            cartItems = cartItems.map(item => ({
+                shoppingCartId: isNaN(parseInt(item.shoppingCartId)) ? 0 : parseInt(item.shoppingCartId),
+                iShopId: isNaN(parseInt(item.iShopId)) ? 0 : parseInt(item.iShopId),
+                arrivingDays: isNaN(parseInt(item.arrivingDays)) ? 0 : parseInt(item.arrivingDays),
+                color: item.color ?? "",
+                description: item.description ?? "",
+                image: item.image ?? "",
+                name: item.name ?? "",
+                price: isNaN(parseFloat(item.price)) ? 0 : parseFloat(item.price),
+                productId: isNaN(parseInt(item.productId)) ? 0 : parseInt(item.productId),
+                productsImageId: isNaN(parseInt(item.productsImageId)) ? (isNaN(parseInt(item.productImageId)) ? 0 : parseInt(item.productImageId)) : parseInt(item.productsImageId),
+                quantity: isNaN(parseInt(item.quantity)) ? 1 : parseInt(item.quantity),
+                total: isNaN(parseFloat(item.total)) ? 0 : parseFloat(item.total),
+                type: item.type ?? ""
+            }));
+
+            // Log the cart data that is being sent to the backend
+            console.log("Sending Cart Data to Backend:", cartItems);
+
+            // Send the cart data to the backend for saving
+            const response = await fetch("/Home/SaveCart", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(cartItems),
+            });
+
+            // Handle server response
+            if (!response.ok) {
+                let errorText;
+                try {
+                    errorText = await response.json(); // Try parsing the response as JSON
+                } catch (err) {
+                    errorText = await response.text(); // Fallback to plain text if JSON parsing fails
+                }
+                console.error("Failed to save cart. Server Response:", errorText);
+                alert("Error saving cart. Please try again.");
+                return;
+            }
+
+            console.log("Cart saved successfully.");
+
+            // Update localStorage with the latest cart items
+            localStorage.setItem("cartItems", JSON.stringify(cartItems));
+
+            // Optional: Update the UI with new cart totals and item counts
+            updateCartTotal?.();
+            updateCartCount?.();
+
+        } catch (error) {
+            console.error("Error saving cart:", error);
+            alert("An error occurred while saving your cart. Please try again.");
         }
+    }
+
 
         function updateCartTotal() {
             let cartTotal = 0;

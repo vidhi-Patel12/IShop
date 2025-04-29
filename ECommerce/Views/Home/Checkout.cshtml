@@ -671,33 +671,120 @@
         renderCheckout(); // Display updated checkout UI
     }
 
-    async function syncGuestCartToDatabase() {
-        let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+            // Normalize cart item function
+    function normalizeCartItem(item) {
+        return {
+            shoppingCartId: parseInt(item.shoppingCartId) || 0,
+            iShopId: parseInt(item.iShopId) || 0,
+            arrivingDays: parseInt(item.arrivingDays) || 0,
+            color: item.color ?? "",
+            description: item.description ?? "",
+            image: item.image ?? "",
+            name: item.name ?? "",
+            price: parseFloat(item.price) || 0,
+            productId: parseInt(item.productId) || 0,
+            productsImageId: parseInt(item.productsImageId || item.productImageId) || 0,
+            quantity: parseInt(item.quantity) || 1,
+            total: parseFloat(item.total) || 0,
+            type: item.type ?? ""
+        };
+    }
 
-        if (cartItems.length === 0) {
-            console.warn(" No items in local cart to sync.");
-            return;
-        }
+    // Get the server cart from the database
+    async function getServerCart() {
+        const response = await fetch('/Home/GetCart');
+        if (!response.ok) return [];
+        const data = await response.json();
+        return (data.cartItems || []).map(normalizeCartItem);
+    }
 
+    // Sync guest cart to the server (after login)
+        async function syncGuestCartToDatabase() {
         try {
-            console.log(" Syncing guest cart to database...", cartItems);
+            const IShopId = getCookie('IShopId'); // Get login session
+            let localCart = JSON.parse(localStorage.getItem("cartItems")) || [];
+            localCart = localCart.map(normalizeCartItem); // Normalize local cart items
 
-            let response = await fetch("/Home/SaveCart", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(cartItems),
-            });
-
-            if (!response.ok) {
-                console.error(" Failed to sync cart. Server Response:", await response.text());
+            if (localCart.length === 0) {
+                console.warn("No items in local cart to sync.");
                 return;
             }
 
-            console.log(" Guest cart successfully synced to database.");
+            // Check if cart has already been synced to avoid duplicate merges
+            if (localStorage.getItem("cartSynced") === "true") {
+                console.log("Guest cart already synced. Skipping merge.");
+                return;
+            }
+
+            // If the user is not logged in, save cart to cookies and exit
+            if (!IShopId) {
+                document.cookie = `cartItems=${JSON.stringify(localCart)}; path=/; expires=${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString()}`;
+                return;
+            }
+
+            console.log("User logged in — merging guest cart into DB.");
+
+            // Get current cart from server
+            const serverCart = await getServerCart();
+            const mergedCart = [];
+
+            // Merge local and server cart items
+            for (let localItem of localCart) {
+                const match = serverCart.find(serverItem =>
+                    serverItem.productsImageId === localItem.productsImageId
+                );
+
+                if (match) {
+                    const updatedQuantity = localItem.quantity + match.quantity;
+                    mergedCart.push({
+                        ...localItem,
+                        quantity: updatedQuantity,
+                        total: updatedQuantity * localItem.price,
+                        shoppingCartId: match.shoppingCartId,
+                    });
+                } else {
+                    mergedCart.push(localItem);
+                }
+            }
+
+            // Add remaining items from server cart
+            for (let serverItem of serverCart) {
+                if (!mergedCart.some(item => item.productsImageId === serverItem.productsImageId)) {
+                    mergedCart.push(serverItem);
+                }
+            }
+
+            console.log("Merged cart:", mergedCart);
+
+            // Save merged cart to server
+            const response = await fetch("/Home/SaveCart", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(mergedCart),
+            });
+
+            if (!response.ok) {
+                console.error("Failed to sync cart. Server Response:", await response.text());
+                return;
+            }
+
+            console.log("Guest cart successfully synced to database.");
+
+            //  CLEANUP LOCAL STORAGE
+            localStorage.removeItem("cartItems"); // Remove local guest cart
+            localStorage.setItem("cartSynced", "true"); // Mark as synced to prevent duplicate merging
+
+            //  Refresh cart UI if needed
+            updateCartTotal?.();  // Optional: update total price
+            updateCartCount?.();  // Optional: update cart count badge
+            loadCartFromDatabase?.(); // Optional: fetch fresh server-side cart
+
         } catch (error) {
-            console.error(" Error syncing guest cart:", error);
+            console.error("Error syncing guest cart:", error);
         }
     }
+
+
 
     async function loadCartFromDatabase() {
         let orderPlaced = localStorage.getItem("orderPlaced");

@@ -105,14 +105,14 @@
                                     <div class="swiper-wrapper" id="couponContainer">
                                         <!-- Coupons will be dynamically inserted here -->
                                     </div>
-                                </div>                               
+                                </div>
                                 <div class="ip-discount-code">
                                     <input type="text" id="CoupanCode" name="CoupanCode" placeholder="Add voucher discount">
                                     <button type="button" class="tf-btn" onclick="applyCoupon()">
                                         <span class="text">Apply Code</span>
                                     </button>
                                 </div>
-                            </div>                           
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -145,7 +145,7 @@
                             <span id="promotionApplied" class="price">₹0.00</span>
                         </div>
                     </div>
-                   
+
                     <h5 class="total-order d-flex justify-content-between align-items-center">
                         <span>Order Total</span>
                         <span class="total" id="orderTotalAmount">₹0.00</span>
@@ -243,7 +243,7 @@
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", async function () {  
+    document.addEventListener("DOMContentLoaded", async function () {
         let addressListContainer = document.getElementById("addressListContainer");
 
         try {
@@ -318,8 +318,8 @@
                     console.warn(" Stored address not found in list, selecting first available.");
                     selectFirstAvailableAddress(addresses);
                 }
-            } 
-            else 
+            }
+            else
             {
                 console.warn(" No stored address found. Selecting first available.");
                 selectFirstAvailableAddress(addresses);
@@ -359,38 +359,41 @@
                 console.error("Error fetching addresses:", error);
         }
 
+        let total = renderCheckout();
+        
         try {
-                 let response = await fetch("/Home/Coupan"); // Fetch coupons
-                 let coupons = await response.json();
-                 let couponContainer = document.getElementById("couponContainer");
+                
+                let response = await fetch(`/Home/Coupan/${total}`); // Fetch coupons
+                let coupons = await response.json();
+                let couponContainer = document.getElementById("couponContainer");
 
-                 // Get the applied coupon code from local storage
-                 let appliedCoupon = localStorage.getItem("appliedCoupon");
+                // Get the applied coupon code from local storage
+                let appliedCoupon = localStorage.getItem("appliedCoupon");
 
-                 couponContainer.innerHTML = coupons.map(coupon => `
-                <div class="swiper-slide">
-                    <div class="box-discount">
-                        <div class="discount-top">
-                            <div class="discount-off">
-                                <div class="text-caption-1">Discount</div>
-                                <span class="sale-off text-btn-uppercase">${coupon.discount}% OFF</span>
+                couponContainer.innerHTML = coupons.map(coupon => `
+                    <div class="swiper-slide">
+                        <div class="box-discount">
+                            <div class="discount-top">
+                                <div class="discount-off">
+                                    <div class="text-caption-1">Discount</div>
+                                    <span class="sale-off text-btn-uppercase">${coupon.discount}% OFF</span>
+                                </div>
+                                <div class="discount-from">
+                                    <p class="text-caption-1">${coupon.coupanType}</p>
+                                </div>
                             </div>
-                            <div class="discount-from">
-                                <p class="text-caption-1">${coupon.coupanType}</p>
+                            <div class="discount-bot">
+                                <span class="text-btn-uppercase">${coupon.coupanCode}</span>
+                                <button class="tf-btn apply-coupon"
+                                    data-code="${coupon.coupanCode}"
+                                    data-discount="${coupon.discount}"
+                                    ${appliedCoupon === coupon.coupanCode ? 'disabled' : ''}>
+                                    <span class="text">${appliedCoupon === coupon.coupanCode ? 'Applied' : 'Apply Code'}</span>
+                                </button>
                             </div>
-                        </div>
-                        <div class="discount-bot">
-                            <span class="text-btn-uppercase">${coupon.coupanCode}</span>
-                            <button class="tf-btn apply-coupon"
-                                data-code="${coupon.coupanCode}"
-                                data-discount="${coupon.discount}"
-                                ${appliedCoupon === coupon.coupanCode ? 'disabled' : ''}>
-                                <span class="text">${appliedCoupon === coupon.coupanCode ? 'Applied' : 'Apply Code'}</span>
-                            </button>
                         </div>
                     </div>
-                </div>
-            `).join("");
+                `).join("");
 
                  // Attach event listeners AFTER inserting HTML
                  document.querySelectorAll(".apply-coupon").forEach(button => {
@@ -420,7 +423,7 @@
                     watchSlidesProgress: true, // Track slide progress
                     watchSlidesVisibility: true, // Ensure visibility updates
                 });
-           } 
+           }
         catch (error) {
          console.error("Error fetching coupons:", error);
         }
@@ -904,7 +907,8 @@
                 updateQuantity(index, "decrease");
             });
         });
-
+        
+        return total;
     }
 
     document.addEventListener("DOMContentLoaded", async function () {
@@ -958,7 +962,7 @@
 
         let OrderId = crypto.randomUUID(); // Generate a random Order ID
         //let PaymentMode = "COD"; // Assume default payment method
-       
+
         // Fetch checkout values from DOM
         let TotalAmount = parseFloat(document.getElementById("totalCheckoutAmount")?.innerText.replace("₹", "")) || 0;
         let DeliveryCharge = parseFloat(document.getElementById("deliveryCharge")?.innerText.replace("₹", "")) || 0;

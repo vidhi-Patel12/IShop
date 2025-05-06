@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using System.Diagnostics;
 using ECommerce.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +11,21 @@ using Microsoft.EntityFrameworkCore;
 using System.Reflection.PortableExecutable;
 using Braintree;
 using ECommerce.Data;
+using System.Net.Mail;
+using System.Reflection.Metadata;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
+using Document = iTextSharp.text.Document;
+using MimeKit;
+using MailKit.Security;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
+using MimeKit.Utils;
+using SmtpClient = MailKit.Net.Smtp.SmtpClient;
+using iTextSharp.text.html.simpleparser;
+using iTextSharp.tool.xml;
+
 
 namespace ECommerce.Controllers
 {
@@ -21,14 +36,18 @@ namespace ECommerce.Controllers
         private readonly IConfiguration _configuration;
         private readonly ApplicationDbContext _context;
 
-        public HomeController(IConfiguration configuration, ILogger<HomeController> logger,ApplicationDbContext context)
+        private readonly IViewRenderService _viewRenderService;
+
+
+        public HomeController(IConfiguration configuration, ILogger<HomeController> logger,ApplicationDbContext context, IViewRenderService viewRenderService)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection");
             _logger = logger;
             _configuration = configuration;
             _context = context;
+            _viewRenderService = viewRenderService;
         }
-       
+
         public async Task<IActionResult> Index()
         {
             List<Products> products = new List<Products>();
@@ -956,8 +975,8 @@ namespace ECommerce.Controllers
             }
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Coupan()
+        [HttpGet("/Home/Coupan/{total}")]
+        public async Task<IActionResult> Coupan(double total)
         {
             List<Coupan> coupons = new List<Coupan>();
 
@@ -965,9 +984,10 @@ namespace ECommerce.Controllers
             {
                 await conn.OpenAsync();
 
-                using (SqlCommand cmd = new SqlCommand("SELECT * FROM Coupan where IsActive = 1 AND ExpiryDate >= CAST(GETDATE() AS DATE)", conn)) // Raw SQL query
+                using (SqlCommand cmd = new SqlCommand("SELECT * FROM Coupan where IsActive = 1 AND ExpiryDate >= CAST(GETDATE() AS DATE) AND ValidAmount >= @ValidAmount", conn)) // Raw SQL query
                 {
                     cmd.CommandType = CommandType.Text; //  Use CommandType.Text for raw SQL
+                    cmd.Parameters.AddWithValue("@ValidAmount", total);
 
                     using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                     {
@@ -1489,6 +1509,268 @@ namespace ECommerce.Controllers
 
             return View(user);
         }
+
+        private async Task<List<OrderDetailsDto>> GetOrderDetailsByOrderId(Guid orderId)
+        {
+            var orderDetails = new List<OrderDetailsDto>();
+
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand("GetOrderDetailsByOrderId", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add(new SqlParameter("@OrderId", SqlDbType.UniqueIdentifier) { Value = orderId });
+
+                    await conn.OpenAsync();
+
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            orderDetails.Add(new OrderDetailsDto
+                            {
+                                OrderId = reader["OrderId"].ToString(),
+                                AddressId = Convert.ToInt32(reader["AddressId"]),
+                                PaymentMode = reader["PaymentMode"]?.ToString(),
+                                OrderDate = reader.GetDateTime(reader.GetOrdinal("OrderDate")),
+                                DelivaryCharge = (float)reader.GetDouble(reader.GetOrdinal("DelivaryCharge")),
+                                PromoAmount = (float)reader.GetDouble(reader.GetOrdinal("PromoAmount")),
+                                OrderAmount = (float)reader.GetDouble(reader.GetOrdinal("OrderAmount")),
+                                FullName = reader["FullName"]?.ToString(),
+                                Mobile = reader["Mobile"]?.ToString(),
+                                Address = reader["Address"]?.ToString(),
+                                City = reader["City"]?.ToString(),
+                                State = reader["State"]?.ToString(),
+                                Country = reader["Country"]?.ToString(),
+                                Zipcode = reader["Zipcode"]?.ToString(),
+                                ProductsImageId = Convert.ToInt32(reader["ProductsImageId"]),
+                                OrderQty = Convert.ToInt32(reader["OrderQty"]),
+                                TotalAmount = (float)reader.GetDouble(reader.GetOrdinal("TotalAmount")),
+                                ProductId = Convert.ToInt32(reader["ProductId"]),
+                                Type = reader["Type"]?.ToString(),
+                                Color = reader["Color"]?.ToString(),
+                                Price = (float)reader.GetDouble(reader.GetOrdinal("Price")),
+                                ProductName = reader["ProductName"]?.ToString(),
+                                Email = reader["Email"]?.ToString(),
+                                PaymentModeInPaymentTable = reader["PaymentModeInPaymentTable"]?.ToString(),
+                                PaymentAmount = (float)reader.GetDouble(reader.GetOrdinal("PaymentAmount")),
+                                PaymentDate = reader.GetDateTime(reader.GetOrdinal("PaymentDate")),
+                                PaymentId = Convert.ToInt32(reader["Id"])
+                            });
+                        }
+                    }
+                }
+            }
+
+            return orderDetails;
+        }
+
+
+        //[HttpGet]
+        //public async Task<IActionResult> GenerateAndSendInvoice(Guid orderId)
+        //{
+        //    var orderDetails = await GetOrderDetailsByOrderId(orderId);
+
+        //    if (!orderDetails.Any())
+        //        return NotFound("No details found for the provided Order ID.");
+
+        //    var order = orderDetails.First();
+
+        //    // Generate PDF
+        //    byte[] pdfBytes;
+        //    using (var ms = new MemoryStream())
+        //    {
+        //        var doc = new Document(PageSize.A4, 25, 25, 30, 30);
+        //        PdfWriter.GetInstance(doc, ms);
+        //        doc.Open();
+
+        //        var titleFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 18);
+        //        var regularFont = FontFactory.GetFont(FontFactory.HELVETICA, 12);
+
+        //        doc.Add(new Paragraph("INVOICE", titleFont));
+        //        doc.Add(new Paragraph($"Order ID: {order.OrderId}", regularFont));
+        //        doc.Add(new Paragraph($"Customer: {order.FullName}", regularFont));
+        //        doc.Add(new Paragraph($"Email: {order.Email}", regularFont));
+        //        doc.Add(new Paragraph($"Phone: {order.Mobile}", regularFont));
+        //        doc.Add(new Paragraph($"Address: {order.Address}, {order.City}, {order.State}, {order.Zipcode}", regularFont));
+        //        doc.Add(new Paragraph($"Order Date: {order.OrderDate:dd-MM-yyyy}", regularFont));
+        //        doc.Add(new Paragraph(" "));
+
+        //        PdfPTable table = new PdfPTable(5);
+        //        table.WidthPercentage = 100;
+        //        table.AddCell("Product");
+        //        table.AddCell("Type");
+        //        table.AddCell("Qty");
+        //        table.AddCell("Price");
+        //        table.AddCell("Total");
+
+        //        foreach (var item in orderDetails)
+        //        {
+        //            table.AddCell(item.ProductName);
+        //            table.AddCell(item.Type ?? "-");
+        //            table.AddCell(item.OrderQty.ToString());
+        //            table.AddCell("₹" + item.Price.ToString("0.00"));
+        //            table.AddCell("₹" + item.TotalAmount.ToString("0.00"));
+        //        }
+
+        //        doc.Add(table);
+
+        //        doc.Add(new Paragraph(" "));
+        //        doc.Add(new Paragraph($"Subtotal: ₹{order.OrderAmount:0.00}", regularFont));
+        //        doc.Add(new Paragraph($"Delivery: ₹{order.DelivaryCharge:0.00}", regularFont));
+        //        doc.Add(new Paragraph($"Promo: ₹{order.PromoAmount:0.00}", regularFont));
+        //        doc.Add(new Paragraph($"Total Paid: ₹{order.PaymentAmount:0.00}", titleFont));
+
+        //        doc.Add(new Paragraph(" "));
+        //        doc.Add(new Paragraph("Thank you for your order!", regularFont));
+
+        //        doc.Close();
+        //        pdfBytes = ms.ToArray();
+        //    }
+
+        //    // Send Email
+        //    var message = new MimeMessage();
+        //    message.From.Add(new MailboxAddress("IShop", "vidhi.p.ivorytechnolab@gmail.com"));
+        //    message.To.Add(new MailboxAddress(order.FullName, order.Email));
+        //    message.Subject = "Your Invoice";
+
+        //    var builder = new BodyBuilder
+        //    {
+        //        TextBody = "Thank you for your order! Please find the invoice attached."
+        //    };
+        //    builder.Attachments.Add("Invoice.pdf", pdfBytes, new ContentType("application", "pdf"));
+        //    message.Body = builder.ToMessageBody();
+
+        //    using var client = new SmtpClient();
+        //    await client.ConnectAsync("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
+        //    await client.AuthenticateAsync("vidhi.p.ivorytechnolab@gmail.com", "qbvryemjvxibgvjd");
+        //    await client.SendAsync(message);
+        //    await client.DisconnectAsync(true);
+
+        //    // Show success message
+        //    TempData["InvoiceSuccess"] = "Thank you for your order! Visit again.";
+        //    return RedirectToAction("OrderConfirmation");
+        //}
+
+        public async Task<IActionResult> GenerateAndSendInvoice(Guid orderId)
+        {
+            var orderDetails = await GetOrderDetailsByOrderId(orderId);
+            if (!orderDetails.Any())
+            {
+                return NotFound("No details found for the provided Order ID.");
+            }
+
+            var order = orderDetails.First();
+
+            if (string.IsNullOrWhiteSpace(order.Email))
+                return BadRequest("Customer email address is missing.");
+
+            // Create an invoice model
+            var invoiceModel = new InvoiceViewModel
+            {
+                // Populate the properties from the order
+                OrderId = order.OrderId,
+                CustomerName = order.FullName,
+                CustomerEmail = order.Email,
+                CustomerPhone = order.Mobile,
+                CustomerAddress = $"{order.Address}, {order.City}, {order.State},{order.Country}, {order.Zipcode}",
+                OrderDate = order.OrderDate,
+                Subtotal = order.OrderAmount, 
+                Discount = order.PromoAmount, 
+                Total = order.TotalAmount, 
+                PaymentMethod = order.PaymentMode,
+                PaymentAmount = order.PaymentAmount,
+                PaymentId = order.PaymentId,
+
+                // Add shop information (populate this as required)
+                ShopName = "IShop",  
+                //ShopLogoUrl = logoDataUrl,
+                ShopEmail = "IShop@gmail.com",  
+                ShopPhone = "+91 9876543210",  
+                //GSTNumber = "GST1234567890",  
+
+                // Set items in the invoice
+                Items = orderDetails.Select(item => new InvoiceItem
+                {
+                    Name = item.ProductName,
+                    Type = item.Type,
+                    Color = item.Color,
+                    Price = item.Price,
+                    Quantity = item.OrderQty,
+                    Total = item.TotalAmount
+                }).ToList(),
+
+                // Signature URL (if available)
+               /* SignatureUrl = "iShop"*/  
+            };
+
+            // Render the HTML content for the invoice view
+            string htmlContent = await _viewRenderService.RenderToStringAsync("Invoice", invoiceModel);
+
+            // Generate PDF from the HTML content
+            byte[] pdfBytes = GeneratePdfFromHtml(htmlContent);
+
+            // Send Email with the generated PDF as an attachment
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("Vidhi Patel", "vidhi.p.ivorytechnolab@gmail.com"));
+            message.To.Add(new MailboxAddress(invoiceModel.CustomerName, invoiceModel.CustomerEmail));
+            message.Subject = "Your Invoice";
+
+            var builder = new BodyBuilder
+            {
+                TextBody = "Thank you for your order! Please find the invoice attached."
+            };
+            builder.Attachments.Add("Invoice.pdf", pdfBytes, new ContentType("application", "pdf"));
+            message.Body = builder.ToMessageBody();
+
+            using var client = new SmtpClient();
+            await client.ConnectAsync("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync("vidhi.p.ivorytechnolab@gmail.com", "qbvryemjvxibgvjd");
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+
+            // Return a success message
+            TempData["InvoiceSuccess"] = "Thank you for your order! Visit again.";
+            return RedirectToAction("OrderConfirmation"); // You can redirect to another page after email is sent
+        }
+
+        private byte[] GeneratePdfFromHtml(string htmlContent)
+        {
+            using (var ms = new MemoryStream())
+            {
+                using (var doc = new Document(PageSize.A4, 25, 25, 30, 30))
+                {
+                    PdfWriter writer = PdfWriter.GetInstance(doc, ms);
+                    doc.Open();
+
+                    using (var sr = new StringReader(htmlContent))
+                    {
+                        XMLWorkerHelper.GetInstance().ParseXHtml(writer, doc, sr);
+                    }
+
+                    doc.Close();
+                }
+
+                return ms.ToArray();
+            }
+        }
+
+
+        [HttpGet]
+        public IActionResult Invoice()
+        {
+            return View();
+        }
+
+
+        [HttpGet]
+        public IActionResult OrderConfirmation()
+        {
+            ViewBag.ShowSuccessModal = TempData["InvoiceSuccess"] != null;
+            ViewBag.SuccessMessage = TempData["InvoiceSuccess"]?.ToString();
+            return View();
+        }
+
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

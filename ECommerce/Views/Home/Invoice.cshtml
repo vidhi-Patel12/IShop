@@ -1,0 +1,246 @@
+﻿@model ECommerce.Models.InvoiceViewModel
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Invoice</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/content/fonts/font-icons.css" />
+
+    <link rel="shortcut icon" href="~/content/images/logo/favicon.png" />
+    <link rel="apple-touch-icon-precomposed" href="~/content/images/logo/favicon.png" />
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 14px;
+            margin: 40px;
+            color: #333;
+        }
+
+        .header {
+            border-bottom: 2px solid #00bcd4;
+            padding-bottom: 10px;
+        }
+
+        .logo {
+            height: 80px;
+        }
+
+        .invoice-box {
+            color: white;
+            padding: 20px 30px;
+            text-align: right;
+        }
+
+        .section-title {
+            color: #00bcd4;
+            font-weight: bold;
+        }
+
+        .table thead {
+            background-color: #00bcd4;
+            color: white;
+        }
+
+        .table td img {
+            height: 50px;
+        }
+
+        .total-table td {
+            border: none;
+        }
+
+        .total-label {
+            font-weight: bold;
+        }
+
+        .note, .footer {
+            margin-top: 30px;
+            color: gray;
+            font-size: 13px;
+        }
+
+        .signature {
+            margin-top: 60px;
+            text-align: right;
+        }
+
+        .signature-name {
+            font-family: 'Segoe Script', cursive;
+            font-size: 18px;
+        }
+
+        .supplier-client-table td,
+        .supplier-client-table th {
+            vertical-align: top;
+            padding: 4px 12px;
+            font-size: 14px;
+        }
+
+        .supplier-client-table th {
+            font-weight: 600;
+            color: #333;
+        }
+
+        h6 {
+            margin-bottom: 0.25rem; /* reduce spacing below Supplier/Client headings */
+        }
+
+        p {
+            margin: 0.1rem 0; /* very small vertical margins */
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- Header -->
+        <div class="row header">
+            <div class="col-md-6">
+                <img src="~/content/images/logo/ishop_logo.svg" alt="logo" class="logo" />
+                <p class="text-muted">@Model.ShopName</p>
+            </div>
+            <div class="col-md-6 invoice-box">
+                <h2 style="background-color: #00bcd4;">INVOICE</h2>
+                <p>Invoice No. <strong>@Model.PaymentId</strong></p>
+            </div>
+        </div>
+        <hr />
+
+        <!-- Supplier and Client -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <table class="table table-borderless w-100 supplier-client-table">
+                    <tbody>
+                        <tr>
+                            <th>Supplier:</th>
+                            <th>Client:</th>
+                        </tr>
+                        <tr>
+                            <td style="color:#00bcd4;">@Model.ShopName</td>
+                            <td style="color:#00bcd4;">@Model.CustomerName</td>
+                        </tr>
+                        <tr>
+                            <td>@Model.ShopEmail</td>
+                            <td>@Model.CustomerEmail</td>
+                        </tr>
+                        <tr>
+                            <td>@Model.ShopPhone</td>
+                            <td>@Model.CustomerPhone</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>@Model.CustomerAddress</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <hr style="width: 100%; margin-top: 20px; margin-left: 0; border-top: 1px solid #000;" />
+
+
+        <!-- Invoice Info -->
+        <table width="60%" style="margin-top: 10px;">
+            <tr>
+                <td style="width: 50%;"><strong>Payment Method:</strong> @Model.PaymentMethod</td>
+                <td style="width: 50%; text-align: right;"><strong>Issue Date:</strong> @Model.OrderDate.ToString("dd-MM-yyyy")</td>
+            </tr>
+        </table>
+        <!-- Second Line: Order Number full width -->
+        <div>
+            <p><strong>Order Number:</strong> @Model.OrderId</p>
+        </div>
+
+    </div>
+
+
+    <!-- Item Table -->
+    <table width="100%" class="table table-bordered mt-5" style="margin-top: 20px;">
+        <thead class="thead-dark">
+            <tr>
+                <th>Item</th>
+                <th>Type</th>
+                <th>Color</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@item.Name<br /></td>
+                    <td>@item.Type<br /></td>
+                    <td>@item.Color<br /></td>
+                    <td>₹ @item.Price.ToString("0.00")</td>
+                    <td class="text-center">@item.Quantity</td>
+                    <td>₹ @((item.Price * item.Quantity).ToString("0.00"))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Totals -->
+    <table width="100%" style="margin-top: 20px;">
+        <tr>
+            <!-- Notes Section -->
+            <td style="width: 50%; vertical-align: top;">
+                <p><strong>Notes:</strong></p>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+            </td>
+
+            <!-- Totals Section -->
+            <td style="width: 50%; vertical-align: top;">
+                <table align="right" cellpadding="4" cellspacing="0" style="width: auto;">
+                    <tr>
+                        <td style="text-align: right;"><strong>Subtotal:</strong></td>
+                        <td style="text-align: right;">₹ @Model.Subtotal.ToString("0.00")</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: right;"><strong>Taxes:</strong></td>
+                        <td style="text-align: right;">0.00%</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: right;"><strong>Discount:</strong></td>
+                        <td style="text-align: right;">@Model.Discount.ToString("0.00")%</td>
+                    </tr>
+                </table>
+
+
+                <!-- Total row styled separately -->
+                <table align="right" width="70%" style="margin-top: 10px; border: 1px solid black; border-collapse: collapse;">
+                    <tr>
+                        <td colspan="2" style="border: 1px solid black; padding: 5px;">
+                            <table align="right" width="100%">
+                                <tr>
+                                    <td style="font-weight: bold; text-align: left;">Total</td>
+                                    <td style="font-weight: bold; text-align: right;">₹ @Model.PaymentAmount.ToString("0.00")</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+
+        </tr>
+    </table>
+
+    <!-- Signature -->
+    <div class="row" style="margin-top: 20px !important;">
+        <div class="col-md-6"> </div>
+        <div class="col-md-6 signature" style="margin-top: 20px;">
+            <p class="signature-name">iShop</p>
+            <p>Signature</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <hr />
+    <footer class="footer text-center">
+        <p><i class="icon-phone"></i> +91 9876543210 | <i class="icon icon-mail"></i> support@example.com | 🌐 www.example.com</p>
+    </footer>
+</body>
+</html>

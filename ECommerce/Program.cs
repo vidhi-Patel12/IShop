@@ -10,6 +10,8 @@ using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddScoped<IViewRenderService, ViewRenderService>();  // Register the service
+
 // Add services to the container.
 
 builder.Services.AddControllersWithViews(options =>

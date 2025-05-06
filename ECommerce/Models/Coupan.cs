@@ -14,6 +14,7 @@ namespace ECommerce.Models
         [Required]
         public double Discount { get; set; }
         public DateTime ExpiryDate { get; set; }
+        public double ValidAmount { get; set; }
         public bool IsActive { get; set; }
     }
 }

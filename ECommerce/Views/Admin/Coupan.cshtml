@@ -33,6 +33,7 @@
                             <th>Code</th>
                             <th>Discount</th>
                             <th>Expiry Date</th>
+                            <th>Amount</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -45,6 +46,7 @@
                                 <td>@coupon.CoupanCode</td>
                                 <td>@coupon.Discount%</td>
                                 <td>@coupon.ExpiryDate.ToString("yyyy-MM-dd")</td>
+                                <td>@coupon.ValidAmount</td>
                                 <td>
                                     @* <a asp-action="GetCoupanById" asp-route-id="@coupon.CoupanId" class="btn btn-success btn-sm">View</a> *@
                                     <button type="button" class="btn btn-success btn-sm view-coupan" data-id="@coupon.CoupanId" data-bs-toggle="modal" data-bs-target="#coupanDetailsModal">
@@ -127,7 +129,10 @@
                         <label>Expiry Date:</label>
                         <input type="date" name="Expiry Date" id="ExpiryDate" class="form-control"  required />
                     </div>
-
+                    <div class="mb-3">
+                        <label>Amount:</label>
+                        <input type="number" step="0.01" name="ValidAmount" id="ValidAmount" class="form-control" required />
+                    </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-primary">Save</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -162,6 +167,9 @@
 
                     <div class="col-md-5"><strong>Expiry Date:</strong></div>
                     <div class="col-md-7" id="modalExpiryDate"></div>
+
+                    <div class="col-md-5"><strong>ValidAmount:</strong></div>
+                    <div class="col-md-7" id="modalValidAmount"></div>
                 </div>
             </div>
             <div class="modal-footer">                
@@ -205,6 +213,7 @@
                 $("#modalCoupanCode").text(data.coupanCode);
                 $("#modalDiscount").text(data.discount + " %");
                 $("#modalExpiryDate").text(data.expiryDate.split('T')[0]);
+                $("#modalValidAmount").text(data.validAmount);
 
                 // Set the Edit button link
                 $("#modalEditBtn").attr("onclick", "editCoupon(" + coupanId + ")");
@@ -230,6 +239,7 @@
                     modal.find("#CoupanType").val(data.coupanType);
                     modal.find("#Discount").val(data.discount);
                     modal.find("#ExpiryDate").val(data.expiryDate.split('T')[0]);
+                    modal.find("#ValidAmount").val(data.validAmount);
                 });
             } else {
                 // Reset form for new coupon
@@ -255,6 +265,7 @@
                     modal.find("#CoupanType").val(data.coupanType);
                     modal.find("#Discount").val(data.discount);
                     modal.find("#ExpiryDate").val(data.expiryDate.split('T')[0]); // Format date
+                    modal.find("#ValidAmount").val(data.validAmount);
                 });
             } else {
                 // Reset form for adding a new coupon
@@ -284,6 +295,9 @@
                         break;
                     case "Expiry Date":
                         model.ExpiryDate = field.value; // 'yyyy-MM-dd'
+                        break;
+                    case "ValidAmount":
+                        model.ValidAmount = parseFloat(field.value);
                         break;
                     case "CoupanId":
                         model.CoupanId = field.value ? parseInt(field.value) : 0;

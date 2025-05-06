@@ -649,7 +649,8 @@ namespace ECommerce.Controllers
                                 CoupanCode = reader.GetString(reader.GetOrdinal("CoupanCode")),
                                 Discount = reader.GetDouble(reader.GetOrdinal("Discount")),
                                 ExpiryDate = reader.GetDateTime(reader.GetOrdinal("ExpiryDate")).Date,
-                                IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive"))
+                                ValidAmount = reader.GetDouble(reader.GetOrdinal("ValidAmount")),
+                                IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
                             });
                         }
                     }
@@ -683,6 +684,7 @@ namespace ECommerce.Controllers
                                 model.CoupanType = reader.GetString(reader.GetOrdinal("CoupanType"));
                                 model.Discount = reader.GetDouble(reader.GetOrdinal("Discount"));
                                 model.ExpiryDate = reader.GetDateTime(reader.GetOrdinal("ExpiryDate")).Date;
+                                model.ValidAmount = reader.GetDouble(reader.GetOrdinal("ValidAmount"));
                             }
                         }
                     }
@@ -713,6 +715,7 @@ namespace ECommerce.Controllers
                         cmd.Parameters.AddWithValue("@CoupanType", model.CoupanType);
                         cmd.Parameters.AddWithValue("@Discount", model.Discount);
                         cmd.Parameters.AddWithValue("@ExpiryDate", model.ExpiryDate.Date);
+                        cmd.Parameters.AddWithValue("@ValidAmount",model.ValidAmount);
                         cmd.Parameters.AddWithValue("@IsActive", true);
 
                         await cmd.ExecuteNonQueryAsync();
@@ -769,6 +772,7 @@ namespace ECommerce.Controllers
                                 CoupanCode = reader.GetString(reader.GetOrdinal("CoupanCode")),
                                 Discount = reader.GetDouble(reader.GetOrdinal("Discount")),
                                 ExpiryDate = reader.GetDateTime(reader.GetOrdinal("ExpiryDate")).Date,
+                                ValidAmount = reader.GetDouble(reader.GetOrdinal("ValidAmount")),
                                 IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive"))
                             };
                         }

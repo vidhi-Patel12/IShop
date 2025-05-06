@@ -16,6 +16,8 @@ namespace ECommerce.Models
         [Range(1000000000, 9999999999, ErrorMessage = "Mobile number must be 10 digits.")]
         public long Mobile { get; set; }
 
+        public string Email { get; set; }
+
         [Required, DataType(DataType.Password)]
         [RegularExpression(@"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$",
         ErrorMessage = "Password must be at least 6 characters long and include at least one letter, one number, and one special character.")]

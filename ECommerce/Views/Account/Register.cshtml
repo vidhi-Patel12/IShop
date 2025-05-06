@@ -36,6 +36,10 @@
                             <input class="" id="mobile" asp-for="Mobile" type="text" placeholder="Mobile number*" name="mobile"  tabindex="2" value="" maxlength="10" aria-required="true" required="">
                             <span id="mobileError" class="text-danger"></span>
                         </fieldset>
+                        <fieldset class="">
+                            <input class="" id="email" asp-for="Email" placeholder="Email*" name="email" tabindex="2" value="" aria-required="true" required="">
+                            <span id="emailError" class="text-danger"></span>
+                        </fieldset>
                         <fieldset class="position-relative password-item">
                             <input class="input-password" type="password" placeholder="Password*" name="password" id="password" asp-for="Password" tabindex="2" value="" aria-required="true" required="">
                             <span class="toggle-password unshow" style="margin-top: -9px;">
@@ -156,7 +160,14 @@
             }
         }
 
+        if (id === "email") {
+            let emailRegex = /^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
+            if (!emailRegex.test(value)) {
+                errorElement.innerText = "Please enter a valid email address.";
+                isValid = false;
+            }
+        }
 
 
             //  Strong Password Validation
@@ -199,6 +210,7 @@
         validateInput("firstName", "firstNameError");
         validateInput("lastName", "lastNameError");
         validateInput("mobile", "mobileError");
+        validateInput("email", "emailError");
         validateInput("password", "passwordError");
         validateInput("cnfPassword", "cnfPasswordError");
         validateInput("birthdate", "birthdateError");

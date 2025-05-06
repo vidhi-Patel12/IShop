@@ -1,5 +1,6 @@
 ﻿using Braintree;
 using ECommerce.Models;
+using MailKit.Search;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using System.Data;
@@ -154,7 +155,7 @@ namespace ECommerce.Controllers
                     cmd.ExecuteNonQuery();
                 }
             }
-            return RedirectToAction("Orders", "Home", new { orderId });
+            return RedirectToAction("GenerateAndSendInvoice", "Home", new { orderId });
         }
 
         //  Generate Client Token (Required for Frontend)
@@ -264,11 +265,11 @@ namespace ECommerce.Controllers
             if (paymentStatus == "Success")
             {
                 // Redirect to ViewOrder page with OrderId as a query parameter
-                return Ok(new { success = true, transactionId = transactionId, redirectUrl = Url.Action("Orders", "Home") });
+                return Ok(new { success = true, transactionId = transactionId, redirectUrl = Url.Action("GenerateAndSendInvoice", "Home", new { orderId = request.OrderId }) });
             }
             else if (paymentStatus == "Pending")
             {
-                return Ok(new { success = true, transactionId = transactionId, redirectUrl = Url.Action("Orders", "Home"), message = "Payment is pending. Please wait for confirmation.", paymentDate = paymentDate });
+                return Ok(new { success = true, transactionId = transactionId, redirectUrl = Url.Action("GenerateAndSendInvoice", "Home", new { orderId = request.OrderId }), message = "Payment is pending. Please wait for confirmation.", paymentDate = paymentDate });
             }
             else
             {

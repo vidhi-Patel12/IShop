@@ -62,6 +62,13 @@ builder.Services.AddCors(options =>
                           .AllowAnyHeader());
 });
 
+builder.Services.AddHttpClient("InsecureClient")
+    .ConfigurePrimaryHttpMessageHandler(() =>
+        new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+        });
+
 
 var options = new RewriteOptions()
     .AddRedirect("^(.*)/$", "$1"); // Remove trailing slash

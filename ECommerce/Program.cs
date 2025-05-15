@@ -54,6 +54,8 @@ builder.Services.Configure<RouteOptions>(options =>
 
 });
 
+System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",

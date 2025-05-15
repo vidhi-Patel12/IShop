@@ -94,7 +94,7 @@
                         <button type="submit" class="btn btn-danger">Cancel Your Order</button>
                     </form>
 
-                    <form asp-action="Orders">
+                    <form asp-action="Orders" asp-controller="Home" method="get">
                         <button type="submit" class="btn btn-primary">Back</button>
                     </form>
                 </div>
@@ -103,7 +103,7 @@
             {
                 <!-- If no active orders, show only "Back" once -->
                 <div class="col-md-3 d-flex align-items-center gap-2 mt-1">
-                    <form asp-action="Orders">
+                    <form asp-action="Orders" asp-controller="Home" method="get">
                         <button type="submit" class="btn btn-primary">Back</button>
                     </form>
                 </div>

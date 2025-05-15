@@ -134,6 +134,10 @@
                                 <input class="" type="date" id="birthdate" asp-for="Birthdate" placeholder="Birthdate*" name="birthdate" tabindex="2" value="@Model?.Birthdate?.ToString("yyyy-MM-dd")" aria-required="true" required="">
                                 <span id="birthdateError" class="text-danger"></span>
                             </fieldset>
+                            <fieldset class="mt-3">
+                                <input class="" type="email" id="email" asp-for="Email" placeholder="Email*" name="email" tabindex="2" value="@Model?.Email" aria-required="true" required="">
+                                <span id="emailError" class="text-danger"></span>
+                            </fieldset>
                             <h5 class="title mt-3">Change Password</h5>
                             <!-- Old Password -->
                             <fieldset class="position-relative password-item mt-3">
@@ -184,7 +188,7 @@
 </script>
 <script>
     window.addEventListener("DOMContentLoaded", function () {
-        const fields = ["firstName", "lastName", "mobile", "birthdate", "oldPassword", "newPassword", "cnfPassword"];
+        const fields = ["firstName", "lastName", "mobile", "birthdate","email", "oldPassword", "newPassword", "cnfPassword"];
         fields.forEach(id => {
             const input = document.getElementById(id);
             if (input) {
@@ -231,6 +235,11 @@
 
         if (field === "birthdate" && value === "") {
             document.getElementById("birthdateError").textContent = "Birthdate is required.";
+            isValid = false;
+        }
+
+         if (field === "email" && value === "") {
+            document.getElementById("emailError").textContent = "Email is required.";
             isValid = false;
         }
 

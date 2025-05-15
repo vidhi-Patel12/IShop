@@ -3,7 +3,10 @@ using ECommerce.Models;
 using MailKit.Search;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Data;
+using System.Text;
 
 namespace ECommerce.Controllers
 {
@@ -31,131 +34,83 @@ namespace ECommerce.Controllers
         }
 
         [HttpGet]
-        public IActionResult Payment(string orderId)
+        public async Task<IActionResult> Payment(string orderId)
         {
-            //string orderId = null;
-            decimal orderAmount = 0;
-            bool isPaymentDone = false;
-            string paymentMode = null;
-            string message = null;
+            string baseUrl = _configuration["APIURL"]; // e.g., https://localhost:5001
+            string apiUrl = $"{baseUrl}/user/v1/payment?orderId={orderId}";
 
-            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using var client = new HttpClient();
+
+            try
             {
-                conn.Open();
+                var response = await client.GetAsync(apiUrl);
 
-                // Step 1: Fetch Order Details using provided OrderId (if available)
-                if (!string.IsNullOrEmpty(orderId))
+                if (!response.IsSuccessStatusCode)
                 {
-                    using (SqlCommand cmd = new SqlCommand("SELECT OrderId, OrderAmount, PaymentMode FROM Checkout WHERE OrderId = @OrderId", conn))
-                    {
-                        cmd.Parameters.AddWithValue("@OrderId", orderId);
-                        using (SqlDataReader reader = cmd.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                orderId = reader.GetString(0);
-                                orderAmount = (decimal)reader.GetDouble(1);
-                                paymentMode = reader.GetString(2);
-                                HttpContext.Session.SetString("PaymentMode", paymentMode);
-                            }
-                        }
-                    }
+                    ViewData["PaymentMessage"] = "Failed to fetch payment details.";
+                    return View();
                 }
 
-                // If orderId is still null, fetch the latest order
-                if (string.IsNullOrEmpty(orderId))
+                var jsonString = await response.Content.ReadAsStringAsync();
+
+                // Parse JSON manually
+                var json = JObject.Parse(jsonString);
+
+                string finalOrderId = json["orderId"]?.ToString();
+                decimal orderAmount = json["orderAmount"] != null ? json["orderAmount"].Value<decimal>() : 0;
+                string paymentMode = json["paymentMode"]?.ToString();
+                bool isPaid = json["isPaymentDone"] != null && json["isPaymentDone"].Value<bool>();
+                string message = json["message"]?.ToString();
+
+                if (!string.IsNullOrEmpty(paymentMode))
+                    HttpContext.Session.SetString("PaymentMode", paymentMode);
+
+                // COD logic
+                if (paymentMode == "COD" && !isPaid)
                 {
-                    using (SqlCommand cmd = new SqlCommand("SELECT TOP 1 OrderId, OrderAmount, PaymentMode FROM Checkout ORDER BY CheckoutId DESC", conn))
-                    {
-                        using (SqlDataReader reader = cmd.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                orderId = reader.GetString(0);  // Last Order ID
-                                orderAmount = (decimal)reader.GetDouble(1); // Total Amount
-                                paymentMode = reader.GetString(2); // Payment Mode
-                                HttpContext.Session.SetString("PaymentMode", paymentMode);
-                            }
-                            else
-                            {
-                                message = "No orders found.";
-                            }
-                        }
-                    }
+                    return await SaveCashPayment(finalOrderId, orderAmount);
                 }
 
-                if (!string.IsNullOrEmpty(orderId))
-                {
-                    // Step 2: Check if payment is already done
-                    using (SqlCommand checkCmd = new SqlCommand("SELECT TransactionId, Status FROM Payment WHERE OrderId = @OrderId", conn))
-                    {
-                        checkCmd.Parameters.AddWithValue("@OrderId", orderId);
-                        using (SqlDataReader reader = checkCmd.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                string existingTransactionId = reader["TransactionId"].ToString();
-                                string existingStatus = reader["Status"].ToString();
+                ViewData["OrderId"] = finalOrderId;
+                ViewData["OrderAmount"] = orderAmount;
+                ViewData["PaymentMessage"] = message;
 
-                                if (!string.IsNullOrEmpty(existingTransactionId) && existingStatus == "Success")
-                                {
-                                    isPaymentDone = true;
-                                    message = "Payment is already done for this order.";
-                                }
-                            }
-                        }
-                    }
-                }
+                return View();
             }
-
-            if (string.IsNullOrEmpty(orderId))
+            catch (Exception ex)
             {
-                message = "No orders found.";
+                ViewData["PaymentMessage"] = "Error occurred while processing payment: " + ex.Message;
+                return View();
             }
-
-            // Step 3: If PaymentMode is Cash, directly save payment and redirect
-            if (paymentMode == "COD" && !isPaymentDone)
-            {
-                return SaveCashPayment(orderId, orderAmount);
-            }
-
-            if (isPaymentDone)
-            {
-                message = "Payment is already done for this order.";
-            }
-
-            // Step 4: Pass Data to View (Only if not cash payment)
-            ViewData["OrderId"] = orderId;
-            ViewData["OrderAmount"] = orderAmount;
-            ViewData["PaymentMessage"] = message;
-            return View();
         }
 
-        // Separate method to handle direct cash payments
-        private IActionResult SaveCashPayment(string orderId, decimal orderAmount)
+        private async Task<IActionResult> SaveCashPayment (string orderId, decimal orderAmount)
         {
-            string transactionId = Guid.NewGuid().ToString("N").Substring(0, 8);
-            string paymentStatus = "Pending";
-            DateTime paymentDate = DateTime.Now;
+            if (string.IsNullOrEmpty(orderId) || orderAmount <= 0)
+                return BadRequest("Invalid order details.");
 
-            using (SqlConnection conn = new SqlConnection(_connectionString))
+            try
             {
-                conn.Open();
+                string apiBaseUrl = _configuration["APIURL"]; // e.g. "https://localhost:5001"
+                string apiUrl = $"{apiBaseUrl}/user/v1/savecashpayment?orderId={orderId}&amount={orderAmount}";
 
-                using (SqlCommand cmd = new SqlCommand("SavePaymentAndUpdateOrder", conn))
+                using var client = new HttpClient();
+                var response = await client.PostAsync(apiUrl, null); // No body; params in query string
+
+                if (response.IsSuccessStatusCode)
                 {
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.AddWithValue("@TransactionId", transactionId);
-                    cmd.Parameters.AddWithValue("@OrderId", orderId);
-                    cmd.Parameters.AddWithValue("@PaymentMode", "COD");
-                    cmd.Parameters.AddWithValue("@Amount", orderAmount);
-                    cmd.Parameters.AddWithValue("@Status", paymentStatus);
-                    cmd.Parameters.AddWithValue("@PaymentDate", paymentDate);
-
-                    cmd.ExecuteNonQuery();
+                    return RedirectToAction("GenerateAndSendInvoice", "Home", new { orderId });
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    return StatusCode((int)response.StatusCode, $"API error: {errorContent}");
                 }
             }
-            return RedirectToAction("GenerateAndSendInvoice", "Home", new { orderId });
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal error: {ex.Message}");
+            }
         }
 
         //  Generate Client Token (Required for Frontend)
@@ -173,107 +128,68 @@ namespace ECommerce.Controllers
             return Ok(new { paymentMode = paymentMode });
         }
 
-        //  Process Payment
         [HttpPost("braintree/checkout")]
         public async Task<IActionResult> ProcessPayment([FromBody] PaymentRequest request)
         {
             if (request == null || string.IsNullOrEmpty(request.OrderId) || string.IsNullOrEmpty(request.Nonce))
             {
-                return BadRequest(new { error = "Invalid payment request" });
+                return BadRequest(new { success = false, error = "Invalid payment request" });
             }
 
-            string paymentStatus;
-            string transactionId = null;
-            double orderAmount = 0;
-            int iShopId = 0;
-            string paymentMode = null;
-            DateTime paymentDate = DateTime.Now;
-            Result<Transaction> result = null;
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
+            try
             {
-                conn.Open();
+                string apiBaseUrl = _configuration["APIURL"];
+                string apiUrl = $"{apiBaseUrl}/user/v1/braintree/checkout";
 
-                //  Step 1: Check if Payment Already Exists
-                using (SqlCommand checkCmd = new SqlCommand("SELECT TransactionId, Status FROM Payment WHERE OrderId = @OrderId", conn))
+                var requestData = new
                 {
-                    checkCmd.Parameters.AddWithValue("@OrderId", request.OrderId);
-                    using (SqlDataReader reader = checkCmd.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            string existingTransactionId = reader["TransactionId"].ToString();
-                            string existingStatus = reader["Status"].ToString();
-
-                            if (!string.IsNullOrEmpty(existingTransactionId) && existingStatus == "Success")
-                            {
-                                return BadRequest(new { error = "Payment is already done for this order." });
-                            }
-                        }
-                    }
-                }
-
-                // Fetch Order Details (Amount and IShopId)
-                using (SqlCommand cmd = new SqlCommand("SELECT TOP 1 IShopId, OrderAmount FROM Checkout WHERE OrderId = @OrderId ORDER BY CheckoutId DESC", conn))
-                {
-                    cmd.Parameters.AddWithValue("@OrderId", request.OrderId);
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            iShopId = reader.GetInt32(0);
-                            orderAmount = reader.GetDouble(1);
-                        }
-                        else
-                        {
-                            return BadRequest(new { error = "Order not found" });
-                        }
-                    }
-                }
-                                
-                // Process Payment using Braintree
-                var transactionRequest = new TransactionRequest
-                {
-                    Amount = (decimal)orderAmount,  // Use Amount from Database
-                    PaymentMethodNonce = request.Nonce,
-                    Options = new TransactionOptionsRequest
-                    {
-                        SubmitForSettlement = true
-                    }
+                    OrderId = request.OrderId,
+                    Nonce = request.Nonce,
+                    PaymentMode = request.PaymentMode
                 };
 
-                result = await _braintreeGateway.Transaction.SaleAsync(transactionRequest);
+                using var client = new HttpClient();
+                var json = JsonConvert.SerializeObject(requestData);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                paymentStatus = result.IsSuccess() ? "Success" : (result.Transaction?.Status == TransactionStatus.SUBMITTED_FOR_SETTLEMENT ? "Pending" : "Failed");
-                transactionId = result.IsSuccess() ? result.Target.Id : result.Transaction?.Id;
+                var response = await client.PostAsync(apiUrl, content);
 
-                // Save Payment and Update Order
-                using (SqlCommand cmd = new SqlCommand("SavePaymentAndUpdateOrder", conn))
+                if (response.IsSuccessStatusCode)
                 {
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.AddWithValue("@TransactionId", transactionId ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@OrderId", request.OrderId);
-                    cmd.Parameters.AddWithValue("@PaymentMode", request.PaymentMode);
-                    cmd.Parameters.AddWithValue("@Amount", orderAmount);
-                    cmd.Parameters.AddWithValue("@Status", paymentStatus);
-                    cmd.Parameters.AddWithValue("@PaymentDate", paymentDate);
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    var jsonResponse = JsonConvert.DeserializeObject<dynamic>(responseString);
 
-                    cmd.ExecuteNonQuery();
+                    bool success = jsonResponse.success ?? false;
+                    string transactionId = jsonResponse.transactionId ?? string.Empty;
+                    string status = jsonResponse.status ?? string.Empty;
+                    string redirectUrl = jsonResponse.redirectUrl ?? string.Empty;
+                    string message = jsonResponse.message ?? string.Empty;
+
+                    if (success)
+                    {
+                        return Ok(new
+                        {
+                            success = true,
+                            transactionId,
+                            status,
+                            redirectUrl,
+                            message
+                        });
+                    }
+                    else
+                    {
+                        return BadRequest(new { success = false, error = message });
+                    }
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    return StatusCode((int)response.StatusCode, $"API Error: {error}");
                 }
             }
-
-            if (paymentStatus == "Success")
+            catch (Exception ex)
             {
-                // Redirect to ViewOrder page with OrderId as a query parameter
-                return Ok(new { success = true, transactionId = transactionId, redirectUrl = Url.Action("GenerateAndSendInvoice", "Home", new { orderId = request.OrderId }) });
-            }
-            else if (paymentStatus == "Pending")
-            {
-                return Ok(new { success = true, transactionId = transactionId, redirectUrl = Url.Action("GenerateAndSendInvoice", "Home", new { orderId = request.OrderId }), message = "Payment is pending. Please wait for confirmation.", paymentDate = paymentDate });
-            }
-            else
-            {
-                return BadRequest(new { success = false, error = result?.Message ?? "Payment failed", paymentDate = paymentDate });
+                return StatusCode(500, $"Internal error: {ex.Message}");
             }
         }
 

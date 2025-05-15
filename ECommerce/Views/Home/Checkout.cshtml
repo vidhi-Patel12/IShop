@@ -1028,7 +1028,13 @@
 
                 localStorage.setItem("orderPlaced", "true");
 
-                window.location.href = "/Payment/Payment"; // Redirect to success page
+                const orderId = checkoutResult.orderId;
+
+                if (orderId) {
+                    window.location.href = `/Payment/Payment?orderId=${orderId}`;
+                } else {
+                    showMessageModal("error", "Order placed but missing order ID.");
+                }
             } else {
                 //alert(checkoutResult.message || "Failed to save checkout details.");
                 showMessageModal("error", `Error: ${checkoutResult.message} || "Failed to save checkout details."`);

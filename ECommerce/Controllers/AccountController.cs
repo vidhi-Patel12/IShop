@@ -18,9 +18,12 @@ namespace ECommerce.Controllers
         private readonly IConfiguration _configuration;
         private readonly SmsService _smsService;
 
-        public AccountController(ApplicationDbContext context,SmsService smsService)
+        private readonly HttpClient _httpClient = new HttpClient();
+
+        public AccountController(ApplicationDbContext context, IConfiguration configuration, SmsService smsService)
         {
             _context = context;
+            _configuration = configuration;
             _smsService = smsService;
         }
 
@@ -29,25 +32,39 @@ namespace ECommerce.Controllers
         {
             return View();
         }
-
+    
         [HttpPost]
-        public IActionResult Register(Register model)
+        public async Task<IActionResult> Register(Register model)
         {
             if (ModelState.IsValid)
             {
-                // Check if the mobile number already exists
-                var existingUser = _context.Register.FirstOrDefault(u => u.Mobile == model.Mobile);
-                if (existingUser != null)
-                {
-                    ModelState.AddModelError("Mobile", "This mobile number is already registered.");
-                    return View(model);
-                }
-                model.Role = 1;      
-                model.IsActive = true;
-                _context.Register.Add(model);
-                _context.SaveChanges();
+                string baseUrl = _configuration["APIURL"];
+                string apiUrl = $"{baseUrl}/account/v1/register";
 
-                return RedirectToAction("Login");
+                var jsonContent = new StringContent(
+                    JsonConvert.SerializeObject(model),
+                    Encoding.UTF8,
+                    "application/json"
+                );
+
+                var response = await _httpClient.PostAsync(apiUrl, jsonContent);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return RedirectToAction("Login");
+                }
+
+                // Read errors from API
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var errors = JsonConvert.DeserializeObject<Dictionary<string, string[]>>(responseContent);
+
+                foreach (var error in errors)
+                {
+                    foreach (var msg in error.Value)
+                    {
+                        ModelState.AddModelError(error.Key, msg);
+                    }
+                }
             }
 
             return View(model);
@@ -57,45 +74,47 @@ namespace ECommerce.Controllers
         {
             return View();
         }
-
+               
         [HttpPost]
-        public IActionResult LoginWithOTP(long Mobile)
+        public async Task<IActionResult> LoginWithOTP(long Mobile)
         {
-            var user = _context.Register.FirstOrDefault(u => u.Mobile == Mobile);
+            string baseUrl = _configuration["APIURL"]; // e.g., https://api.yoursite.com/api
+            string apiUrl = $"{baseUrl}/account/v1/loginwithotp";
 
-            if (user == null)
+            var jsonContent = new StringContent(
+                JsonConvert.SerializeObject(Mobile),
+                Encoding.UTF8,
+                "application/json"
+            );
+
+            HttpResponseMessage response;
+            try
             {
-                ViewBag.Error = "Mobile number not registered.";
+                response = await _httpClient.PostAsync(apiUrl, jsonContent);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = "API call failed: " + ex.Message;
                 return View("Login");
             }
 
-            // Generate a random 6-digit OTP
-            Random random = new Random();
-            int otp = random.Next(100000, 999999);
-
-            // Save OTP in the Login table
-            var loginEntry = new Login
+            if (response.IsSuccessStatusCode)
             {
-                IShopId = user.IShopId,
-                OTP = otp,
-                IsValid = true,
-                GeneratedAt = DateTime.Now
-            };
-
-            _context.Login.Add(loginEntry);
-            _context.SaveChanges();
-
-            // Send OTP via SMS
-            bool otpSent =  _smsService.SendSmsOTP(Mobile, otp);
-
-            if (!otpSent)
-            {
-                ViewBag.Error = "Failed to send OTP. Please try again.";
-                return View("Login");
+                ViewBag.Mobile = Mobile;
+                return View("Login"); // Redirect to OTP input or verification page
             }
 
-            ViewBag.Mobile = Mobile;
-            // Redirect to OTP verification page
+            var responseContent = await response.Content.ReadAsStringAsync();
+            try
+            {
+                var errorResponse = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseContent);
+                ViewBag.Error = errorResponse["message"];
+            }
+            catch
+            {
+                ViewBag.Error = "Unexpected error: " + responseContent;
+            }
+
             return View("Login");
         }
 
@@ -107,144 +126,189 @@ namespace ECommerce.Controllers
         }
 
         [HttpPost]
-        public IActionResult VerifyOTP(long Mobile, int OTP)
+        public async Task<IActionResult> VerifyOTP(long Mobile, int OTP)
         {
-            var user = _context.Register.FirstOrDefault(u => u.Mobile == Mobile);
-            if (user == null)
+            string baseUrl = _configuration["APIURL"];
+            string apiUrl = $"{baseUrl}/account/v1/verifyotp";
+
+            var requestBody = new
             {
-                ViewBag.Error = "User not found.";
-                return View("Login");
-            }
-
-            var loginEntry = _context.Login
-                .Where(l => l.IShopId == user.IShopId && l.IsValid)
-                .OrderByDescending(l => l.GeneratedAt)
-                .FirstOrDefault();
-
-            if (loginEntry == null || loginEntry.OTP != OTP)
-            {
-                ViewBag.Error = "Invalid or expired OTP.";
-                return View("Login");
-            }
-
-            // Check if OTP has expired (5-minute validity)
-            if (DateTime.Now > loginEntry.GeneratedAt.AddMinutes(5))
-            {
-                loginEntry.IsValid = false;
-                _context.SaveChanges();
-                ViewBag.Error = "OTP expired. Please request a new one.";
-                return View("Login");
-            }
-
-            // OTP is valid → Log in the user
-            loginEntry.IsValid = false; // Mark OTP as used
-            _context.SaveChanges();
-
-            CookieOptions options = new CookieOptions
-            {
-                Path = "/",
-                HttpOnly = false,
-                SameSite = SameSiteMode.Lax,
-                Secure = false,
+                Mobile = Mobile,
+                OTP = OTP
             };
 
-            Response.Cookies.Append("IShopId", user.IShopId.ToString(), options);
-            HttpContext.Session.SetInt32("IShopId", user.IShopId);
+            var jsonContent = new StringContent(
+                JsonConvert.SerializeObject(requestBody),
+                Encoding.UTF8,
+                "application/json"
+            );
 
-            //  Redirect based on role
-            if (user.Role == 0)  // Admin
+            var response = await _httpClient.PostAsync(apiUrl, jsonContent);
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
             {
-                return RedirectToAction("Dashboard", "Admin");
-            }
-            else if (user.Role == 1 && Helper.IsCheckout)  // Regular User & trying to checkout
-            {
-                Helper.IsCheckout = false;
-                return RedirectToAction("Checkout", "Home");
+                // Deserialize dynamically
+                dynamic result = JsonConvert.DeserializeObject<dynamic>(responseContent);
+
+                int shopId = result.shopId;
+                int role = result.role;
+
+                CookieOptions options = new CookieOptions
+                {
+                    Path = "/",
+                    HttpOnly = false,
+                    SameSite = SameSiteMode.Lax,
+                    Secure = false,
+                };
+
+                Response.Cookies.Append("IShopId", shopId.ToString(), options);
+                HttpContext.Session.SetInt32("IShopId", shopId);
+
+                if (role == 0)
+                {
+                    return RedirectToAction("Dashboard", "Admin");
+                }
+                else if (role == 1 && Helper.IsCheckout)
+                {
+                    Helper.IsCheckout = false;
+                    return RedirectToAction("Checkout", "Home");
+                }
+                else
+                {
+                    return RedirectToAction("Index", "Home");
+                }
             }
             else
             {
-                return RedirectToAction("Index", "Home");
+                dynamic error = JsonConvert.DeserializeObject<dynamic>(responseContent);
+                ViewBag.Error = error?.message ?? "OTP verification failed.";
+                return View("Login");
             }
         }
 
-        public void ExpireOTP()
+        public async Task ExpireOTP()
         {
-            var expiredOtps = _context.Login
-                .Where(l => l.IsValid && DateTime.Now > l.GeneratedAt.AddMinutes(5))
-                .ToList();
+            string baseUrl = _configuration["APIURL"]; // Your API base URL
+            string apiUrl = $"{baseUrl}/account/v1/expireotp";
 
-            foreach (var entry in expiredOtps)
+            var response = await _httpClient.PostAsync(apiUrl, null);
+
+            if (response.IsSuccessStatusCode)
             {
-                entry.IsValid = false;
+                var content = await response.Content.ReadAsStringAsync();
+                Console.WriteLine("Expire OTP API called successfully: " + content);
             }
-
-            _context.SaveChanges();
+            else
+            {
+                Console.WriteLine("Failed to call Expire OTP API. Status: " + response.StatusCode);
+            }
         }
 
         [HttpPost]
-        public IActionResult LoginWithPassword(long Mobile, string Password)
+        public async Task<IActionResult> LoginWithPassword(long Mobile, string Password)
         {
-            var user = _context.Register.FirstOrDefault(u => u.Mobile == Mobile);
+            var baseUrl = _configuration["APIURL"]; // Your API base URL from config
+            var apiUrl = $"{baseUrl}/account/v1/loginwithpassword";
 
-            if (user == null)
+            var loginRequest = new
             {
-                ViewBag.Error = "Mobile number not registered.";
-                TempData.Keep("IsCheckout"); //  Keep checkout intent in case of failure
-                return View("Login");
-            }
-
-            if (user.Password != Password)
-            {
-                ViewBag.Error = "Invalid password.";
-                TempData.Keep("IsCheckout"); //  Keep checkout intent in case of failure
-                return View("Login");
-            }
-
-            CookieOptions options = new CookieOptions
-            {
-                Path = "/",
-                HttpOnly = false,
-                SameSite = SameSiteMode.Lax,
-                Secure = false,
+                Mobile = Mobile,
+                Password = Password
             };
 
-            Response.Cookies.Append("IShopId", user.IShopId.ToString(), options);
-            HttpContext.Session.SetInt32("IShopId", user.IShopId);
+            var jsonContent = new StringContent(
+                JsonConvert.SerializeObject(loginRequest),
+                Encoding.UTF8,
+                "application/json"
+            );
 
-            //  Redirect based on role
-            if (user.Role == 0)  // Admin
+            var response = await _httpClient.PostAsync(apiUrl, jsonContent);
+
+            if (response.IsSuccessStatusCode)
             {
-                return RedirectToAction("Dashboard", "Admin");
-            }
-            else if (user.Role == 1 && Helper.IsCheckout)  // Regular User & trying to checkout
-            {
-                Helper.IsCheckout = false;
-                return RedirectToAction("Checkout", "Home");
+                var responseBody = await response.Content.ReadAsStringAsync();
+                var result = JsonConvert.DeserializeObject<dynamic>(responseBody);
+
+                int shopId = result.shopId;
+                int role = result.role;
+
+                // Set cookies and session same as before
+                CookieOptions options = new CookieOptions
+                {
+                    Path = "/",
+                    HttpOnly = false,
+                    SameSite = SameSiteMode.Lax,
+                    Secure = false,
+                };
+
+                Response.Cookies.Append("IShopId", shopId.ToString(), options);
+                HttpContext.Session.SetInt32("IShopId", shopId);
+
+                // Redirect based on role
+                if (role == 0) // Admin
+                {
+                    return RedirectToAction("Dashboard", "Admin");
+                }
+                else if (role == 1 && Helper.IsCheckout) // Regular User & checkout
+                {
+                    Helper.IsCheckout = false;
+                    return RedirectToAction("Checkout", "Home");
+                }
+                else
+                {
+                    return RedirectToAction("Index", "Home");
+                }
             }
             else
             {
-                return RedirectToAction("Index", "Home");
+                // Read error message from API response
+                var errorContent = await response.Content.ReadAsStringAsync();
+                var errorObj = JsonConvert.DeserializeObject<dynamic>(errorContent);
+                string errorMessage = errorObj?.message ?? "Login failed.";
+
+                ViewBag.Error = errorMessage;
+                TempData.Keep("IsCheckout"); // Keep checkout intent
+                return View("Login");
             }
         }
-                
+
         [HttpGet]
-        public ContentResult Logout()
+        public async Task<ContentResult> Logout()
         {
-            HttpContext.Session.Clear();
-            Response.Cookies.Delete("IShopId");
-            Response.Cookies.Delete("cartItems");
+            // Get the API URL from config or hardcode
+            string baseUrl = _configuration["APIURL"];  // e.g. "https://yourdomain.com/api"
+            string apiUrl = $"{baseUrl}/account/v1/logout"; // Adjust path according to your routing
 
-            string js = @"
-            <script>
-                localStorage.removeItem('cartItems');
-                localStorage.removeItem('checkoutItems');
-                localStorage.removeItem('selectedAddress');
-                localStorage.removeItem('orderPlaced');
-                localStorage.removeItem('cartSynced');
-                window.location.href = '/Account/Login';
-            </script>";
+            // Call API logout endpoint using HttpClient
+            var response = await _httpClient.PostAsync(apiUrl, null); // POST with no body
 
-            return Content(js, "text/html");
+            if (response.IsSuccessStatusCode)
+            {
+                // API logout success, now clear local server session and cookies as fallback (optional)
+                HttpContext.Session.Clear();
+                Response.Cookies.Delete("IShopId");
+                Response.Cookies.Delete("cartItems");
+
+                // Return JS to clear localStorage and redirect client
+                string js = @"
+        <script>
+            localStorage.removeItem('cartItems');
+            localStorage.removeItem('checkoutItems');
+            localStorage.removeItem('selectedAddress');
+            localStorage.removeItem('orderPlaced');
+            localStorage.removeItem('cartSynced');
+            window.location.href = '/Account/Login';
+        </script>";
+
+                return Content(js, "text/html");
+            }
+            else
+            {
+                // If API call failed, show error or fallback
+                return Content("<script>alert('Logout failed. Please try again.');window.location.href = '/Account/Login';</script>", "text/html");
+            }
         }
+
     }
 }

@@ -79,6 +79,16 @@
 <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" />
 
+
+@if (ViewBag.ErrorMessage != null)
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            showMessageModal("error", "@ViewBag.ErrorMessage");
+        });
+    </script>
+}
+
 <!-- Initialize DataTable -->
 <script>
     $(document).ready(function () {
@@ -87,7 +97,7 @@
             "searching": true,   // Enable search box
             "ordering": true,    // Enable column sorting
             "lengthMenu": [5, 10, 25, 50], // Show entries per page options
-            "order": [[0, "desc"]],
+            "order": [[1, "desc"]],
             "columnDefs": [
             { "targets": [0], "visible": false, "searchable": false } // Hide OrderId column
         ],
@@ -104,6 +114,29 @@
         });
 
         localStorage.removeItem("orderPlaced");
+
+         function showMessageModal(type, message) {
+            let modalTitle = document.getElementById("messageModalLabel");
+            let modalBody = document.getElementById("messageText");
+            let modalHeader = document.querySelector("#messageModal .modal-header");
+
+            // Update the modal based on type (success or error)
+            if (type === "success") {
+                modalTitle.innerText = "Success";
+                modalBody.innerHTML = ` ${message}`;
+                modalHeader.classList.add("bg-success", "text-white");
+                modalHeader.classList.remove("bg-danger");
+            } else if (type === "error") {
+                modalTitle.innerText = "Error";
+                modalBody.innerHTML = ` ${message}`;
+                modalHeader.classList.add("bg-danger", "text-white");
+                modalHeader.classList.remove("bg-success");
+            }
+
+            // Show the modal
+            let messageModal = new bootstrap.Modal(document.getElementById("messageModal"));
+            messageModal.show();
+        }
 
     });
 </script>

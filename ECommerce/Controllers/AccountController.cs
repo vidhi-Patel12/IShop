@@ -18,13 +18,20 @@ namespace ECommerce.Controllers
         private readonly IConfiguration _configuration;
         private readonly SmsService _smsService;
 
-        private readonly HttpClient _httpClient = new HttpClient();
+        private readonly HttpClient _httpClient;
 
         public AccountController(ApplicationDbContext context, IConfiguration configuration, SmsService smsService)
         {
             _context = context;
             _configuration = configuration;
             _smsService = smsService;
+
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            };
+
+            _httpClient = new HttpClient(handler);
         }
 
         [HttpGet]
@@ -32,7 +39,7 @@ namespace ECommerce.Controllers
         {
             return View();
         }
-    
+
         [HttpPost]
         public async Task<IActionResult> Register(Register model)
         {
@@ -74,7 +81,7 @@ namespace ECommerce.Controllers
         {
             return View();
         }
-               
+
         [HttpPost]
         public async Task<IActionResult> LoginWithOTP(long Mobile)
         {
@@ -121,7 +128,7 @@ namespace ECommerce.Controllers
         [HttpGet]
         public IActionResult VerifyOTP(long Mobile)
         {
-             ViewBag.Mobile = Mobile;
+            ViewBag.Mobile = Mobile;
             return PartialView("_VerifyOTP"); //  Use a Partial View
         }
 
@@ -165,19 +172,24 @@ namespace ECommerce.Controllers
                 Response.Cookies.Append("IShopId", shopId.ToString(), options);
                 HttpContext.Session.SetInt32("IShopId", shopId);
 
-                if (role == 0)
+                string redirectUrl = (role == 0)
+            ? "/Admin/Dashboard"
+            : (role == 1 && Helper.IsCheckout)
+                ? "/Home/Checkout"
+                : "/Home/Index";
+
+                Helper.IsCheckout = false;
+
+                // Build JS with conditional localStorage set
+                string js = "<script>\n";
+                if (redirectUrl == "/Home/Index")
                 {
-                    return RedirectToAction("Dashboard", "Admin");
+                    js += "localStorage.setItem('cartSynced', 'true');\n";
                 }
-                else if (role == 1 && Helper.IsCheckout)
-                {
-                    Helper.IsCheckout = false;
-                    return RedirectToAction("Checkout", "Home");
-                }
-                else
-                {
-                    return RedirectToAction("Index", "Home");
-                }
+                js += $"window.location.href = '{redirectUrl}';\n";
+                js += "</script>";
+
+                return Content(js, "text/html");
             }
             else
             {
@@ -246,19 +258,29 @@ namespace ECommerce.Controllers
                 HttpContext.Session.SetInt32("IShopId", shopId);
 
                 // Redirect based on role
-                if (role == 0) // Admin
+                string redirectUrl = (role == 0)
+                 ? "/Admin/Dashboard"
+                 : (role == 1 && Helper.IsCheckout)
+                     ? "/Home/Checkout"
+                     : "/Home/Index";
+
+                Helper.IsCheckout = false;
+
+                // Base JS
+                string js = "<script>\n";
+
+                // Conditionally add localStorage only for /Home/Index
+                if (redirectUrl == "/Home/Index")
                 {
-                    return RedirectToAction("Dashboard", "Admin");
+                    js += "localStorage.setItem('cartSynced', 'true');\n";
                 }
-                else if (role == 1 && Helper.IsCheckout) // Regular User & checkout
-                {
-                    Helper.IsCheckout = false;
-                    return RedirectToAction("Checkout", "Home");
-                }
-                else
-                {
-                    return RedirectToAction("Index", "Home");
-                }
+
+                js += $"window.location.href = '{redirectUrl}';\n";
+                js += "</script>";
+
+                return Content(js, "text/html");
+
+
             }
             else
             {
@@ -268,7 +290,7 @@ namespace ECommerce.Controllers
                 string errorMessage = errorObj?.message ?? "Login failed.";
 
                 ViewBag.Error = errorMessage;
-                TempData.Keep("IsCheckout"); // Keep checkout intent
+                TempData.Keep("IsCheckout"); 
                 return View("Login");
             }
         }

@@ -42,6 +42,13 @@ namespace ECommerce.Controllers
             _logger = logger;
             _httpClient = httpClient;
             _config = config;
+
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            };
+
+            _httpClient = new HttpClient(handler);
         }
 
         public async Task<IActionResult> Index()
@@ -52,23 +59,20 @@ namespace ECommerce.Controllers
             string baseUrl = _config["APIURL"]; // e.g., "https://localhost:5001"
             string apiUrl = $"{baseUrl}/admin/v1/product";
 
-            using (HttpClient client = new HttpClient())
+            HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
+
+            if (response.IsSuccessStatusCode)
             {
-                HttpResponseMessage response = await client.GetAsync(apiUrl);
+                string json = await response.Content.ReadAsStringAsync();
 
-                if (response.IsSuccessStatusCode)
+                productsList = JsonSerializer.Deserialize<List<Products>>(json, new JsonSerializerOptions
                 {
-                    string json = await response.Content.ReadAsStringAsync();
-
-                    productsList = JsonSerializer.Deserialize<List<Products>>(json, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-                }
-                else
-                {
-                    TempData["ErrorMessage"] = "Failed to fetch product data.";
-                }
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Failed to fetch product data.";
             }
 
             return View(productsList);
@@ -92,7 +96,6 @@ namespace ECommerce.Controllers
             string baseUrl = _config["APIURL"];
             string url = $"{baseUrl}/admin/v1/product/create";
 
-            using var client = new HttpClient();
             using var form = new MultipartFormDataContent();
 
             try
@@ -132,7 +135,7 @@ namespace ECommerce.Controllers
                 }
 
                 // Step 3: Send form to API
-                var response = await client.PostAsync(url, form);
+                var response = await _httpClient.PostAsync(url, form);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -192,25 +195,22 @@ namespace ECommerce.Controllers
                 url += $"?productsImageId={productsImageId.Value}";
             }
 
-            using (HttpClient client = new HttpClient())
+
+            HttpResponseMessage response = await _httpClient.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
             {
-                HttpResponseMessage response = await client.GetAsync(url);
-
-                if (response.IsSuccessStatusCode)
+                string json = await response.Content.ReadAsStringAsync();
+                product = JsonSerializer.Deserialize<Products>(json, new JsonSerializerOptions
                 {
-                    string json = await response.Content.ReadAsStringAsync();
-                    product = JsonSerializer.Deserialize<Products>(json, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-                }
-                else
-                {
-                    TempData["ErrorMessage"] = "Failed to fetch product details.";
-                    return RedirectToAction("Index"); // or return NotFound()
-                }
+                    PropertyNameCaseInsensitive = true
+                });
             }
-
+            else
+            {
+                TempData["ErrorMessage"] = "Failed to fetch product details.";
+                return RedirectToAction("Index"); // or return NotFound()
+            }
             return Json(product);
         }
 
@@ -226,7 +226,6 @@ namespace ECommerce.Controllers
             string baseUrl = _config["APIURL"];
             string url = $"{baseUrl}/admin/v1/product/update";  // Pointing to your update endpoint
 
-            using var client = new HttpClient();
             using var form = new MultipartFormDataContent();
 
             try
@@ -262,7 +261,7 @@ namespace ECommerce.Controllers
                 }
 
                 // Step 4: Call the API
-                var response = await client.PostAsync(url, form);
+                var response = await _httpClient.PostAsync(url, form);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
                 // Check if the update API responded with success
@@ -316,30 +315,26 @@ namespace ECommerce.Controllers
         {
             string baseUrl = _config["APIURL"]; // e.g. "https://localhost:5001"
             string endpoint = $"{baseUrl}/admin/v1/product/delete?id={id}&productsImageId={productsImageId}";
-
-            using (HttpClient client = new HttpClient())
+            try
             {
-                try
-                {
-                    var response = await client.PostAsync(endpoint, null); // POST with no body, just query params
+                var response = await _httpClient.PostAsync(endpoint, null); // POST with no body, just query params
 
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var json = await response.Content.ReadAsStringAsync();
-                        // Optionally parse json if you need to check `{ success = true }`
-                        return RedirectToAction("Index");
-                    }
-                    else
-                    {
-                        TempData["ErrorMessage"] = "Failed to delete product image.";
-                        return RedirectToAction("Index");
-                    }
-                }
-                catch (Exception ex)
+                if (response.IsSuccessStatusCode)
                 {
-                    TempData["ErrorMessage"] = $"Exception: {ex.Message}";
+                    var json = await response.Content.ReadAsStringAsync();
+                    // Optionally parse json if you need to check `{ success = true }`
                     return RedirectToAction("Index");
                 }
+                else
+                {
+                    TempData["ErrorMessage"] = "Failed to delete product image.";
+                    return RedirectToAction("Index");
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Exception: {ex.Message}";
+                return RedirectToAction("Index");
             }
         }
 
@@ -356,23 +351,20 @@ namespace ECommerce.Controllers
                 url += $"?productsImageId={productsImageId.Value}";
             }
 
-            using (HttpClient client = new HttpClient())
-            {
-                HttpResponseMessage response = await client.GetAsync(url);
+            HttpResponseMessage response = await _httpClient.GetAsync(url);
 
-                if (response.IsSuccessStatusCode)
+            if (response.IsSuccessStatusCode)
+            {
+                string json = await response.Content.ReadAsStringAsync();
+                product = JsonSerializer.Deserialize<Products>(json, new JsonSerializerOptions
                 {
-                    string json = await response.Content.ReadAsStringAsync();
-                    product = JsonSerializer.Deserialize<Products>(json, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-                }
-                else
-                {
-                    TempData["ErrorMessage"] = "Failed to fetch product details.";
-                    return RedirectToAction("Index"); // or return NotFound()
-                }
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Failed to fetch product details.";
+                return RedirectToAction("Index"); // or return NotFound()
             }
 
             return Json(product);
@@ -500,23 +492,21 @@ namespace ECommerce.Controllers
         [HttpPost]
         public async Task<IActionResult> DeleteCoupan(int id)
         {
-            using (HttpClient client = new HttpClient())
+
+            // Replace with your API base URL
+            string baseUrl = _config["APIURL"];
+            string requestUrl = $"{baseUrl}/admin/v1/coupan/{id}";
+
+            HttpResponseMessage response = await _httpClient.DeleteAsync(requestUrl);
+
+            if (response.IsSuccessStatusCode)
             {
-                // Replace with your API base URL
-                string baseUrl = _config["APIURL"];
-                string requestUrl = $"{baseUrl}/admin/v1/coupan/{id}";
-
-                HttpResponseMessage response = await _httpClient.DeleteAsync(requestUrl);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    return RedirectToAction("Coupan");
-                }
-                else
-                {
-                    // Handle errors or logging
-                    return View("Error");
-                }
+                return RedirectToAction("Coupan");
+            }
+            else
+            {
+                // Handle errors or logging
+                return View("Error");
             }
         }
 
@@ -530,34 +520,30 @@ namespace ECommerce.Controllers
 
             string baseUrl = _config["APIURL"]; // Ensure this is in appsettings.json
             string apiUrl = $"{baseUrl}/admin/v1/coupan/validate?coupanCode={Uri.EscapeDataString(coupanCode)}";
-
-            using (HttpClient client = new HttpClient())
+            try
             {
-                try
+                HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
+
+                if (response.IsSuccessStatusCode)
                 {
-                    HttpResponseMessage response = await client.GetAsync(apiUrl);
+                    string json = await response.Content.ReadAsStringAsync();
 
-                    if (response.IsSuccessStatusCode)
+                    // Deserialize to dynamic instead of a typed model
+                    var result = JsonSerializer.Deserialize<dynamic>(json, new JsonSerializerOptions
                     {
-                        string json = await response.Content.ReadAsStringAsync();
+                        PropertyNameCaseInsensitive = true
+                    });
 
-                        // Deserialize to dynamic instead of a typed model
-                        var result = JsonSerializer.Deserialize<dynamic>(json, new JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true
-                        });
-
-                        return Json(result); // Return the raw dynamic JSON result
-                    }
-                    else
-                    {
-                        return Json(new { success = false, message = "API Error: " + response.StatusCode });
-                    }
+                    return Json(result); // Return the raw dynamic JSON result
                 }
-                catch (Exception ex)
+                else
                 {
-                    return Json(new { success = false, message = "Exception: " + ex.Message });
+                    return Json(new { success = false, message = "API Error: " + response.StatusCode });
                 }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Exception: " + ex.Message });
             }
         }
 
@@ -576,25 +562,21 @@ namespace ECommerce.Controllers
             string baseUrl = _config["APIURL"]; // e.g., "https://localhost:5001"
             string apiEndpoint = $"{baseUrl}/admin/v1/order?shopId={iShopId}";
 
-            using (HttpClient client = new HttpClient())
+            HttpResponseMessage response = await _httpClient.GetAsync(apiEndpoint);
+
+            if (response.IsSuccessStatusCode)
             {
-                HttpResponseMessage response = await client.GetAsync(apiEndpoint);
-
-                if (response.IsSuccessStatusCode)
+                string jsonString = await response.Content.ReadAsStringAsync();
+                orders = JsonSerializer.Deserialize<List<OrderDetails>>(jsonString, new JsonSerializerOptions
                 {
-                    string jsonString = await response.Content.ReadAsStringAsync();
-                    orders = JsonSerializer.Deserialize<List<OrderDetails>>(jsonString, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-                }
-                else
-                {
-                    // Optional: handle API error response
-                    TempData["ErrorMessage"] = "Failed to fetch orders from API.";
-                }
+                    PropertyNameCaseInsensitive = true
+                });
             }
-
+            else
+            {
+                // Optional: handle API error response
+                TempData["ErrorMessage"] = "Failed to fetch orders from API.";
+            }
             return View(orders);
         }
 
@@ -613,22 +595,20 @@ namespace ECommerce.Controllers
             string baseUrl = _config["APIURL"]; // e.g., https://localhost:5001
             string apiEndpoint = $"{baseUrl}/admin/v1/order/{id}";
 
-            using (HttpClient client = new HttpClient())
-            {
-                HttpResponseMessage response = await client.GetAsync(apiEndpoint);
 
-                if (response.IsSuccessStatusCode)
+            HttpResponseMessage response = await _httpClient.GetAsync(apiEndpoint);
+
+            if (response.IsSuccessStatusCode)
+            {
+                string jsonString = await response.Content.ReadAsStringAsync();
+                orders = JsonSerializer.Deserialize<List<OrderDetails>>(jsonString, new JsonSerializerOptions
                 {
-                    string jsonString = await response.Content.ReadAsStringAsync();
-                    orders = JsonSerializer.Deserialize<List<OrderDetails>>(jsonString, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-                }
-                else
-                {
-                    TempData["ErrorMessage"] = "Failed to fetch order details from API.";
-                }
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Failed to fetch order details from API.";
             }
 
             if (orders == null || !orders.Any())
@@ -653,23 +633,20 @@ namespace ECommerce.Controllers
             string baseUrl = _config["APIURL"];
             string apiEndpoint = $"{baseUrl}/admin/v1/dashboard/chart-data?timeRange={timeRange}";
 
-            using (HttpClient client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.Add("Cookie", $"IShopId={shopIdString}");
+            _httpClient.DefaultRequestHeaders.Add("Cookie", $"IShopId={shopIdString}");
 
-                HttpResponseMessage response = await client.GetAsync(apiEndpoint);
-                if (response.IsSuccessStatusCode)
+            HttpResponseMessage response = await _httpClient.GetAsync(apiEndpoint);
+            if (response.IsSuccessStatusCode)
+            {
+                string jsonString = await response.Content.ReadAsStringAsync();
+                chartData = JsonSerializer.Deserialize<object>(jsonString, new JsonSerializerOptions
                 {
-                    string jsonString = await response.Content.ReadAsStringAsync();
-                    chartData = JsonSerializer.Deserialize<object>(jsonString, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-                }
-                else
-                {
-                    return StatusCode((int)response.StatusCode, "Error retrieving chart data.");
-                }
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            else
+            {
+                return StatusCode((int)response.StatusCode, "Error retrieving chart data.");
             }
 
             return new JsonResult(chartData);

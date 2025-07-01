@@ -24,14 +24,36 @@
         }
 
         .logo {
-            height: 80px;
+            height: 50%;
         }
 
-        .invoice-box {
+        /* .invoice-box {
             color: white;
             padding: 20px 30px;
             text-align: right;
+        } */
+
+        .invoice-box {
+            width: 150px;
+            float: right;
+            text-align: right;
         }
+
+            .invoice-box .invoice-label {
+                background-color: #008b99;
+                color: white;
+                padding: 10px 30px;
+                font-weight: bold;
+                font-size: 20px;
+            }
+
+            .invoice-box .invoice-details {
+                margin-top: 8px;
+                font-size: 16px;
+                color: #333;
+            }
+
+
 
         .section-title {
             color: #00bcd4;
@@ -99,12 +121,24 @@
         <!-- Header -->
         <div class="row header">
             <div class="col-md-6">
-                <img src="~/content/images/logo/ishop_logo.svg" alt="logo" class="logo" />
+                <img src="~/content/images/logo/ishop_logo.png" alt="logo" class="logo" />
                 <p class="text-muted">@Model.ShopName</p>
             </div>
-            <div class="col-md-6 invoice-box">
-                <h2 style="background-color: #00bcd4;">INVOICE</h2>
-                <p>Invoice No. <strong>@Model.PaymentId</strong></p>
+            @* <div class="col-md-6 invoice-box">
+                <div class="invoice-label">INVOICE</div>
+                <div class="invoice-details">
+                    Invoice No. <strong>@Model.Id</strong>
+                </div>
+            </div> *@
+            <div class="col-md-6">
+                <div style="width: 150px; float: right; text-align: right;">
+                    <div style="background-color: #008b99; color: white; padding: 10px 30px;margin-right:50px; font-weight: bold; font-size: 20px;">
+                        INVOICE
+                    </div>
+                    <div style="margin-top: 8px; font-size: 16px; color: #333;">
+                        INVOICE NO. <strong>@Model.Id</strong>
+                    </div>
+                </div>
             </div>
         </div>
         <hr />
@@ -205,7 +239,7 @@
                     </tr>
                     <tr>
                         <td style="text-align: right;"><strong>Discount:</strong></td>
-                        <td style="text-align: right;">@Model.Discount.ToString("0.00")%</td>
+                        <td style="text-align: right;">₹ @Model.Discount.ToString("0.00")</td>
                     </tr>
                 </table>
 

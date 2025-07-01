@@ -21,6 +21,14 @@ namespace ECommerce.Controllers
             _configuration = configuration;
             _httpClient = httpClient;
             _httpClientFactory = httpClientFactory;
+
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            };
+
+            _httpClient = new HttpClient(handler);
+
         }
 
         [HttpGet]
@@ -38,16 +46,15 @@ namespace ECommerce.Controllers
                 return View("TrackOrder");
             }
 
-            var client = _httpClientFactory.CreateClient();
-            string apiBaseUrl = _configuration["APIURL"]; 
-            string endpoint = "/user/v1/trackorder";      
+            string apiBaseUrl = _configuration["APIURL"];
+            string endpoint = "/user/v1/trackorder";
 
-            client.BaseAddress = new Uri(apiBaseUrl);
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _httpClient.BaseAddress = new Uri(apiBaseUrl);
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             var content = new StringContent(JsonConvert.SerializeObject(trackingNumber), Encoding.UTF8, "application/json");
 
-            var response = await client.PostAsync(endpoint, content);
+            var response = await _httpClient.PostAsync(endpoint, content);
             var resultJson = await response.Content.ReadAsStringAsync();
 
             if (response.IsSuccessStatusCode)

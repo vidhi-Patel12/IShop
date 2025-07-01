@@ -40,6 +40,7 @@ namespace ECommerce.Controllers
         private readonly ApplicationDbContext _context;
 
         private readonly IViewRenderService _viewRenderService;
+        private readonly HttpClient _httpClient;
 
 
         public HomeController(IConfiguration configuration, ILogger<HomeController> logger, ApplicationDbContext context, IViewRenderService viewRenderService)
@@ -49,8 +50,15 @@ namespace ECommerce.Controllers
             _configuration = configuration;
             _context = context;
             _viewRenderService = viewRenderService;
+
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            };
+
+            _httpClient = new HttpClient(handler);
         }
-               
+
         public async Task<IActionResult> Index(bool showAll = false)
         {
             List<Products> products = new List<Products>();
@@ -59,32 +67,31 @@ namespace ECommerce.Controllers
             string endpoint = showAll ? "all" : "limited";
             string apiUrl = $"{baseUrl}/user/v1/{endpoint}";
 
-            using (HttpClient client = new HttpClient())
-            {
-                try
-                {
-                    HttpResponseMessage response = await client.GetAsync(apiUrl);
 
-                    if (response.IsSuccessStatusCode)
-                    {
-                        string json = await response.Content.ReadAsStringAsync();
-                        products = JsonSerializer.Deserialize<List<Products>>(json, new JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true
-                        });
-                    }
-                    else
-                    {
-                        ViewBag.Error = $"API Error: {response.StatusCode}";
-                        return View(new List<Products>());
-                    }
-                }
-                catch (Exception ex)
+            try
+            {
+                HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
+
+                if (response.IsSuccessStatusCode)
                 {
-                    ViewBag.Error = $"Exception: {ex.Message}";
+                    string json = await response.Content.ReadAsStringAsync();
+                    products = JsonSerializer.Deserialize<List<Products>>(json, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                }
+                else
+                {
+                    ViewBag.Error = $"API Error: {response.StatusCode}";
                     return View(new List<Products>());
                 }
             }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Exception: {ex.Message}";
+                return View(new List<Products>());
+            }
+
 
             return View(products);
         }
@@ -95,17 +102,15 @@ namespace ECommerce.Controllers
             string baseUrl = _configuration["APIURL"];
             string apiUrl = $"{baseUrl}/user/v1/quickview/{productImageId}";
 
-            using (HttpClient client = new HttpClient())
+
+            var response = await _httpClient.GetAsync(apiUrl);
+            if (response.IsSuccessStatusCode)
             {
-                var response = await client.GetAsync(apiUrl);
-                if (response.IsSuccessStatusCode)
+                string json = await response.Content.ReadAsStringAsync();
+                products = JsonSerializer.Deserialize<List<Products>>(json, new JsonSerializerOptions
                 {
-                    string json = await response.Content.ReadAsStringAsync();
-                    products = JsonSerializer.Deserialize<List<Products>>(json, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-                }
+                    PropertyNameCaseInsensitive = true
+                });
             }
 
             return PartialView("_QuickView", products);
@@ -118,11 +123,10 @@ namespace ECommerce.Controllers
             if (string.IsNullOrEmpty(slug))
                 return NotFound();
 
-            var client = clientFactory.CreateClient();
             string baseUrl = _configuration["APIURL"];
             string apiUrl = $"{baseUrl}/user/v1/productdetails/{slug}/{typeslug}/{colorslug}";
 
-            var response = await client.GetAsync(apiUrl);
+            var response = await _httpClient.GetAsync(apiUrl);
 
             if (!response.IsSuccessStatusCode)
                 return NotFound("API call failed.");
@@ -160,41 +164,69 @@ namespace ECommerce.Controllers
             string baseUrl = _configuration["APIURL"]; // Example: "https://localhost:5001"
             string apiUrl = $"{baseUrl}/user/v1/all";
 
-            using (HttpClient client = new HttpClient())
+
+            var response = await _httpClient.GetAsync(apiUrl);
+            if (response.IsSuccessStatusCode)
             {
-                var response = await client.GetAsync(apiUrl);
-                if (response.IsSuccessStatusCode)
+                string json = await response.Content.ReadAsStringAsync();
+                products = JsonSerializer.Deserialize<List<Products>>(json, new JsonSerializerOptions
                 {
-                    string json = await response.Content.ReadAsStringAsync();
-                    products = JsonSerializer.Deserialize<List<Products>>(json, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-                }
-                else
-                {
-                    ViewBag.Error = "Unable to fetch products from API.";
-                }
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            else
+            {
+                ViewBag.Error = "Unable to fetch products from API.";
             }
 
             return View(products);
         }
-    
+
         public async Task<IActionResult> GetCart()
         {
             List<ShoppingCart> cartItems = new List<ShoppingCart>();
             string baseUrl = _configuration["APIURL"]; // e.g., "https://yourdomain.com/api"
             string apiUrl = $"{baseUrl}/user/v1/getcart"; // Adjust based on your route
 
-            using (HttpClient client = new HttpClient())
-            {
-                var cookie = Request.Cookies["IShopId"];
-                if (!string.IsNullOrEmpty(cookie))
-                {
-                    client.DefaultRequestHeaders.Add("Cookie", $"IShopId={cookie}");
-                }
 
-                var response = await client.GetAsync(apiUrl);
+            var cookie = Request.Cookies["IShopId"];
+            if (!string.IsNullOrEmpty(cookie))
+            {
+                _httpClient.DefaultRequestHeaders.Add("Cookie", $"IShopId={cookie}");
+            }
+
+            var response = await _httpClient.GetAsync(apiUrl);
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                var result = JsonSerializer.Deserialize<JsonElement>(json);
+
+                if (result.TryGetProperty("cartItems", out var items))
+                {
+                    cartItems = JsonSerializer.Deserialize<List<ShoppingCart>>(items.GetRawText(), new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                }
+            }
+
+            return Json(new { success = true, cartItems });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Cart()
+        {
+            List<ShoppingCart> cartItems = new List<ShoppingCart>();
+            string baseUrl = _configuration["APIURL"];
+            string apiUrl = $"{baseUrl}/user/v1/getcart";
+
+            // Pass IShopId cookie manually
+            var iShopId = Request.Cookies["IShopId"];
+            if (!string.IsNullOrEmpty(iShopId))
+            {
+                _httpClient.DefaultRequestHeaders.Add("Cookie", $"IShopId={iShopId}");
+
+                var response = await _httpClient.GetAsync(apiUrl);
                 if (response.IsSuccessStatusCode)
                 {
                     var json = await response.Content.ReadAsStringAsync();
@@ -208,53 +240,18 @@ namespace ECommerce.Controllers
                         });
                     }
                 }
-            }
-
-            return Json(new { success = true, cartItems });
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Cart()
-        {
-            List<ShoppingCart> cartItems = new List<ShoppingCart>();
-            string baseUrl = _configuration["APIURL"]; 
-            string apiUrl = $"{baseUrl}/user/v1/getcart"; 
-
-            using (HttpClient client = new HttpClient())
-            {
-                // Pass IShopId cookie manually
-                var iShopId = Request.Cookies["IShopId"];
-                if (!string.IsNullOrEmpty(iShopId))
-                {
-                    client.DefaultRequestHeaders.Add("Cookie", $"IShopId={iShopId}");
-
-                    var response = await client.GetAsync(apiUrl);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var json = await response.Content.ReadAsStringAsync();
-                        var result = JsonSerializer.Deserialize<JsonElement>(json);
-
-                        if (result.TryGetProperty("cartItems", out var items))
-                        {
-                            cartItems = JsonSerializer.Deserialize<List<ShoppingCart>>(items.GetRawText(), new JsonSerializerOptions
-                            {
-                                PropertyNameCaseInsensitive = true
-                            });
-                        }
-                    }
-                    else
-                    {
-                        ViewBag.Error = "Unable to fetch products from API.";
-                    }
-                }
                 else
                 {
-                    // Fallback: Load guest cart from session
-                    var guestCart = HttpContext.Session.GetString("GuestCart");
-                    if (!string.IsNullOrEmpty(guestCart))
-                    {
-                        cartItems = JsonConvert.DeserializeObject<List<ShoppingCart>>(guestCart);
-                    }
+                    ViewBag.Error = "Unable to fetch products from API.";
+                }
+            }
+            else
+            {
+                // Fallback: Load guest cart from session
+                var guestCart = HttpContext.Session.GetString("GuestCart");
+                if (!string.IsNullOrEmpty(guestCart))
+                {
+                    cartItems = JsonConvert.DeserializeObject<List<ShoppingCart>>(guestCart);
                 }
             }
 
@@ -268,82 +265,78 @@ namespace ECommerce.Controllers
                 return Json(new { success = false, message = "Cart is empty." });
 
             string? userId = Request.Cookies["IShopId"];
-            string baseUrl = _configuration["APIURL"]; 
+            string baseUrl = _configuration["APIURL"];
             string apiUrl = $"{baseUrl}/user/v1/savecart";
 
-            using (HttpClient client = new HttpClient())
+
+            // Pass cookie manually
+            if (!string.IsNullOrEmpty(userId))
             {
-                // Pass cookie manually
-                if (!string.IsNullOrEmpty(userId))
-                {
-                    client.DefaultRequestHeaders.Add("Cookie", $"IShopId={userId}");
-                }
+                _httpClient.DefaultRequestHeaders.Add("Cookie", $"IShopId={userId}");
+            }
 
-                var jsonContent = new StringContent(
-                    JsonSerializer.Serialize(cartItems),
-                    Encoding.UTF8,
-                    "application/json"
-                );
+            var jsonContent = new StringContent(
+                JsonSerializer.Serialize(cartItems),
+                Encoding.UTF8,
+                "application/json"
+            );
 
-                var response = await client.PostAsync(apiUrl, jsonContent);
+            var response = await _httpClient.PostAsync(apiUrl, jsonContent);
 
-                if (response.IsSuccessStatusCode)
+            if (response.IsSuccessStatusCode)
+            {
+                var responseJson = await response.Content.ReadAsStringAsync();
+                return Content(responseJson, "application/json");
+            }
+            else
+            {
+                return StatusCode((int)response.StatusCode, new
                 {
-                    var responseJson = await response.Content.ReadAsStringAsync();
-                    return Content(responseJson, "application/json");
-                }
-                else
-                {
-                    return StatusCode((int)response.StatusCode, new
-                    {
-                        success = false,
-                        message = "Failed to save cart via API.",
-                        status = response.StatusCode
-                    });
-                }
+                    success = false,
+                    message = "Failed to save cart via API.",
+                    status = response.StatusCode
+                });
             }
         }
 
         public async Task<IActionResult> CheckCartItem(ShoppingCart item)
         {
-            string? baseUrl = _configuration["APIURL"]; 
+            string? baseUrl = _configuration["APIURL"];
             string apiUrl = $"{baseUrl}/user/v1//checkcartitem";
 
-            using (HttpClient client = new HttpClient())
+
+            // Pass cookies if needed
+            var userId = Request.Cookies["IShopId"];
+            if (!string.IsNullOrEmpty(userId))
             {
-                // Pass cookies if needed
-                var userId = Request.Cookies["IShopId"];
-                if (!string.IsNullOrEmpty(userId))
+                _httpClient.DefaultRequestHeaders.Add("Cookie", $"IShopId={userId}");
+            }
+
+            // Serialize the request body
+            var jsonContent = new StringContent(
+                JsonSerializer.Serialize(item),
+                Encoding.UTF8,
+                "application/json");
+
+            // Send the POST request
+            var response = await _httpClient.PostAsync(apiUrl, jsonContent);
+
+            if (response.IsSuccessStatusCode)
+            {
+                string resultJson = await response.Content.ReadAsStringAsync();
+
+                // Pass through the same JSON structure returned by the API
+                var jsonElement = JsonSerializer.Deserialize<JsonElement>(resultJson);
+                return Json(jsonElement);
+            }
+            else
+            {
+                return Json(new
                 {
-                    client.DefaultRequestHeaders.Add("Cookie", $"IShopId={userId}");
-                }
-
-                // Serialize the request body
-                var jsonContent = new StringContent(
-                    JsonSerializer.Serialize(item),
-                    Encoding.UTF8,
-                    "application/json");
-
-                // Send the POST request
-                var response = await client.PostAsync(apiUrl, jsonContent);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    string resultJson = await response.Content.ReadAsStringAsync();
-
-                    // Pass through the same JSON structure returned by the API
-                    var jsonElement = JsonSerializer.Deserialize<JsonElement>(resultJson);
-                    return Json(jsonElement);
-                }
-                else
-                {
-                    return Json(new
-                    {
-                        exists = false,
-                        message = "Failed to contact CheckCartItem API.",
-                        error = response.ReasonPhrase
-                    });
-                }
+                    exists = false,
+                    message = "Failed to contact CheckCartItem API.",
+                    error = response.ReasonPhrase
+                });
             }
         }
 
@@ -363,57 +356,53 @@ namespace ECommerce.Controllers
                 ProductsImageId = request.ProductsImageId  // Pass ProductsImageId from ShoppingCart
             };
 
-            // Use HttpClient to send the request to the API
-            using (HttpClient client = new HttpClient())
+            try
             {
-                try
+                // Add IShopId cookie to the header if needed by the API
+                if (!string.IsNullOrEmpty(userId))
                 {
-                    // Add IShopId cookie to the header if needed by the API
-                    if (!string.IsNullOrEmpty(userId))
-                    {
-                        client.DefaultRequestHeaders.Add("Cookie", $"IShopId={userId}");
-                    }
-
-                    // Serialize the request body into JSON
-                    var jsonContent = new StringContent(
-                        JsonSerializer.Serialize(deleteRequest),
-                        Encoding.UTF8,
-                        "application/json");
-
-                    // Send the POST request to the API
-                    HttpResponseMessage response = await client.PostAsync(apiUrl, jsonContent);
-
-                    // Handle the response from the API
-                    if (response.IsSuccessStatusCode)
-                    {
-                        string resultJson = await response.Content.ReadAsStringAsync();
-
-                        // Return the result as JSON back to the caller
-                        var jsonElement = JsonSerializer.Deserialize<JsonElement>(resultJson);
-                        return Json(jsonElement);
-                    }
-                    else
-                    {
-                        // If the request fails, return an error message
-                        var errorResponse = await response.Content.ReadAsStringAsync();
-                        return Json(new
-                        {
-                            success = false,
-                            message = "Failed to contact DeleteCartItem API.",
-                            error = response.ReasonPhrase,
-                            errorDetails = errorResponse
-                        });
-                    }
+                    _httpClient.DefaultRequestHeaders.Add("Cookie", $"IShopId={userId}");
                 }
-                catch (Exception ex)
+
+                // Serialize the request body into JSON
+                var jsonContent = new StringContent(
+                    JsonSerializer.Serialize(deleteRequest),
+                    Encoding.UTF8,
+                    "application/json");
+
+                // Send the POST request to the API
+                HttpResponseMessage response = await _httpClient.PostAsync(apiUrl, jsonContent);
+
+                // Handle the response from the API
+                if (response.IsSuccessStatusCode)
                 {
-                    // If any exception occurs during the API call, return an error message
+                    string resultJson = await response.Content.ReadAsStringAsync();
+
+                    // Return the result as JSON back to the caller
+                    var jsonElement = JsonSerializer.Deserialize<JsonElement>(resultJson);
+                    return Json(jsonElement);
+                }
+                else
+                {
+                    // If the request fails, return an error message
+                    var errorResponse = await response.Content.ReadAsStringAsync();
                     return Json(new
                     {
                         success = false,
-                        message = $"Error occurred: {ex.Message}"
+                        message = "Failed to contact DeleteCartItem API.",
+                        error = response.ReasonPhrase,
+                        errorDetails = errorResponse
                     });
                 }
+            }
+            catch (Exception ex)
+            {
+                // If any exception occurs during the API call, return an error message
+                return Json(new
+                {
+                    success = false,
+                    message = $"Error occurred: {ex.Message}"
+                });
             }
         }
 
@@ -436,7 +425,7 @@ namespace ECommerce.Controllers
             }
             return View();
         }
-    
+
         [HttpGet]
         public async Task<IActionResult> GetAddresses()
         {
@@ -451,38 +440,35 @@ namespace ECommerce.Controllers
                 string baseUrl = _configuration["APIURL"];
                 string apiUrl = $"{baseUrl}/user/v1/getaddresses";
 
-                using (HttpClient client = new HttpClient())
+                // Add cookie manually to the request header
+                _httpClient.DefaultRequestHeaders.Add("Cookie", $"IShopId={shopId}");
+
+                HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
+
+                if (response.IsSuccessStatusCode)
                 {
-                    // Add cookie manually to the request header
-                    client.DefaultRequestHeaders.Add("Cookie", $"IShopId={shopId}");
+                    string resultJson = await response.Content.ReadAsStringAsync();
 
-                    HttpResponseMessage response = await client.GetAsync(apiUrl);
-
-                    if (response.IsSuccessStatusCode)
+                    //  Deserialize the raw JSON into a list directly
+                    var addresses = JsonSerializer.Deserialize<List<DelivaryAddresses>>(resultJson, new JsonSerializerOptions
                     {
-                        string resultJson = await response.Content.ReadAsStringAsync();
+                        PropertyNameCaseInsensitive = true
+                    });
 
-                        // ✅ Deserialize the raw JSON into a list directly
-                        var addresses = JsonSerializer.Deserialize<List<DelivaryAddresses>>(resultJson, new JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true
-                        });
-
-                        if (addresses == null || addresses.Count == 0)
-                        {
-                            return NotFound(); // Only 404 with no extra message
-                        }
-
-                        return Ok(addresses); // ✅ Return the list directly
-                    }
-                    else
+                    if (addresses == null || addresses.Count == 0)
                     {
-                        return StatusCode((int)response.StatusCode, new
-                        {
-                            success = false,
-                            message = $"Failed to retrieve addresses. Status code: {response.StatusCode}"
-                        });
+                        return NotFound(); // Only 404 with no extra message
                     }
+
+                    return Ok(addresses); //  Return the list directly
+                }
+                else
+                {
+                    return StatusCode((int)response.StatusCode, new
+                    {
+                        success = false,
+                        message = $"Failed to retrieve addresses. Status code: {response.StatusCode}"
+                    });
                 }
             }
             catch (Exception ex)
@@ -513,32 +499,30 @@ namespace ECommerce.Controllers
                 var json = JsonSerializer.Serialize(model);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                using (HttpClient client = new HttpClient())
+
+                // Send POST request to the internal API
+                HttpResponseMessage response = await _httpClient.PostAsync(apiUrl, content);
+
+                // Check if the request was successful
+                if (!response.IsSuccessStatusCode)
                 {
-                    // Send POST request to the internal API
-                    HttpResponseMessage response = await client.PostAsync(apiUrl, content);
-
-                    // Check if the request was successful
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        return StatusCode((int)response.StatusCode, "Failed to save address.");
-                    }
-
-                    // Read and parse the response from the API
-                    string responseBody = await response.Content.ReadAsStringAsync();
-
-                    // Parse the response body as JSON
-                    using var document = JsonDocument.Parse(responseBody);
-                    var root = document.RootElement;
-
-                    // Extract values from the JSON response
-                    bool success = root.GetProperty("success").GetBoolean();
-                    string message = root.GetProperty("message").GetString();
-                    int addressId = root.GetProperty("addressId").GetInt32();
-
-                    // Returning an OK response with the success message and addressId
-                    return Ok(new { success = success, message = message, addressId = addressId });
+                    return StatusCode((int)response.StatusCode, "Failed to save address.");
                 }
+
+                // Read and parse the response from the API
+                string responseBody = await response.Content.ReadAsStringAsync();
+
+                // Parse the response body as JSON
+                using var document = JsonDocument.Parse(responseBody);
+                var root = document.RootElement;
+
+                // Extract values from the JSON response
+                bool success = root.GetProperty("success").GetBoolean();
+                string message = root.GetProperty("message").GetString();
+                int addressId = root.GetProperty("addressId").GetInt32();
+
+                // Returning an OK response with the success message and addressId
+                return Ok(new { success = success, message = message, addressId = addressId });
             }
             catch (Exception ex)
             {
@@ -557,18 +541,17 @@ namespace ECommerce.Controllers
                 string baseUrl = _configuration["APIURL"]; // From appsettings.json
                 string apiUrl = $"{baseUrl}/user/v1/saveorder"; // Adjust route if needed
 
-                using var client = new HttpClient();
 
-                // 🟡 Add cookie header if needed
+                //  Add cookie header if needed
                 if (Request.Cookies.TryGetValue("IShopId", out var iShopId))
                 {
-                    client.DefaultRequestHeaders.Add("Cookie", $"IShopId={iShopId}");
+                    _httpClient.DefaultRequestHeaders.Add("Cookie", $"IShopId={iShopId}");
                 }
 
                 var json = JsonSerializer.Serialize(orders);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await client.PostAsync(apiUrl, content);
+                var response = await _httpClient.PostAsync(apiUrl, content);
 
                 var responseBody = await response.Content.ReadAsStringAsync();
 
@@ -582,7 +565,7 @@ namespace ECommerce.Controllers
                     });
                 }
 
-                // ✅ Parse the message from response JSON
+                //  Parse the message from response JSON
                 using var doc = JsonDocument.Parse(responseBody);
                 string message = doc.RootElement.GetProperty("message").GetString();
 
@@ -610,18 +593,16 @@ namespace ECommerce.Controllers
                 string baseUrl = _configuration["APIURL"]; // e.g., https://yourapi.com
                 string apiUrl = $"{baseUrl}/user/v1/savecheckout"; // Adjust based on your route
 
-                using var client = new HttpClient();
-
                 // Send cookie if needed (IShopId)
                 if (Request.Cookies.TryGetValue("IShopId", out var iShopId))
                 {
-                    client.DefaultRequestHeaders.Add("Cookie", $"IShopId={iShopId}");
+                    _httpClient.DefaultRequestHeaders.Add("Cookie", $"IShopId={iShopId}");
                 }
 
                 var json = JsonSerializer.Serialize(checkout);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await client.PostAsync(apiUrl, content);
+                var response = await _httpClient.PostAsync(apiUrl, content);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -656,35 +637,32 @@ namespace ECommerce.Controllers
                 string baseUrl = _configuration["APIURL"]; // e.g., "https://localhost:5001"
                 string apiUrl = $"{baseUrl}/user/v1/Coupan/{total}";
 
-                using (HttpClient client = new HttpClient())
+                HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
+
+                if (response.IsSuccessStatusCode)
                 {
-                    HttpResponseMessage response = await client.GetAsync(apiUrl);
+                    string resultJson = await response.Content.ReadAsStringAsync();
 
-                    if (response.IsSuccessStatusCode)
+                    // Deserialize to List<Coupan>
+                    var coupons = JsonSerializer.Deserialize<List<Coupan>>(resultJson, new JsonSerializerOptions
                     {
-                        string resultJson = await response.Content.ReadAsStringAsync();
+                        PropertyNameCaseInsensitive = true
+                    });
 
-                        // Deserialize to List<Coupan>
-                        var coupons = JsonSerializer.Deserialize<List<Coupan>>(resultJson, new JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true
-                        });
-
-                        if (coupons == null || coupons.Count == 0)
-                        {
-                            return NotFound(new { success = false, message = "No coupons found." });
-                        }
-
-                        return Json(coupons);
-                    }
-                    else
+                    if (coupons == null || coupons.Count == 0)
                     {
-                        return StatusCode((int)response.StatusCode, new
-                        {
-                            success = false,
-                            message = $"Failed to retrieve coupons. Status: {response.StatusCode}"
-                        });
+                        return NotFound(new { success = false, message = "No coupons found." });
                     }
+
+                    return Json(coupons);
+                }
+                else
+                {
+                    return StatusCode((int)response.StatusCode, new
+                    {
+                        success = false,
+                        message = $"Failed to retrieve coupons. Status: {response.StatusCode}"
+                    });
                 }
             }
             catch (Exception ex)
@@ -704,48 +682,49 @@ namespace ECommerce.Controllers
             }
 
             // API URL to get orders
-            string baseUrl = _configuration["APIURL"];  
+            string baseUrl = _configuration["APIURL"];
             string apiUrl = $"{baseUrl}/user/v1/orders";
 
-            using (HttpClient client = new HttpClient())
+            // Add cookie manually to the request header
+            _httpClient.DefaultRequestHeaders.Add("Cookie", $"IShopId={shopIdString}");
+
+            try
             {
-                // Add cookie manually to the request header
-                client.DefaultRequestHeaders.Add("Cookie", $"IShopId={shopIdString}");
+                HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
 
-                try
+                if (response.IsSuccessStatusCode)
                 {
-                    HttpResponseMessage response = await client.GetAsync(apiUrl);
+                    string resultJson = await response.Content.ReadAsStringAsync();
 
-                    if (response.IsSuccessStatusCode)
+                    // Deserialize to List<OrderDetails>
+                    var orders = JsonSerializer.Deserialize<List<OrderDetails>>(resultJson, new JsonSerializerOptions
                     {
-                        string resultJson = await response.Content.ReadAsStringAsync();
+                        PropertyNameCaseInsensitive = true
+                    });
 
-                        // Deserialize to List<OrderDetails>
-                        var orders = JsonSerializer.Deserialize<List<OrderDetails>>(resultJson, new JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true
-                        });
-
-                        if (orders == null || orders.Count == 0)
-                        {
-                            return NotFound(new { success = false, message = "No orders found." });
-                        }
-
-                        return View(orders);  // Pass the list of orders to the view
-                    }
-                    else
+                    if (orders == null || orders.Count == 0)
                     {
-                        return StatusCode((int)response.StatusCode, new
-                        {
-                            success = false,
-                            message = $"Failed to retrieve orders. Status: {response.StatusCode}"
-                        });
+                        ViewBag.ErrorMessage = "No orders found.";
+                        return View(new List<OrderDetails>());
+                        // return NotFound(new { success = false, message = "No orders found." });
                     }
+
+                    return View(orders);  // Pass the list of orders to the view
                 }
-                catch (Exception ex)
+                else
                 {
-                    return StatusCode(500, new { success = false, message = "Error occurred while calling Orders API.", error = ex.Message });
+                    //return StatusCode((int)response.StatusCode, new
+                    //{
+                    //    success = false,
+                    //    message = $"Failed to retrieve orders. Status: {response.StatusCode}"
+                    //});
+                    ViewBag.ErrorMessage = "No orders found.";
+                    return View(new List<OrderDetails>());
                 }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "Error occurred while calling Orders API.", error = ex.Message });
             }
         }
 
@@ -759,20 +738,17 @@ namespace ECommerce.Controllers
             string baseUrl = _configuration["APIURL"];
             string apiUrl = $"{baseUrl}/user/v1/{id}";
 
-            using (HttpClient client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.Add("Cookie", $"IShopId={shopIdString}");
+            _httpClient.DefaultRequestHeaders.Add("Cookie", $"IShopId={shopIdString}");
 
-                var response = await client.GetAsync(apiUrl);
+            var response = await _httpClient.GetAsync(apiUrl);
 
-                if (!response.IsSuccessStatusCode)
-                    return View(new List<OrderDetails>());
+            if (!response.IsSuccessStatusCode)
+                return View(new List<OrderDetails>());
 
-                var json = await response.Content.ReadAsStringAsync();
-                var orders = JsonSerializer.Deserialize<List<OrderDetails>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var json = await response.Content.ReadAsStringAsync();
+            var orders = JsonSerializer.Deserialize<List<OrderDetails>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-                return View(orders);
-            }
+            return View(orders);
         }
 
         [HttpPost]
@@ -786,9 +762,7 @@ namespace ECommerce.Controllers
                 string baseUrl = _configuration["APIURL"]; // e.g., https://localhost:5001
                 string apiUrl = $"{baseUrl}/user/v1/cancelorder?id={id}";
 
-                using var client = new HttpClient();
-
-                var response = await client.PostAsync(apiUrl, null); // POST with query string, no body
+                var response = await _httpClient.PostAsync(apiUrl, null); // POST with query string, no body
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -796,7 +770,6 @@ namespace ECommerce.Controllers
                     return StatusCode((int)response.StatusCode, $"Cancel API failed: {error}");
                 }
 
-                // Optionally read response content if needed
                 // var content = await response.Content.ReadAsStringAsync();
 
                 return RedirectToAction("Index"); // Navigate back to order list or desired page
@@ -815,25 +788,22 @@ namespace ECommerce.Controllers
                 string baseUrl = _configuration["APIURL"]; // e.g. "https://your-api.com"
                 string apiUrl = $"{baseUrl}/user/v1/CheckAvailability?productImageId={productImageId}&requestedQty={requestedQty}";
 
-                using (HttpClient client = new HttpClient())
+                HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
+
+                if (response.IsSuccessStatusCode)
                 {
-                    HttpResponseMessage response = await client.GetAsync(apiUrl);
+                    string resultJson = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<JsonElement>(resultJson);
 
-                    if (response.IsSuccessStatusCode)
+                    return Ok(result);
+                }
+                else
+                {
+                    return StatusCode((int)response.StatusCode, new
                     {
-                        string resultJson = await response.Content.ReadAsStringAsync();
-                        var result = JsonSerializer.Deserialize<JsonElement>(resultJson);
-
-                        return Ok(result);
-                    }
-                    else
-                    {
-                        return StatusCode((int)response.StatusCode, new
-                        {
-                            success = false,
-                            message = $"API call failed with status: {response.StatusCode}"
-                        });
-                    }
+                        success = false,
+                        message = $"API call failed with status: {response.StatusCode}"
+                    });
                 }
             }
             catch (Exception ex)
@@ -841,14 +811,12 @@ namespace ECommerce.Controllers
                 return StatusCode(500, new { success = false, message = "HTTP call failed", error = ex.Message });
             }
         }
-
         public async Task<List<Products>> SearchProduct(string query)
         {
-            using var httpClient = new HttpClient();
             string baseUrl = _configuration["APIURL"];
             string apiUrl = $"{baseUrl}/user/v1/SearchProduct?query={query}";
 
-            var response = await httpClient.GetAsync(apiUrl);
+            var response = await _httpClient.GetAsync(apiUrl);
 
             if (response.IsSuccessStatusCode)
             {
@@ -868,16 +836,16 @@ namespace ECommerce.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            var client = httpClientFactory.CreateClient();
 
             string baseUrl = _configuration["APIURL"];
             string apiUrl = $"{baseUrl}/user/v1/MyAccount?iShopId={iShopId}";
 
-            HttpResponseMessage response = await client.GetAsync(apiUrl);
+            HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
 
             if (!response.IsSuccessStatusCode)
             {
                 ViewBag.Error = "Profile not found.";
+                TempData["Message"] = "";
                 return View();
             }
 
@@ -899,15 +867,14 @@ namespace ECommerce.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-           
-            var client = httpClientFactory.CreateClient();
+
             string baseUrl = _configuration["APIURL"];
             string apiUrl = $"{baseUrl}/user/v1/MyAccount?iShopId={iShopId}";
 
             var json = JsonSerializer.Serialize(model);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await client.PostAsync(apiUrl, content);
+            var response = await _httpClient.PostAsync(apiUrl, content);
 
             if (response.IsSuccessStatusCode)
             {
@@ -931,14 +898,13 @@ namespace ECommerce.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            var client = httpClientFactory.CreateClient();
             string baseUrl = _configuration["APIURL"];
             string apiUrl = $"{baseUrl}/user/v1/getaddresses";
 
             // Send the cookie manually
-            client.DefaultRequestHeaders.Add("Cookie", $"IShopId={shopIdString}");
+            _httpClient.DefaultRequestHeaders.Add("Cookie", $"IShopId={shopIdString}");
 
-            HttpResponseMessage response = await client.GetAsync(apiUrl);
+            HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -978,7 +944,6 @@ namespace ECommerce.Controllers
 
             try
             {
-                var client = httpClientFactory.CreateClient();
 
                 string baseUrl = _configuration["APIURL"];
                 string apiUrl = $"{baseUrl}/user/v1/saveaddress?iShopId={iShopId}&formMode={Uri.EscapeDataString(formMode)}";
@@ -989,7 +954,7 @@ namespace ECommerce.Controllers
                     "application/json"
                 );
 
-                HttpResponseMessage response = await client.PostAsync(apiUrl, jsonContent);
+                HttpResponseMessage response = await _httpClient.PostAsync(apiUrl, jsonContent);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -1061,13 +1026,11 @@ namespace ECommerce.Controllers
 
         public async Task<List<OrderDetailsDto>> GetOrderDetailsByOrderId(Guid orderId)
         {
-            using var httpClient = new HttpClient();
-
             // Replace with your actual API base URL
             string baseUrl = _configuration["APIURL"];
             string apiUrl = $"{baseUrl}/user/v1/orderdetails/{orderId}";
 
-            var response = await httpClient.GetAsync(apiUrl);
+            var response = await _httpClient.GetAsync(apiUrl);
 
             if (response.IsSuccessStatusCode)
             {
@@ -1095,6 +1058,7 @@ namespace ECommerce.Controllers
             var invoiceModel = new InvoiceViewModel
             {
                 // Populate the properties from the order
+                Id = order.PaymentId,
                 OrderId = order.OrderId,
                 CustomerName = order.FullName,
                 CustomerEmail = order.Email,

@@ -16,12 +16,20 @@ namespace ECommerce.Controllers
         private readonly ILogger<PaymentController> _logger;
         private readonly IConfiguration _configuration;
         private readonly IBraintreeGateway _braintreeGateway;
+        private readonly HttpClient _httpClient;
 
         public PaymentController(IConfiguration configuration, ILogger<PaymentController> logger)
         {
             _configuration = configuration;
             _logger = logger;
             _connectionString = configuration.GetConnectionString("DefaultConnection");
+
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            };
+
+            _httpClient = new HttpClient(handler);
 
             // Initialize Braintree gateway
             _braintreeGateway = new BraintreeGateway
@@ -30,7 +38,7 @@ namespace ECommerce.Controllers
                 MerchantId = _configuration["Braintree:MerchantId"],
                 PublicKey = _configuration["Braintree:PublicKey"],
                 PrivateKey = _configuration["Braintree:PrivateKey"]
-            };
+            };            
         }
 
         [HttpGet]
@@ -39,11 +47,9 @@ namespace ECommerce.Controllers
             string baseUrl = _configuration["APIURL"]; // e.g., https://localhost:5001
             string apiUrl = $"{baseUrl}/user/v1/payment?orderId={orderId}";
 
-            using var client = new HttpClient();
-
             try
             {
-                var response = await client.GetAsync(apiUrl);
+                var response = await _httpClient.GetAsync(apiUrl);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -94,8 +100,7 @@ namespace ECommerce.Controllers
                 string apiBaseUrl = _configuration["APIURL"]; // e.g. "https://localhost:5001"
                 string apiUrl = $"{apiBaseUrl}/user/v1/savecashpayment?orderId={orderId}&amount={orderAmount}";
 
-                using var client = new HttpClient();
-                var response = await client.PostAsync(apiUrl, null); // No body; params in query string
+                var response = await _httpClient.PostAsync(apiUrl, null); // No body; params in query string
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -148,11 +153,10 @@ namespace ECommerce.Controllers
                     PaymentMode = request.PaymentMode
                 };
 
-                using var client = new HttpClient();
                 var json = JsonConvert.SerializeObject(requestData);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await client.PostAsync(apiUrl, content);
+                var response = await _httpClient.PostAsync(apiUrl, content);
 
                 if (response.IsSuccessStatusCode)
                 {

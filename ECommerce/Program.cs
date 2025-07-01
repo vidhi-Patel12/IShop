@@ -59,12 +59,16 @@ System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Inst
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
-        builder => builder.WithOrigins("https://localhost:44353")
-                          .AllowAnyMethod()
-                          .AllowAnyHeader());
+        builder => builder.WithOrigins("https://localhost:44353",
+                           "http://localhost:47779",    // IIS HTTP
+                           "https://localhost:7020",    // API HTTPS
+                           "http://localhost:5245" // API HTTP
+                           ).AllowAnyMethod()
+                          .AllowAnyHeader()
+                          .AllowAnyOrigin()); 
 });
 
-builder.Services.AddHttpClient("InsecureClient")
+builder.Services.AddHttpClient("MyHttpClient")
     .ConfigurePrimaryHttpMessageHandler(() =>
         new HttpClientHandler
         {
@@ -78,10 +82,19 @@ var options = new RewriteOptions()
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+//if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
+//{
+//    app.UseExceptionHandler("/Home/Error");
+//    app.UseHsts();
+//}
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage(); // <-- shows detailed error page
+}
+else
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -95,9 +108,11 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/uploads"
 });
 
-app.UseCors("AllowSpecificOrigin");
 
 app.UseRouting();
+
+app.UseCors("AllowSpecificOrigin");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
